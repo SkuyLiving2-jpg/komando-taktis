@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KOMANDO TAKTIS — NEXUS-4.0 Sistem Komando Kognitif</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-doc="tni" data-view="radar">
+
+<div id="boot"></div>
+<div id="modal" class="modal off"><div class="mbox" id="mbox"></div></div>
+
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="crest" id="crest">★</div>
+      <div><h1 data-t="title"></h1><small id="subtitle"></small></div>
+    </div>
+    <div class="nxcore" id="nxcore" title="NEXUS-4.0"><canvas id="nxneu" width="92" height="34"></canvas><div><b data-t="nx_core"></b><small id="nxcs"></small></div></div>
+    <div class="alertbar" id="alert">—</div>
+    <div class="docsw" id="docsw">
+      <button data-doc="tni">TNI</button><button data-doc="us">US</button>
+    </div>
+    <div class="clock"><span id="utc">--:--:--</span> <small>UTC</small><br><small id="date"></small></div>
+  </header>
+
+  <main>
+    <!-- ===== KIRI ===== -->
+    <aside class="col left">
+      <section class="panel">
+        <h2><span data-t="p_cmd"></span><span id="mark">—</span></h2>
+        <div class="kv"><span data-t="l_cmd"></span><b id="cmdname">—</b></div>
+        <div class="kv"><span data-t="l_op"></span><b id="opname">—</b></div>
+        <div class="kv"><span data-t="l_th"></span><b id="theater" class="sm">—</b></div>
+        <div class="kv only-air"><span data-t="l_mt"></span><b id="mtime">00:00:00</b></div>
+        <div class="kv only-air"><span data-t="l_sc"></span><b id="score" class="big">0</b></div>
+      </section>
+
+      <section class="panel only-air">
+        <h2><span data-t="p_roe"></span><span id="roename">—</span></h2>
+        <div class="ctl" id="roebtns"><button data-roe="HOLD"></button><button data-roe="TIGHT"></button><button data-roe="FREE"></button></div>
+      </section>
+
+      <section class="panel grow only-air">
+        <h2><span data-t="p_sites"></span><span id="nsites">0</span></h2>
+        <div class="siteList" id="sites"></div>
+      </section>
+
+      <section class="panel only-air">
+        <h2><span data-t="p_stats"></span><span></span></h2>
+        <div class="bar" id="integ"><div class="lbl"><span data-t="s_int"></span><span id="integv">100%</span></div><div class="trk"><div class="fill"></div></div></div>
+        <div class="kv"><span data-t="s_kill"></span><b id="kills">0</b></div>
+        <div class="kv"><span data-t="s_vid"></span><b id="vids">0</b></div>
+        <div class="kv"><span data-t="s_civ"></span><b id="civ">0</b></div>
+        <div class="kv"><span data-t="s_blue"></span><b id="blue">0</b></div>
+        <div class="kv"><span data-t="s_hit"></span><b id="hits">0</b></div>
+        <div class="kv"><span data-t="s_warn"></span><b id="warns">0</b></div>
+      </section>
+
+      <section class="panel only-air">
+        <h2><span data-t="p_ew"></span><span>RWR</span></h2>
+        <canvas id="spec"></canvas>
+        <div class="kv" style="margin-top:5px"><span data-t="ew_nf"></span><b id="nf">-92 dBm</b></div>
+        <div class="kv"><span data-t="ew_j"></span><b id="jam">—</b></div>
+      </section>
+
+      <!-- panel khusus warzone -->
+      <section class="panel grow only-war">
+        <h2><span data-t="p_mis"></span><span id="wtime">00:00</span></h2>
+        <div id="wobjs"></div>
+      </section>
+      <section class="panel only-war">
+        <h2><span data-t="p_logi"></span><span id="winc">+0/s</span></h2>
+        <div class="kv"><span data-t="w_l_cr"></span><b id="wcr" class="big">0</b></div>
+        <div class="kv"><span data-t="w_l_pop"></span><b id="wpop">0</b></div>
+      </section>
+      <section class="panel only-war">
+        <h2><span data-t="p_wst"></span><span></span></h2>
+        <div class="kv"><span data-t="w_l_dep"></span><b id="wdep">0</b></div>
+        <div class="kv"><span data-t="w_l_lost"></span><b id="wlost">0</b></div>
+        <div class="kv"><span data-t="w_l_kill"></span><b id="wkill">0</b></div>
+        <div class="kv"><span data-t="w_l_vis"></span><b id="wvis">0</b></div>
+      </section>
+      <section class="panel only-war">
+        <h2><span data-t="p_wctl"></span><span></span></h2>
+        <div class="ctl"><label data-t="w_diff"></label><span id="wdiff"><button data-d="0" data-t="w_d0"></button><button data-d="1" data-t="w_d1"></button><button data-d="2" data-t="w_d2"></button><button data-d="3" data-t="w_d3"></button></span></div>
+        <div class="ctl"><button id="wrestart" class="red" data-t="w_restart"></button></div>
+        <div class="ctl"><button id="wfps" class="amb" data-t="v_fps_go"></button></div>
+      </section>
+    </aside>
+
+    <!-- ===== TENGAH ===== -->
+    <section class="col center">
+      <section class="panel viewp">
+        <h2 class="tabs">
+          <span><button class="tab on" data-view="radar" data-t="v_radar"></button><button class="tab" data-view="map" data-t="v_map"></button><button class="tab" data-view="war" data-t="v_war"></button><button class="tab" data-view="fps" data-t="v_fps"></button></span>
+          <span id="viewinfo"></span>
+        </h2>
+        <div class="vbar only-air">
+          <div class="grp"><label data-t="c_range"></label><span id="rangebtns"></span></div>
+          <div class="grp"><label><span data-t="c_sweep"></span> <span id="spv">5.0</span>s</label><input id="speed" type="range" min="2" max="12" step="0.5" value="5"></div>
+          <div class="grp tg">
+            <button id="oTrail" data-opt="trails" data-t="c_trail"></button>
+            <button id="oGrid" data-opt="grid" data-t="c_grid"></button>
+            <button id="oLbl" data-opt="labels" data-t="c_lbl"></button>
+            <button id="oDl" data-opt="datalink" data-t="c_dl"></button>
+            <button id="oLand" data-opt="land" data-t="c_land"></button>
+            <button id="oSnd" data-opt="sound" data-t="c_snd"></button>
+            <button id="bPause" data-t="c_pause"></button>
+            <button id="bSpawn" class="amb" data-t="c_spawn"></button>
+          </div>
+        </div>
+        <div class="vbar only-war">
+          <div class="grp"><label data-t="w_speed"></label><span id="wspeed"><button data-sp="1">1×</button><button data-sp="2">2×</button><button data-sp="4">4×</button></span></div>
+          <div class="grp tg">
+            <button id="wFog" data-t="w_fog"></button>
+            <button id="wGrid" data-t="w_grid"></button>
+            <button id="oSnd2" data-opt="sound" data-t="c_snd"></button>
+            <button id="wPause" data-t="c_pause"></button>
+          </div>
+        </div>
+        <div class="vstage" id="stage">
+          <canvas id="radar"></canvas>
+          <canvas id="map"></canvas>
+          <canvas id="war"></canvas>
+          <canvas id="mini" width="180" height="115"></canvas>
+          <canvas id="fps"></canvas>
+          <div id="fpsmenu" class="fmenu off"></div>
+          <div id="fpspause" class="fmenu off"></div>
+          <div class="hud tl legend only-air"><span><i class="dot f"></i><b data-t="leg_f"></b></span><span><i class="dot h"></i><b data-t="leg_h"></b></span><span><i class="dot u"></i><b data-t="leg_u"></b></span><span><i class="dot c"></i><b data-t="leg_c"></b></span></div>
+          <div class="hud tl legend only-war"><span><i class="dot f"></i><b data-t="leg_f"></b></span><span><i class="dot h"></i><b data-t="leg_h"></b></span></div>
+          <div class="hud tr" id="hudtr"></div>
+          <div class="hud bl only-air" id="cursor"></div>
+          <div class="hud br" id="hint"></div>
+          <div class="wover off" id="wover"><div id="wovert"></div><button data-t="w_again"></button></div>
+        </div>
+      </section>
+
+      <section class="panel logp">
+        <h2 class="tabs">
+          <span><button class="tab on" data-ltab="log" data-t="p_log"></button><button class="tab" data-ltab="cons" data-t="p_cons"></button></span>
+          <span id="logcount"></span>
+        </h2>
+        <div id="log"></div>
+        <div id="cons" class="off">
+          <div id="conout"></div>
+          <div class="conin"><span>&gt;</span><input id="conin" type="text" autocomplete="off" spellcheck="false"></div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ===== KANAN ===== -->
+    <aside class="col right">
+      <section class="panel grow only-air">
+        <h2><span data-t="p_con"></span><span id="ncont">0</span></h2>
+        <div class="chips" id="chips"></div>
+        <div class="tblwrap">
+          <table><thead><tr><th data-t="th_id"></th><th data-t="th_iff"></th><th data-t="th_brg"></th><th data-t="th_rng"></th><th data-t="th_alt"></th><th data-t="th_spd"></th></tr></thead>
+          <tbody id="tbody"></tbody></table>
+        </div>
+      </section>
+      <section class="panel only-air" id="detail">
+        <h2><span data-t="p_det"></span><span id="dstate">—</span></h2>
+        <div id="dbody"></div>
+      </section>
+
+      <!-- panel khusus warzone -->
+      <section class="panel grow only-war">
+        <h2><span data-t="p_dep"></span><span id="wdepcr">0</span></h2>
+        <div class="chips" id="wcats"></div>
+        <div class="cards" id="wcards"></div>
+        <div class="wq" id="wqueue"></div>
+      </section>
+      <section class="panel only-war nxp" id="nxp">
+        <h2><span data-t="p_nx"></span><span id="nxfus">—</span></h2>
+        <div class="nx-top">
+          <div class="nx-pw"><b id="nxpw">--%</b><small data-t="nx_pw"></small><em id="nxverd">—</em></div>
+          <canvas id="nxspark"></canvas>
+        </div>
+        <div class="nx-kv"><span data-t="nx_ratio"></span><b id="nxratio">—</b><span data-t="nx_mom"></span><b id="nxmom">—</b><span data-t="nx_unc"></span><b id="nxunc">—</b></div>
+        <div class="nx-h" data-t="nx_rec"></div>
+        <div id="nxrec"></div>
+        <div class="nx-btns"><button id="nxov" data-t="nx_b_map"></button><button id="nxauto" class="amb" data-t="nx_b_auto"></button><button id="nxvoice" data-t="nx_b_voice"></button><button id="nxdoc" data-t="nx_b_doc"></button></div>
+        <div class="nx-cmd"><button id="nxmic" data-t="nx_b_mic"></button><input id="nxin" type="text" autocomplete="off" spellcheck="false"></div>
+      </section>
+      <section class="panel only-war" id="wsel">
+        <h2><span data-t="p_sel"></span><span id="wselc">0</span></h2>
+        <div id="wselbody"></div>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<script src="js/core/core.js"></script>
+<script src="js/core/geo.js"></script>
+<script src="js/core/doctrine.js"></script>
+<script src="js/warzone/war-lang.js"></script>
+<script src="js/radar/sim.js"></script>
+<script src="js/radar/radar.js"></script>
+<script src="js/radar/map.js"></script>
+<script src="js/warzone/war-data.js"></script>
+<script src="js/warzone/war.js"></script>
+<script src="js/warzone/war-terrain.js"></script>
+<script src="js/warzone/war-view.js"></script>
+<script src="js/operator/fps-lang.js"></script>
+<script src="js/operator/fps-data.js"></script>
+<script src="js/operator/fps.js"></script>
+<script src="js/operator/fps-sfx.js"></script>
+<script src="js/operator/fps-audio.js"></script>
+<script src="js/operator/fps-render.js"></script>
+<script src="js/operator/fps-models.js"></script>
+<script src="js/operator/fps-models2.js"></script>
+<script src="js/operator/fps-base.js"></script>
+<script src="js/operator/fps-gl.js"></script>
+<script src="js/operator/fps-vm.js"></script>
+<script src="js/operator/fps-heli.js"></script>
+<script src="js/operator/fps-veh.js"></script>
+<script src="js/operator/fps-life.js"></script>
+<script src="js/operator/fps-chute.js"></script>
+<script src="js/operator/fps-claycam.js"></script>
+<script src="js/operator/fps-cray.js"></script>
+<script src="js/operator/fps-kit.js"></script>
+<script src="js/operator/fps-bossdie.js"></script>
+<script src="js/operator/fps-ui.js"></script>
+<script src="js/nexus/nexus-lang.js"></script>
+<script src="js/nexus/nexus.js"></script>
+<script src="js/nexus/nexus-ui.js"></script>
+<script src="js/core/ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#070707">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Komando Taktis">
+  <meta name="description" content="Komando Taktis — Operator: game tembak-menembak orang pertama, bisa dimainkan tanpa internet.">
+  <title>KOMANDO TAKTIS — OPERATOR</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/play.css">
+</head>
+<!-- EDISI OFFLINE: hanya mode OPERATOR (FPS). Simulasi warzone tetap berjalan di belakang tanpa layar radar/warzone. -->
+<body class="play" data-doc="tni" data-view="fps">
+
+<div id="stage" class="vstage fps">
+  <canvas id="fps"></canvas>
+  <div id="fpsmenu" class="fmenu off"></div>
+  <div id="fpspause" class="fmenu off"></div>
+  <div id="ptitle" class="pscreen"></div>
+  <div id="pover" class="off"></div>
+  <div id="protate"></div>
+</div>
+
+<script src="js/core/core.js"></script>
+<script src="js/core/geo.js"></script>
+<script src="js/core/doctrine.js"></script>
+<script src="js/warzone/war-lang.js"></script>
+<script src="js/warzone/war-data.js"></script>
+<script src="js/warzone/war.js"></script>
+<script src="js/warzone/war-terrain.js"></script>
+<script src="js/operator/fps-lang.js"></script>
+<script src="js/operator/fps-data.js"></script>
+<script src="js/operator/fps.js"></script>
+<script src="js/operator/fps-sfx.js"></script>
+<script src="js/operator/fps-audio.js"></script>
+<script src="js/operator/fps-render.js"></script>
+<script src="js/operator/fps-models.js"></script>
+<script src="js/operator/fps-models2.js"></script>
+<script src="js/operator/fps-base.js"></script>
+<script src="js/operator/fps-gl.js"></script>
+<script src="js/operator/fps-vm.js"></script>
+<script src="js/operator/fps-heli.js"></script>
+<script src="js/operator/fps-veh.js"></script>
+<script src="js/operator/fps-life.js"></script>
+<script src="js/operator/fps-chute.js"></script>
+<script src="js/operator/fps-claycam.js"></script>
+<script src="js/operator/fps-cray.js"></script>
+<script src="js/operator/fps-kit.js"></script>
+<script src="js/operator/fps-bossdie.js"></script>
+<script src="js/operator/fps-ui.js"></script>
+<script src="js/operator/fps-touch.js"></script>
+<script src="js/offline/play.js"></script>
+</body>
+</html>
