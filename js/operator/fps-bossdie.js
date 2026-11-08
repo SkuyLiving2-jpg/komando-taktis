@@ -12,6 +12,7 @@
      ZEUS     kapasitor kelebihan beban (busur listrik makin rapat) → implosi biru → rel meriam terlempar
      CMDR     terhuyung → jatuh berlutut → tersungkur ke depan, eksoskeleton memercik
      WARLORD  terhuyung → bertumpu satu lutut, zirah berasap → roboh ke samping → inti daya meledak
+     CLAY     (Cray Martin) berlutut satu kaki memegang perut, jetpack tersendat → roboh telentang, lengan terbentang
    d.u = unit palsu untuk fps-gl: pose {z,yaw,pit,rol} (pit > 0 = hidung naik), bo (tulang terlepas),
    sq (kempis), burnt, rph/rph2/rotK (rotor), ere (peluncur TITAN), die/dk (prajurit)
    ============================================================ */
@@ -265,23 +266,23 @@
       d.u.dk = d.t; if (d.t < 3.4) return false;
       wreck(d, { die: 'fwd', dk: 99, human: 1, life: 120, fire: 0, side: d.side }); return true;
     },
-    CLAY(d, dt) {   // pose 'fwd': terhuyung, jetpack tersendat menyembur liar & memercik → tersungkur → tangki jetpack meledak
-      const hs = UT.CLAY.hs || 1, pack = () => rot(d, [-.35 * hs, 0, (d.t < 1.3 ? 1.1 : d.t < 2 ? .8 : .35) * hs]);
+    CLAY(d, dt) {   // v2.15 pose 'cray': tersentak → jatuh berlutut SATU kaki sambil mencengkeram perut, jetpack tersendat & memercik → roboh telentang, lengan terbentang
+      const hs = UT.CLAY.hs || 1, pack = () => rot(d, d.t < 2.6 ? [-.3 * hs, 0, 1.05 * hs] : [-1.0 * hs, 0, .35 * hs]);
       if (d.u.alt > 0) {   // tertembak di udara: jatuh dengan jet menyala liar, baru skrip tewas berjalan
         d.t = 0; d.fall = (d.fall || 0) + 26 * dt; d.u.alt = Math.max(0, d.u.alt - d.fall * dt); d.z = F.hAt(d.x, d.y) + d.u.alt;
         if (every(d, 18, dt)) { const p = pack(); fire(p, .8, -3); smoke(p, .9, 2, [56, 56, 58]); }
         if (d.u.alt <= 0) { F.puff(d.x, d.y, d.z + .2, 14, [140, 126, 100], 2.2); A() && A().at('thud', d.x, d.y, 1.4); P.shake = Math.min(1.6, P.shake + .25); }
         return false;
       }
-      if (once(d, 'a', 0)) { spark(rot(d, [0, 0, 1.4 * hs]), 12, [255, 90, 60]); A() && A().at('zap', d.x, d.y, .9); }
-      if (d.t < 2 && every(d, 14, dt)) fire(pack(), .5, -4);
-      if (every(d, d.t < 2.6 ? 8 : 3, dt)) spark(pack(), 4, [255, 160, 80]);
-      if (d.t > .5 && every(d, 6, dt)) smoke(pack(), .7, 2, [56, 56, 58]);
-      if (once(d, 'k', 1.1)) { F.puff(d.x, d.y, d.z + .2, 4, [140, 126, 100], 1); A() && A().at('thud', d.x, d.y, .7); }
-      if (once(d, 'g', 2.05)) { const p = rot(d, [1.1 * hs, 0, .2]); F.puff(p[0], p[1], p[2], 9, [140, 126, 100], 1.6); A() && A().at('thud', p[0], p[1], 1.2); }
-      if (once(d, 'x', 3)) { const p = pack(); blast(p, 6, 18); flash(p, 10, [255, 150, 70]); debris(p, 6, 9, [56, 58, 62], .2, 1); }
-      d.u.dk = d.t; if (d.t < 3.6) return false;
-      wreck(d, { die: 'fwd', dk: 99, human: 1, life: 120, fire: 8, side: d.side }); return true;
+      if (once(d, 'a', 0)) { spark(rot(d, [.15 * hs, 0, 1.1 * hs]), 12, [255, 90, 60]); A() && A().at('zap', d.x, d.y, .9); }
+      if (d.t < 1.2 && every(d, 12, dt)) fire(pack(), .45, -4);                       // jet tersendat
+      if (every(d, d.t < 2.6 ? 6 : 2, dt)) spark(pack(), 3, [255, 160, 80]);
+      if (d.t > .5 && every(d, 5, dt)) smoke(pack(), .6, 2, [56, 56, 58]);
+      if (once(d, 'k', .78)) { const p = rot(d, [.05 * hs, .1 * hs, .1]); F.puff(p[0], p[1], p[2], 6, [140, 126, 100], 1.1); A() && A().at('thud', d.x, d.y, .8); }   // lutut menghantam tanah
+      if (once(d, 'm', .8)) A() && A().at('thud', d.x + Math.cos(d.yaw) * .8, d.y + Math.sin(d.yaw) * .8, .6);   // railgun jatuh
+      if (once(d, 'g', 3.25)) { const p = rot(d, [-1.1 * hs, 0, .2]); F.puff(p[0], p[1], p[2], 12, [140, 126, 100], 1.9); A() && A().at('thud', p[0], p[1], 1.3); P.shake = Math.min(1.6, P.shake + .1); spark(pack(), 14, [255, 120, 80]); }   // punggung menghantam tanah
+      d.u.dk = d.t; if (d.t < 4.6) return false;
+      wreck(d, { die: 'cray', dk: 99, human: 1, life: 120, fire: 0, side: d.side }); return true;
     },
     WARLORD(d, dt) {   // pose di MD.humanDie ('knee'); zirah berasap & memercik, roboh, inti daya di dada meledak
       const hs = UT.WARLORD.hs || 1, core = () => rot(d, [.25 * hs, 0, (d.t < 3.3 ? 1.2 : .45) * hs]);
@@ -394,7 +395,7 @@
     const d = { type: u.type, t: 0, ev: {}, x: u.x, y: u.y, z: gz + alt, yaw, pit: 0, rol: air && T.bank !== undefined ? T.bank : 0, vx: Math.cos(yaw) * sp, vy: Math.sin(yaw) * sp, vz: 0, wy: 0,
       side: u.id % 2 ? 1 : -1, ty0: wrap((u.face || yaw) - yaw), air,
       u: { id: -100000 - u.id, type: u.type, team: u.team, x: u.x, y: u.y, face: u.face || yaw, hdg: yaw, alt, fly: air, ere: u.ere, kit: u.kit } };
-    if (HUMAN(u.type)) { d.u.die = u.type === 'WARLORD' ? 'knee' : 'fwd'; d.u.dk = 0; d.u.side = d.side; d.yaw = d.u.face; }
+    if (HUMAN(u.type)) { d.u.die = u.type === 'WARLORD' ? 'knee' : u.type === 'CLAY' ? 'cray' : 'fwd'; d.u.dk = 0; d.u.side = d.side; d.yaw = d.u.face; }
     F.dying.push(d); return true;
   };
   const HUMAN = t => t === 'CMDR' || t === 'WARLORD' || t === 'CLAY';

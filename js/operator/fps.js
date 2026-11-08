@@ -148,7 +148,7 @@
   const pop = (text, pts, cr) => { P.pops.push({ text, pts, cr, t: P.time }); if (P.pops.length > 6) P.pops.shift(); if (pts) { P.score += pts; F.xp += pts; saveXp(); } };
   const feed = (a, b, col) => { P.feed.push({ a, b, col, t: P.time }); if (P.feed.length > 6) P.feed.shift(); };
   F.emit = function (k, x, y, z, o) {
-    if (F.fx3.length > 700) return;
+    if (F.fx3.length >= 700) return;
     F.fx3.push(Object.assign({ k, x, y, z, vx: 0, vy: 0, vz: 0, t: 0, life: 1, s0: 1, s1: 1, col: [255, 255, 255], a: 1, g: 0, drag: 0 }, o));
   };
   const puff = (x, y, z, n, col, sz) => { for (let i = 0; i < n; i++) F.emit('dust', x, y, z, { vx: rand(-2, 2), vy: rand(-2, 2), vz: rand(.5, 3), life: rand(.5, 1), s0: sz * .4, s1: sz * 1.4, col, a: .55, drag: 2 }); };
@@ -651,7 +651,12 @@
     for (let i = F.fx3.length - 1; i >= 0; i--) {
       const p = F.fx3[i]; p.t += dt;
       if (p.t >= p.life) { F.fx3.splice(i, 1); continue; }
-      if (p.drag) { const k = Math.max(0, 1 - p.drag * dt); p.vx *= k; p.vy *= k; if (p.k === 'smoke' || p.k === 'fire') p.vz *= k; }
+      if (p.drag) { const k = Math.max(0, 1 - p.drag * dt); p.vx *= k; p.vy *= k; if (p.k === 'smoke' || p.k === 'fire' || p.k === 'ash') p.vz *= k; }
+      if (p.k === 'ash') {   // v2.15 abu vulkanik: cap = ketinggian awan payung (berhenti naik, melebar ke ux/uy), wx/wy = angin yang makin kuat di atas zb, hug = awan panas menyusuri lereng
+        if (p.cap !== undefined && p.z > p.cap) { const q = Math.min(1, dt * 1.4); p.vz -= p.vz * q; p.vx += (p.ux - p.vx) * q * .6; p.vy += (p.uy - p.vy) * q * .6; p.drag = 0; }
+        if (p.wx) { const h = clamp((p.z - p.zb) / 450, 0, 1); p.x += p.wx * h * dt; p.y += p.wy * h * dt; }
+        if (p.hug !== undefined) { p.x += p.vx * dt; p.y += p.vy * dt; p.zr = (p.zr || 0) + p.vz * dt; p.z = F.hAt(p.x, p.y) + p.hug + p.zr; continue; }
+      }
       p.vz -= p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
       if (p.g && p.z < F.hAt(p.x, p.y) + .03) { p.z = F.hAt(p.x, p.y) + .03; p.vz = 0; p.vx *= .3; p.vy *= .3; }
     }

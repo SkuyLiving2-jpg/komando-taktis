@@ -326,41 +326,75 @@
   };
 
   /* ---------- gunung berapi: erupsi berkala (±1 menit) ----------
-     gemuruh + getaran beberapa detik sebelumnya → ledakan kawah (dentum, kilat, guncangan sesuai jarak) → kolom abu menjulang ratusan meter,
-     semburan pijar, petir vulkanik di dalam awan abu, bom lava yang melayang balistik lalu meledak & membakar di lereng (melukai siapa pun
-     di dekatnya). Partikel ber-'far' tetap tampak menembus kabut jarak jauh (fps-gl collectFx). */
-  const VE = F.volcE = { w: null, next: 0, ph: 0, t0: 0, acc: [0, 0, 0, 0], bombs: [], nb: 0 };
+     v2.15 (lebih realistis): gemuruh + getaran + uap abu tipis dari kawah sebelum meletus → LETUSAN (dentum, kilat, guncangan sesuai jarak):
+     - kolom abu ('ash': gumpalan bertepi kembang kol, sisi yang kena matahari terang) menyembur cepat lalu melambat, mencapai ±650–800 m
+       di atas kawah dan MELEBAR jadi awan payung yang hanyut terbawa angin; dasar kolom berpendar jingga oleh lava
+     - AWAN PANAS (aliran piroklastik): lidah abu kelabu bergulung menuruni lereng ke beberapa arah, menyusuri permukaan tanah
+     - air mancur lava pijar, bom lava balistik berjejak asap yang meledak & membakar di lereng (melukai siapa pun di dekatnya)
+     - petir vulkanik bercabang di dalam awan abu, hujan abu menjuntai dari bawah awan payung
+     Partikel ber-'far' tetap tampak menembus kabut jarak jauh (fps-gl collectFx). */
+  const VE = F.volcE = { w: null, next: 0, ph: 0, t0: 0, acc: [0, 0, 0, 0, 0, 0], bombs: [], nb: 0, wx: 0, wy: 0, lobes: [] };
+  const ASH = [[54, 49, 46], [66, 60, 55], [82, 76, 70], [104, 98, 92]];
+  function ash(V, x, y, z, o) {   // gumpalan abu kolom letusan (naik, berhenti di awan payung, hanyut angin)
+    const a = Math.random() * 6.283, sp = rand(22, 52), cap = V.top + rand(620, 800);
+    F.emit('ash', x, y, z, Object.assign({ vx: rand(-4, 4), vy: rand(-4, 4), vz: 60, life: rand(17, 22), s0: 26, s1: 160, col: ASH[Math.random() * 4 | 0], a: .95, drag: .07, far: 1,
+      cap, ux: Math.cos(a) * sp, uy: Math.sin(a) * sp, wx: VE.wx, wy: VE.wy, zb: V.top + 120 }, o));
+  }
+  function pyro(V, ang, k) {   // awan panas: lahir di bibir kawah, meluncur menuruni lereng menyusuri tanah, makin besar & melambat
+    const r = 30 + rand(0, 14), sp = rand(30, 46) * (k || 1), aa = ang + rand(-.16, .16);
+    F.emit('ash', V.x + Math.cos(aa) * r, V.y + Math.sin(aa) * r, V.top, { vx: Math.cos(aa) * sp, vy: Math.sin(aa) * sp, vz: rand(.6, 2.2), life: rand(11, 14), s0: 20, s1: rand(90, 125), col: Math.random() < .5 ? [118, 110, 102] : [92, 86, 80], a: .92, drag: .2, far: 1, hug: rand(6, 14) });
+  }
+  function bolt(V, z0) {   // petir vulkanik bercabang di dalam awan abu (garis F.arcs, sangat terang, tanpa kabut)
+    if (!F.arcs) return;
+    const pts = [], x0 = V.x + VE.wx * 3 + rand(-80, 80), y0 = V.y + VE.wy * 3 + rand(-80, 80), L = rand(140, 300), n = 9, dx = rand(-.35, .35), dy = rand(-.35, .35);
+    let x = x0, y = y0, z = z0; pts.push([x, y, z]);
+    for (let i = 1; i <= n; i++) { x += dx * L / n + rand(-1, 1) * L * .09; y += dy * L / n + rand(-1, 1) * L * .09; z -= L / n * rand(.6, 1.2); pts.push([x, y, z]); }
+    F.arcs.push({ p: pts, t: 0, life: .22, col: [205, 215, 255], w: 3.2 });
+    const j = 2 + (Math.random() * 4 | 0), q = pts[j], br = [q.slice()]; let bx = q[0], by = q[1], bz = q[2];
+    for (let i = 0; i < 4; i++) { bx += rand(-1, 1) * L * .12; by += rand(-1, 1) * L * .12; bz -= L * .07; br.push([bx, by, bz]); }
+    F.arcs.push({ p: br, t: 0, life: .16, col: [190, 200, 255], w: 1.8 });
+  }
   function volcTick(dt) {
     const V = F.world.volc, C = F.VOLC; if (!V || !V.top) return;
     const T = P.time, d = Math.hypot(V.x - P.x, V.y - P.y), cl = k => clamp(k, 0, 1);
     if (VE.w !== F.world) { VE.w = F.world; VE.next = T + rand(C.first[0], C.first[1]); VE.ph = 0; VE.bombs.length = 0; }
-    if (VE.ph === 0 && T > VE.next - C.warn) { VE.ph = 1; VE.t0 = VE.next; A() && A().local('quake', .25 + .75 * cl(1 - d / 4500)); if (d < C.msgR) F.msg(TK.t('f_volc'), 'c'); }
+    if (VE.ph === 0 && T > VE.next - C.warn) {
+      VE.ph = 1; VE.t0 = VE.next; A() && A().local('quake', .25 + .75 * cl(1 - d / 4500)); if (d < C.msgR) F.msg(TK.t('f_volc'), 'c');
+      const wa = Math.random() * 6.283, ws = rand(6, 11); VE.wx = Math.cos(wa) * ws; VE.wy = Math.sin(wa) * ws;   // angin letusan ini: awan payung & hujan abu hanyut ke arahnya
+      VE.lobes = []; const nl = 3 + (Math.random() * 3 | 0), a0 = Math.random() * 6.283; for (let i = 0; i < nl; i++) VE.lobes.push(a0 + i * 6.283 / nl + rand(-.4, .4));   // arah lidah awan panas
+    }
     if (VE.ph === 1) {
       P.shake = Math.max(P.shake, .3 * cl(1 - d / 2600) * (1 - (VE.t0 - T) / C.warn));
-      if (Math.random() < dt * 6) F.emit('smoke', V.x + rand(-20, 20), V.y + rand(-20, 20), V.top - 4, { vz: rand(8, 14), vx: 1.5, life: rand(8, 12), s0: 10, s1: 40, col: [70, 66, 62], a: .7, drag: .05, far: 1 });
+      if (Math.random() < dt * 5) ash(V, V.x + rand(-20, 20), V.y + rand(-20, 20), V.top - 4, { vz: rand(10, 18), vx: rand(-1, 1), vy: rand(-1, 1), life: rand(9, 13), s0: 10, s1: 55, col: [118, 112, 106], a: .6, drag: .05, cap: V.top + 300 });   // uap & abu tipis merembes dari kawah
       if (T >= VE.t0) {   // LETUSAN
-        VE.ph = 2; VE.nb = 0; VE.acc = [0, 0, 0, 0];
+        VE.ph = 2; VE.nb = 0; VE.acc = [0, 0, 0, 0, 0, 0];
         A() && A().boom(V.x, V.y, C.boom); A() && A().local('quake', .4 + .6 * cl(1 - d / 4500));
         P.shake = Math.min(2, P.shake + 1.4 * cl(1 - d / 2800) + .15);
         F.emit('flash', V.x, V.y, V.top + 25, { life: .9, s0: 110, s1: 300, col: [255, 170, 90], far: 1 });
-        for (let i = 0; i < 22; i++) F.emit('smoke', V.x + rand(-30, 30), V.y + rand(-30, 30), V.top + rand(0, 30), { vx: rand(-6, 6), vy: rand(-6, 6), vz: rand(45, 90), life: rand(20, 28), s0: 50, s1: 240, col: i % 3 ? [46, 42, 40] : [86, 80, 74], a: .95, drag: .09, far: 1 });   // gumpalan awal seperti kembang kol
-        for (let i = 0; i < 26; i++) { const a = Math.random() * 6.283, s = rand(10, 40); F.emit('smoke', V.x + Math.cos(a) * 20, V.y + Math.sin(a) * 20, V.top, { vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: rand(4, 18), life: rand(10, 16), s0: 18, s1: 70, col: [84, 78, 72], a: .85, drag: .35, far: 1 }); }   // awan panas menyapu bibir kawah
-        if (F.shock) F.shock.push({ x: V.x, y: V.y, R: 900, t: 0, life: 2.6, col: [255, 225, 190], w: 3 });
+        for (let i = 0; i < 20; i++) ash(V, V.x + rand(-30, 30), V.y + rand(-30, 30), V.top + rand(0, 40), { vx: rand(-9, 9), vy: rand(-9, 9), vz: rand(70, 120), s0: rand(30, 50), s1: rand(170, 240), col: ASH[i % 4] });   // gumpalan pertama menjulang seperti kembang kol
+        for (const la of VE.lobes) for (let i = 0; i < 4; i++) pyro(V, la, 1.15);   // awan panas pertama runtuh dari bibir kawah
+        if (F.shock) F.shock.push({ x: V.x, y: V.y, R: 900, t: 0, life: 2.6, col: [255, 236, 214], w: 2, al: .5 });
       }
     }
     if (VE.ph === 2) {
       const e = T - VE.t0, main = e < C.dur, ac = VE.acc;
-      ac[0] += dt * (main ? 6 : e < C.plume ? 1.6 : 0); while (ac[0] >= 1) { ac[0]--; const f = 1 - .6 * cl(e / C.plume); F.emit('smoke', V.x + rand(-28, 28), V.y + rand(-28, 28), V.top + rand(0, 40), { vz: rand(38, 66) * f, vx: rand(-4, 4) + 2.5, vy: rand(-4, 4), life: rand(16, 22), s0: 38, s1: 210, col: Math.random() < .3 ? [92, 86, 80] : [52, 48, 46], a: .9, drag: .06, far: 1 }); }
+      ac[0] += dt * (main ? 6.5 : e < C.plume ? 3 * (1 - .6 * cl((e - C.dur) / (C.plume - C.dur))) : 0); while (ac[0] >= 1) { ac[0]--; const f = main ? 1 : .9;   // kolom: semburan cepat yang melambat, sesudahnya terus mengepul makin lemah (tidak terputus)
+        ash(V, V.x + rand(-26, 26), V.y + rand(-26, 26), V.top + rand(0, 30), main ? { vz: rand(60, 92) } : { vz: rand(44, 64) * f, s0: 20, s1: 120, col: Math.random() < .5 ? [96, 90, 85] : [118, 112, 106], a: .8 }); }
+      if (main && Math.random() < dt * 7) ash(V, V.x + rand(-24, 24), V.y + rand(-24, 24), V.top + rand(0, 20), { vz: rand(14, 26), life: rand(2.6, 4), s0: 26, s1: 70, col: [150, 84, 50], a: .85, cap: V.top + 90 });   // dasar kolom: abu yang disinari lava dari bawah (jingga), cepat tertelan kolom
+      ac[3] += dt * (e < 6 ? 4.5 : e < 12 ? 1.5 : 0); while (ac[3] >= 1) { ac[3]--; pyro(V, VE.lobes[Math.random() * VE.lobes.length | 0], e < 6 ? 1 : .8); }   // lidah awan panas terus mengalir beberapa detik
+      ac[4] += dt * (e > 7 && e < C.plume ? 1.6 : 0); while (ac[4] >= 1) { ac[4]--; const q = rand(.3, 1), z = V.top + rand(520, 660);   // hujan abu menjuntai dari bawah awan payung (searah angin)
+        F.emit('ash', V.x + VE.wx * e * q + rand(-160, 160), V.y + VE.wy * e * q + rand(-160, 160), z, { vz: rand(-14, -8), life: rand(10, 14), s0: 50, s1: 80, col: [70, 66, 62], a: .32, far: 1 }); }
       if (main && Math.random() < dt * 6) F.emit('fire', V.x, V.y, V.top + 4, { life: .5, s0: 70, s1: 50, col: [255, 120, 40], a: .55, far: 1 });   // pendar kawah
-      ac[1] += dt * (main ? 12 : 0); while (ac[1] >= 1) { ac[1]--; F.emit('fire', V.x + rand(-14, 14), V.y + rand(-14, 14), V.top - 6, { vx: rand(-18, 18), vy: rand(-18, 18), vz: rand(30, 70), g: 9.8, life: rand(1.6, 3.4), s0: 15, s1: 5, col: [255, 140 + rand(0, 50), 50], a: .95, far: 1 }); }
-      ac[2] += dt * (e < C.dur + 4 ? 1.3 : 0); while (ac[2] >= 1) { ac[2]--; if (Math.random() < .7) { const z = V.top + rand(120, 330 * cl(e / 6) + 140); F.emit('flash', V.x + rand(-70, 70), V.y + rand(-70, 70), z, { life: .14, s0: 40, s1: 24, col: [205, 215, 255], far: 1 }); F.emit('flash', V.x + rand(-40, 40), V.y + rand(-40, 40), z - rand(30, 80), { life: .1, s0: 26, s1: 14, col: [230, 235, 255], far: 1 }); if (Math.random() < .5) A() && A().at('cannon', V.x, V.y, .7); } }   // petir vulkanik
+      if (main && Math.random() < dt * 4) F.emit('flash', V.x + rand(-20, 20), V.y + rand(-20, 20), V.top + rand(20, 80), { life: .35, s0: 90, s1: 130, col: [255, 110, 40], far: 1 });   // pantulan lava di dasar kolom abu
+      ac[1] += dt * (main ? 13 : e < C.dur + 3 ? 4 : 0); while (ac[1] >= 1) { ac[1]--; F.emit('fire', V.x + rand(-14, 14), V.y + rand(-14, 14), V.top - 6, { vx: rand(-20, 20), vy: rand(-20, 20), vz: rand(35, 85), g: 9.8, life: rand(1.8, 3.6), s0: rand(10, 18), s1: 4, col: [255, 130 + rand(0, 60), 40], a: .95, far: 1 }); }   // air mancur lava pijar
+      ac[2] += dt * (e < C.dur + 6 ? 1.5 : 0); while (ac[2] >= 1) { ac[2]--; if (Math.random() < .75) { const z = V.top + rand(150, 300 * cl(e / 5) + 220); bolt(V, z); F.emit('flash', V.x + VE.wx * 3 + rand(-60, 60), V.y + VE.wy * 3 + rand(-60, 60), z - rand(40, 120), { life: .14, s0: 60, s1: 30, col: [200, 210, 255], far: 1 }); if (Math.random() < .5) A() && A().at('cannon', V.x, V.y, .7); } }   // petir vulkanik
       while (VE.nb < C.bombs && e > VE.nb * C.dur * .7 / C.bombs) { VE.nb++; const a = Math.random() * 6.283, s = rand(8, 36); VE.bombs.push({ x: V.x + Math.cos(a) * 8, y: V.y + Math.sin(a) * 8, z: V.top, vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: rand(34, 62), tr: 0, tf: 0 }); }
       if (e > C.plume) { VE.ph = 0; VE.next = VE.t0 + C.every + rand(-C.jit, C.jit); }
     }
     for (let i = VE.bombs.length - 1; i >= 0; i--) {   // bom lava: balistik, jejak pijar + asap, meledak saat menghantam lereng
       const b = VE.bombs[i]; b.vz -= 9.8 * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt; b.tr -= dt;
       b.tf -= dt; if (b.tf <= 0) { b.tf = .05; F.emit('fire', b.x, b.y, b.z, { life: .24, s0: 8, s1: 3, col: [255, 165, 70], a: 1, far: 1 }); }
-      if (b.tr <= 0) { b.tr = .2; F.emit('smoke', b.x, b.y, b.z, { vz: 1, life: rand(1.6, 2.4), s0: 4, s1: 11, col: [44, 40, 38], a: .55, drag: .5, far: 1 }); }
+      if (b.tr <= 0) { b.tr = .22; F.emit('ash', b.x, b.y, b.z, { vz: 1, life: rand(1.6, 2.2), s0: 4, s1: 13, col: [50, 46, 43], a: .7, drag: .5, far: 1 }); }
       const gz = F.inb(b.x, b.y) ? F.hAt(b.x, b.y) : -9;
       if (b.z <= gz) {
         VE.bombs.splice(i, 1); if (!F.inb(b.x, b.y)) continue;

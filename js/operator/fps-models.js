@@ -535,7 +535,9 @@
 
   /* animasi tewas bos prajurit (fps-bossdie): s.dk = detik sejak tewas, s.side = arah roboh
      'fwd'  (Komandan Bayangan): terhuyung ke belakang → jatuh berlutut → tersungkur ke depan (berporos di lutut), lengan menahan jatuh
-     'knee' (Sang Jenderal): terhuyung → bertumpu satu lutut & terkulai (minigun lepas) → roboh ke samping */
+     'knee' (Sang Jenderal): terhuyung → bertumpu satu lutut & terkulai (minigun lepas) → roboh ke samping
+     'cray' (Cray Martin, v2.15): tersentak → jatuh berlutut SATU kaki, kedua tangan mencengkeram perut, membungkuk & goyah → roboh telentang ke belakang, kedua lengan terbentang */
+  const CRD = MD.CRD = { fall: 1.5, hunch: .55, back: .4, low: .33, a1: .35, elb: .2, spread: 1.35, fold: 1.75, inw: .85 };   // setelan pose tewas Cray
   MD.humanDie = function (s, out) {
     let U = X.chain(X.T(s.x, s.y, s.z), X.rz(s.yaw)); if (s.sc) U = X.cmp(U, { c: [[s.sc, 0, 0], [0, s.sc, 0], [0, 0, s.sc]], t: [0, 0, 0] });
     const t = s.dk, sd0 = s.side || 1, sm = (a, b) => { const k = Math.max(0, Math.min(1, (t - a) / (b - a))); return k * k * (3 - 2 * k); }, acc = (a, b) => { const k = Math.max(0, Math.min(1, (t - a) / (b - a))); return k * k; };
@@ -552,6 +554,20 @@
       const knb = Math.max(.08, 1.62 * kn - F1);   // tulang kering tetap rebah di tanah saat badan berporos di lutut
       legs = [1, -1].map(sd => { const hip = X.chain(pel, X.T(0, sd * .1, -.05), X.ry(.25 * st * (sd > 0 ? 1 : 0)), X.rx(-sd * .06 * kn)); return [hip, X.chain(hip, X.T(0, 0, -.44), X.ry(-knb))]; });
       const gk = acc(.5, .95); gunM = X.chain(U, X.T(.55, -.3, Math.max(.04, 1.05 * (1 - gk)) + .04), X.rz(.9 + gk * .6), X.rx(1.5 * gk));   // senjata terlepas & jatuh
+    } else if (s.die === 'cray') {
+      const k1 = sm(.3, .85), hug = sm(.25, .75) * (1 - sm(2.5, 2.95)), fb = acc(2.5, 3.25), bo = t > 3.25 ? .06 * Math.sin(Math.min(1, (t - 3.25) / .25) * Math.PI) : 0, Fb = CRD.fall * fb - bo, ly = sm(2.5, 3.3), spr = sm(2.55, 3.15);
+      const sway = t > .85 && t < 2.5 ? .05 * Math.sin((t - .85) * 2.4) : 0, hun = CRD.hunch * k1 * (1 - sm(2.45, 2.9));
+      pel = X.chain(U, X.T(-.08 * st - .04 * k1 - CRD.back * ly, 0, .97 - .46 * k1 - CRD.low * ly), X.ry(Fb));   // panggul: turun saat berlutut, lalu rebah ke belakang (berporos di panggul)
+      tor = X.chain(pel, X.T(0, 0, .09), X.ry(.35 * st - hun + .08 * ly), X.rx(sway)); head = X.chain(tor, X.T(.01, 0, .52), X.ry(-.5 * k1 * (1 - ly) + .3 * ly), X.rz(sd0 * .55 * sm(3, 3.6)));
+      for (const sd of [1, -1]) {   // memegang perut: lengan atas sedikit ke depan & siku keluar, lengan bawah terlipat ke depan-dalam → telapak di perut; roboh: lengan terbentang lurus ke samping
+        const a1 = -.5 * st + hug * (sd > 0 ? CRD.a1 : CRD.a1 - .1) + spr * .12, ab = sd * (-.12 + CRD.elb * hug + CRD.spread * spr), up = X.chain(tor, X.T(0, sd * .19, .43), X.ry(a1), X.rx(ab));
+        B[sd > 0 ? 3 : 5] = up; B[sd > 0 ? 4 : 6] = X.chain(up, X.T(0, 0, -.29), X.ry(hug * (sd > 0 ? CRD.fold : CRD.fold - .15) + .12 * spr), X.rx(-sd * hug * CRD.inw));
+      }
+      legs = [1, -1].map(sd => {   // kanan: lutut di tanah, tulang kering rebah ke belakang · kiri: telapak menapak, paha mendatar ke depan → saat roboh kaki terjulur, lutut kiri sedikit menekuk
+        const th = sd > 0 ? 0 : -1.5 * k1 * (1 - ly) - .45 * ly, kn = sd > 0 ? 1.62 * k1 * (1 - ly) + .08 * ly : 1.5 * k1 * (1 - ly) + .8 * ly;
+        const hip = X.chain(pel, X.T(0, sd * .1, -.05), X.ry(-th + .25 * st * (sd > 0 ? 1 : 0))); return [hip, X.chain(hip, X.T(0, 0, -.44), X.ry(-kn))];
+      });
+      const gk = acc(.3, .78), gx = sm(.3, .78); gunM = X.chain(U, X.T(.3 + .4 * gx, -.12 - .26 * gx, Math.max(.05, 1.05 * (1 - gk)) + .05), X.rz(.2 + gk * 1.1), X.rx(1.5 * gk));   // railgun terlepas dari tangan, jatuh di samping lutut
     } else {
       const k1 = sm(.55, 1.2), sway = t > 1.2 && t < 3.3 ? .07 * Math.sin((t - 1.2) * 2.2) : 0, Fs = acc(3.3, 4.1) * 1.4, bo = t > 4.1 ? .06 * Math.sin(Math.min(1, (t - 4.1) / .25) * Math.PI) : 0, py = -sd0 * .3;
       R = X.chain(U, X.T(-.12 * st - .08 * k1, py, 0), X.rx(sd0 * (Fs - bo)), X.T(0, -py, 0));
