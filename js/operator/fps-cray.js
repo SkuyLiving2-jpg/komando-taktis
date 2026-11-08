@@ -13,6 +13,7 @@
   const { rand, clamp } = TK.util;
   const Tt = (k, v) => TK.t(k, v), A = () => TK.fpsaudio;
   const real = t => t / (Q.speed || 1);   // detik sim → detik nyata (mode operator: sim ½ kecepatan)
+  F.vcs = [];   // kerucut uap Cray terbang supersonik (diisi fps-gl clayFx tiap frame, digambar & dikosongkan di fase partikel)
   F.cuts = [];   // garis tebasan 3D {x0,y0,z0,x1,y1,z1,t (negatif = belum muncul),life,w,core}
   const S = F.crayS = { duel: null, wind: null, flash: 0, slash2d: [], shat: null, msg: null, deflT: -9, hintT: -9, jce: null, par: 0, rd: 0, swU: new Set(), back: null, rlock: null, rd2: null };
   const wrapPi = a => { while (a > Math.PI) a -= 6.2832; while (a < -Math.PI) a += 6.2832; return a; };

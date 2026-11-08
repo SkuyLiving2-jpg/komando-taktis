@@ -1126,7 +1126,7 @@
         if (Q.t >= u.jt0) u.alt = Math.max(0, u.alt + clamp(want - u.alt, -T.jetSink * 2.6 * dt, T.jetClimb * dt));
         u.jpk = dd < 20 && u.alt < 1.5 ? 0 : Q.t + 1; if (u.jpk === 0) u.alt = 0;
       }
-      else if (on()) { const top = u.rduel ? CRAY.rduel.alt : T.jetAlt; if (Q.t >= u.jt0) u.alt = u.alt > top ? Math.max(top, u.alt - T.jetSink * dt) : Math.min(top, u.alt + T.jetClimb * dt);   // duel railgun: terbang rendah (±70 m) mengitari kendaraan operator
+      else if (on()) { const top = u.rduel ? CRAY.rduel.alt : T.jetAlt; if (Q.t >= u.jt0) u.alt = u.alt > top ? Math.max(top, u.alt - T.jetSink * dt) : Math.min(top, u.alt + T.jetClimb * Math.min(1, .45 + (Q.t - u.jt0) / .5) * dt);   // duel railgun: terbang rendah (±70 m) mengitari kendaraan operator
         if (!mv && u.bph < 2) u.jpk -= dt * 1.5; }   // melayang diam menghabiskan bahan bakar lebih cepat
       else if (u.alt < 40 && (terAt(u.x, u.y) === W.TER.WATER || (war.hooks.roofAt && war.hooks.roofAt(u.x, u.y)))) { u.jpk = Q.t + 2; if (!u.path.length) { const a = (u.hdg || 0) + rand(-.6, .6); u.path = [{ x: u.x + Math.cos(a) * 70, y: u.y + Math.sin(a) * 70 }]; } }   // jangan mendarat di air atau menembus gedung: meluncur mencari tempat lapang
       else u.alt = Math.max(0, u.alt - T.jetSink * dt);
@@ -1134,7 +1134,7 @@
       if (u.alt <= 0 && Q.t >= u.jt0) { u.jf = false; u.jv = 0; u.fly = false; u.tc = 'G'; u.lowA = false; u.alt = undefined; u.gzS = undefined; u.gzV = 0; u.path = []; u.repath = 0; u.landed = Q.t; }
     }
     u.spdK = u.jf ? T.jetK : (u.dash || 1);
-    if (u.jf && Q.t < u.jt0) { const kr = 1 - (u.jt0 - Q.t) / T.jetRun, v = T.spd * (.55 + .75 * kr); u.x += Math.cos(u.hdg || 0) * v * dt; u.y += Math.sin(u.hdg || 0) * v * dt; }   // awalan lari
+    if (u.jf && Q.t < u.jt0) { const kr = 1 - (u.jt0 - Q.t) / T.jetRun, v = T.spd * (.26 + .14 * kr) * (kr > .78 ? .4 : 1); u.x += Math.cos(u.hdg || 0) * v * dt; u.y += Math.sin(u.hdg || 0) * v * dt; }   // awalan lari
     else if (u.jf) { if (!u.jl0) { u.jl0 = true; u.jv = Math.max(u.jv || 0, T.spd * T.jetK * .3); u.jlT = Q.t + 1.1; } clayFly(u, dt, T); }   // lepas: langsung melaju serong naik
     if (!u.jf) u.jl0 = false;
   }

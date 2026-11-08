@@ -632,14 +632,15 @@ vec3 n=normalize(vec3(-dx*uK,-dy*uK,1.));o=vec4(n.xy*.5+.5,clamp(.92+(c-av)*2.6,
     const tg0 = u.ftg && !u.ftg.dead ? u.ftg : null;
     if (tg0) { const dh = Math.hypot(tg0.x - u.x, tg0.y - u.y), tz = F.zOf(tg0) + 1; s.gunP = clamp(Math.atan2(tz - (gz + alt + 1.8), Math.max(dh, 3)), -1.25, 1.1); }
     if (dt > 0 && !u.die) {
-      if (u.jf && !m.wasF && Q.t >= u.jt0) { m.wasF = true; m.sbT = 0; m.burst = 1; const A = TK.fpsaudio; if (A) A.at('jetign', u.x, u.y, 1.8); F.shock && F.shock.push({ x: u.x, y: u.y, R: 15, t: 0, life: .4, col: [255, 170, 120], w: .16 }); for (let i = 0; i < 22; i++) { const a = i / 22 * 6.283; F.emit('dust', u.x + Math.cos(a) * 1.5, u.y + Math.sin(a) * 1.5, gz + .3, { vx: Math.cos(a) * 15, vy: Math.sin(a) * 15, vz: .7, life: 1.1, s0: .9, s1: 3.6, col: [150, 138, 116], a: .34, drag: 2 }); } }
-      else if (!u.jf && m.wasF) { m.wasF = false; const A = TK.fpsaudio; if (A) A.at('jetland', u.x, u.y, 1.6); F.shock && F.shock.push({ x: u.x, y: u.y, R: 12, t: 0, life: .36, col: [255, 170, 120], w: .14 }); for (let i = 0; i < 16; i++) { const a = i / 16 * 6.283; F.emit('dust', u.x + Math.cos(a), u.y + Math.sin(a), gz + .25, { vx: Math.cos(a) * 11, vy: Math.sin(a) * 11, vz: .5, life: .9, s0: .7, s1: 2.8, col: [150, 138, 116], a: .34, drag: 2.2 }); } }
+      if (u.jf && !m.wasF && Q.t >= u.jt0) { m.wasF = true; m.sbT = 0; m.burst = 1; const A = TK.fpsaudio; if (A) A.at('jetign', u.x, u.y, 1.8); F.shock && F.shock.push({ x: u.x, y: u.y, R: 15, t: 0, life: .4, col: [225, 222, 214], w: .12, al: .3 }); for (let i = 0; i < 22; i++) { const a = i / 22 * 6.283; F.emit('dust', u.x + Math.cos(a) * 1.5, u.y + Math.sin(a) * 1.5, gz + .3, { vx: Math.cos(a) * 15, vy: Math.sin(a) * 15, vz: .7, life: 1.1, s0: .9, s1: 3.6, col: [150, 138, 116], a: .34, drag: 2 }); } }
+      else if (!u.jf && m.wasF) { m.wasF = false; const A = TK.fpsaudio; if (A) A.at('jetland', u.x, u.y, 1.6); F.shock && F.shock.push({ x: u.x, y: u.y, R: 12, t: 0, life: .36, col: [225, 222, 214], w: .1, al: .3 }); for (let i = 0; i < 16; i++) { const a = i / 16 * 6.283; F.emit('dust', u.x + Math.cos(a), u.y + Math.sin(a), gz + .25, { vx: Math.cos(a) * 11, vy: Math.sin(a) * 11, vz: .5, life: .9, s0: .7, s1: 2.8, col: [150, 138, 116], a: .34, drag: 2.2 }); } }
     }
-    if (u.jf && u.jt0 > Q.t && !u.die) {   // awalan: berlari, kepalan naik ke dada, badan makin rebah ke depan (poros di telapak agar kaki tetap menapak), lalu lepas
-      const q = clamp(1 - (u.jt0 - Q.t) / UT.CLAY.jetRun, 0, 1), e = q * q * (3 - 2 * q);
-      s.mv = 1; s.run = true; s.rk = 1; s.gv = Math.max(s.gv || 0, 4 + 3 * e); s.aim = 0; s.tilt = -.82 * e; s.pv = [0, 0, 0]; s.fly = e; s.sweep = 0; m.aim = 0; m.tiltS = s.tilt; m.tiltV = 0; m.rolS = m.rolV = 0; return;
+    if (u.jf && u.jt0 > Q.t && !u.die) {   // awalan (video rujukan v2.14): berjalan 2–3 langkah hampir tegak, kepalan langsung naik ke dada, lalu menekuk lutut sejenak & melesat
+      const q = clamp(1 - (u.jt0 - Q.t) / UT.CLAY.jetRun, 0, 1), dip = clamp((q - .74) / .18, 0, 1), cr = Math.sin(Math.min(1, dip) * Math.PI * .5) * (q > .94 ? 1 - (q - .94) / .06 : 1);
+      s.mv = 1 - dip * .85; s.run = false; s.rk = 1; s.gv = 2.6; s.aim = 0; s.tilt = -.1 - .26 * cr - .55 * clamp((q - .9) / .1, 0, 1); s.pv = [0, 0, 0]; s.fly = Math.min(1, q * 4); s.sweep = 0; s.cr = .55 * cr; m.aim = 0; m.tiltS = s.tilt; m.tiltV = 0; m.rolS = m.rolV = 0; return;
     }
     if (alt <= .5 || u.die) {
+      if (u.jf && !u.die && Q.t >= u.jt0) { s.tilt = m.tiltS = Math.min(m.tiltS || 0, -.66); m.tiltV = 0; m.rolS = m.rolV = 0; s.fly = 1; s.sweep = 0; s.mv = 0; s.aim = 0; s.pv = [0, 0, 0]; m.aim = 0; return; }   // v2.14: detik lepas dari tanah — sudah condong serong, kepalan di dada (bukan berdiri tegak)
       m.tiltS = m.tiltV = m.rolS = m.rolV = 0; m.altP = undefined;
       const la = u.landed !== undefined ? 1 - (Q.t - u.landed) / .4 : 0; if (la > 0 && !u.die) { s.cr = la * .9; s.mv = 0; s.aim *= 1 - la; }
       return;
@@ -648,6 +649,7 @@ vec3 n=normalize(vec3(-dx*uK,-dy*uK,1.));o=vec4(n.xy*.5+.5,clamp(.92+(c-av)*2.6,
     const vh = m.sp, k = clamp(vh / 70, 0, 1), aimK = clamp(m.aim * 1.2, 0, 1);
     let tg = Math.max(-Math.atan2(vh, Math.max(9, vz > 0 ? vz + 9 : 9 - vz * .15)), -1.42);   // sumbu badan searah laju; laju kecil = tegak melayang
     tg += clamp(-(m.acc || 0) / 80, 0, 1) * 1.45;                                            // mengerem: badan berdiri, kaki terayun ke depan
+    if (u.jt0 !== undefined && Q.t - u.jt0 < .45) tg = Math.min(tg, -.78);   // v2.14: sesaat setelah lepas badan langsung condong serong searah lesatan (video rujukan)
     tg = lerp(Math.min(tg, .4), -.26, aimK);
     if (dt > 0) {
       const dy = wrap(m.yaw - (m.yawP === undefined ? m.yaw : m.yawP)) / hd; m.yawP = m.yaw;
@@ -667,22 +669,20 @@ vec3 n=normalize(vec3(-dx*uK,-dy*uK,1.));o=vec4(n.xy*.5+.5,clamp(.92+(c-av)*2.6,
     const px = b => [B[b * 16 + 12], B[b * 16 + 13], B[b * 16 + 14]], hs = UT.CLAY.hs || 1, R = Math.random, k = s.flyK || 0, c = px(1), h = px(2), p0 = px(0), f1 = px(12), f2 = px(13);
     m.auT = (m.auT || 0) - dt;
     if (m.auT <= 0 && d < 520) { m.auT = .05; for (const [p, q] of [[c, .95], [h, .55], [p0, .8]]) F.emit('fire', p[0] + (R() - .5) * .1, p[1] + (R() - .5) * .1, p[2] + (R() - .5) * .1, { life: .11, s0: q * hs, s1: q * hs * 1.08, col: [255, 54, 20], a: .055 + .03 * k }); }
-    if (m.burst && alt > 1.5) { m.burst = 0; if (d < 1300) { for (let i = 0; i < 26; i++) { const a = R() * 6.283, e = (R() - .5) * 2.4, v = 3 + R() * 7; F.emit('smoke', p0[0] + (R() - .5) * .6, p0[1] + (R() - .5) * .6, p0[2] + (R() - .5) * .9, { vx: Math.cos(a) * v, vy: Math.sin(a) * v, vz: Math.sin(e) * v, life: .55 + R() * .55, s0: .55 * hs, s1: (2.2 + R() * 1.6) * hs, col: [226, 54, 30], a: .5, drag: 2.6 }); } F.emit('flash', c[0], c[1], c[2], { life: .16, s0: 1.2 * hs, s1: 4.2 * hs, col: [255, 120, 80] }); } }
-    const fast = m.sp > 16 || Math.abs(m.vz || 0) > 7, tail = [p0[0], p0[1], p0[2]];
-    if (m.ct0 && fast && d < 1500) {   // kontrail: kepulan kabut merah di sepanjang ruas yang baru dilewati, ditambah garis inti terang agar tetap menyambung
-      const a = m.ct0, L = Math.hypot(tail[0] - a[0], tail[1] - a[1], tail[2] - a[2]), gap = Math.max(1.1, d * .012), rw = lerp(.2, .42, k) * hs; let nE = 0;
-      m.ctD = (m.ctD || 0) + L;
-      if (L > .02 && L < 300) {
-        F.tracers.push({ x0: a[0], y0: a[1], z0: a[2], x1: tail[0], y1: tail[1], z1: tail[2], t: 0, life: lerp(.12, .3, k), w: .018 * hs, col: [255, 150, 110], inst: true, a: .5, tp: 1 });
-        while (m.ctD > gap && nE++ < 30) { m.ctD -= gap; const q = 1 - m.ctD / Math.max(L, 1e-3), ang = R() * 6.283, rr = R() * rw, x = a[0] + (tail[0] - a[0]) * q + Math.cos(ang) * rr, y = a[1] + (tail[1] - a[1]) * q + Math.sin(ang) * rr, z = a[2] + (tail[2] - a[2]) * q + Math.sin(ang * 1.7) * rr; F.emit('smoke', x, y, z, { vx: Math.cos(ang) * .9, vy: Math.sin(ang) * .9, vz: (R() - .3) * .9, life: lerp(.5, 1.25, k) * (.8 + R() * .4), s0: lerp(.32, .5, k) * hs, s1: lerp(.8, 1.75, k) * hs, col: [188, 34, 22], a: .62, drag: .7 }); }
-        if (m.ctD > gap * 2) m.ctD = 0;
-      }
-    } else m.ctD = 0;
+    if (m.burst && alt > 1.5) { m.burst = 0; if (d < 1300) { for (let i = 0; i < 26; i++) { const a = R() * 6.283, e = (R() - .5) * 2.4, v = 3 + R() * 7; F.emit('smoke', p0[0] + (R() - .5) * .6, p0[1] + (R() - .5) * .6, p0[2] + (R() - .5) * .9, { vx: Math.cos(a) * v, vy: Math.sin(a) * v, vz: Math.sin(e) * v, life: .45 + R() * .45, s0: .55 * hs, s1: (2 + R() * 1.4) * hs, col: [196, 190, 180], a: .3, drag: 2.6 }); } } }
+    /* v2.14 (video rujukan): tanpa kabut merah — garis kondensasi putih tipis di belakang badan, dan saat menembus kecepatan suara
+       muncul KERUCUT UAP (selubung putih berbentuk lonceng di sekeliling badan, ujung depan paling terang) yang ikut terbang selama ia supersonik */
+    const vt = Math.hypot(m.sp, m.vz || 0), tail = [p0[0], p0[1], p0[2]], vk = m.vcK = clamp((m.vcK || 0) + ((vt > 84 ? 1 : 0) - (m.vcK || 0)) * Math.min(1, dt * (vt > 84 ? 3.2 : 1.6)), 0, 1);
+    if (m.ct0 && (vt > 40 || vk > .05) && d < 2600) {
+      const a = m.ct0, L = Math.hypot(tail[0] - a[0], tail[1] - a[1], tail[2] - a[2]);
+      if (L > .02 && L < 300) F.tracers.push({ x0: a[0], y0: a[1], z0: a[2], x1: tail[0], y1: tail[1], z1: tail[2], t: 0, life: .5 + .9 * vk, w: (.014 + .02 * vk) * hs * Math.max(1, d * .004), col: [236, 240, 246], inst: true, a: .08 + .17 * vk, tp: 1 });
+    }
     m.ct0 = tail;
+    if (vk > .02 && d < 4000 && F.vcs) { const dz = m.vz || 0, cy0 = Math.cos(m.yaw), sy0 = Math.sin(m.yaw), n = Math.hypot(m.sp, dz) || 1; F.vcs.push({ p: [(c[0] + h[0]) * .5, (c[1] + h[1]) * .5, (c[2] + h[2]) * .5], d: [cy0 * m.sp / n, sy0 * m.sp / n, dz / n], k: vk, R: 1.25 * hs, d0: d }); }
     const yw = m.yaw, cy = Math.cos(yw), sy = Math.sin(yw);
     if (alt < 26 && alt > .5 && d < 500 && R() < dt * 46 * (1 - alt / 26)) { const a = R() * 6.283, q = 1 + R() * 2; F.emit('dust', u.x + Math.cos(a) * q, u.y + Math.sin(a) * q, gz + .3, { vx: Math.cos(a) * 13, vy: Math.sin(a) * 13, vz: .6, life: .9, s0: .7, s1: 3.1, col: [150, 138, 116], a: .3, drag: 2 }); }
-    if (m.sp > 74 && !m.sbT) { m.sbT = 1; const A = TK.fpsaudio; if (A) A.at('sboom', u.x, u.y, 2.2); for (let i = 0; i < 18; i++) { const a = i / 18 * 6.283, cq = Math.cos(a), sq = Math.sin(a); F.emit('dust', c[0] - sy * cq * 1.6, c[1] + cy * cq * 1.6, c[2] + sq * 1.6, { vx: -sy * cq * 13 - cy * 7, vy: cy * cq * 13 - sy * 7, vz: sq * 13, life: .55, s0: .6, s1: 2.5, col: [235, 235, 238], a: .3, drag: 3 }); } }
-    else if (m.sp < 42) m.sbT = 0;
+    if (Math.hypot(m.sp, m.vz || 0) > 84 && !m.sbT) { m.sbT = 1; const A = TK.fpsaudio; if (A) A.at('sboom', u.x, u.y, 2.2); for (let i = 0; i < 18; i++) { const a = i / 18 * 6.283, cq = Math.cos(a), sq = Math.sin(a); F.emit('dust', c[0] - sy * cq * 1.6, c[1] + cy * cq * 1.6, c[2] + sq * 1.6, { vx: -sy * cq * 13 - cy * 7, vy: cy * cq * 13 - sy * 7, vz: sq * 13, life: .55, s0: .6, s1: 2.5, col: [235, 235, 238], a: .3, drag: 3 }); } }
+    else if (Math.hypot(m.sp, m.vz || 0) < 50) m.sbT = 0;
   }
   const JETL = { FGT: 7.8, CAS: 4.6, BMB: 15.4, UCAV: 3.4 };
   function launchFx(u, alt, gz, d, dt) {   // debu sapuan rotor di helipad, semburan mesin saat pesawat lepas landas
@@ -988,6 +988,16 @@ vec3 n=normalize(vec3(-dx*uK,-dy*uK,1.));o=vec4(n.xy*.5+.5,clamp(.92+(c-av)*2.6,
     const D = F.abDrone; if (D) { const bl = (TIME * 2.5 | 0) % 2; part(D.x, D.y, D.z + .2, bl ? 1.1 : .5, bl ? [255, 60, 50] : [80, 255, 120], .95, true); line(D.x, D.y, D.z, D.x, D.y, F.hAt(D.x, D.y), .25, [120, 255, 150], .12 + .1 * Math.sin(TIME * 5)); }   // drone intai: lampu navigasi + sinar pindai
     for (const u of Q.units) if (u.paintT > Q.t && !u.dead && u.team === 'R') { const gz = F.hAt(u.x, u.y), a = .35 + .25 * Math.sin(TIME * 6); line(u.x, u.y, gz, u.x, u.y, gz + 60, .45, [255, 50, 40], a); part(u.x, u.y, gz + 4.5, 1.4, [255, 60, 50], .8, true); }   // kendaraan dicat laser
     for (const a of F.arcs || []) { const k = 1 - a.t / a.life, col = a.col || [150, 220, 255]; for (let i = 0; i < a.p.length - 1; i++) { const p = a.p[i], q = a.p[i + 1]; line(p[0], p[1], p[2], q[0], q[1], q[2], a.w || .14, col, k); if (a.w) line(p[0], p[1], p[2], q[0], q[1], q[2], a.w * .3, [255, 240, 230], k); } part(a.p[0][0], a.p[0][1], a.p[0][2], 1.2, col, .8 * k, true); }   // busur listrik ZEUS / rambatan Railing Power (merah)
+    for (const v of F.vcs || []) {   // kerucut uap Cray (v2.14): 6 cincin lonceng sepanjang sumbu laju, depan sempit & terang → belakang lebar & pudar, plus kabut tipis di tepinya
+      const D = v.d, ax = Math.abs(D[2]) < .9 ? [0, 0, 1] : [1, 0, 0], u0 = [D[1] * ax[2] - D[2] * ax[1], D[2] * ax[0] - D[0] * ax[2], D[0] * ax[1] - D[1] * ax[0]], un = Math.hypot(u0[0], u0[1], u0[2]) || 1, U1 = [u0[0] / un, u0[1] / un, u0[2] / un], V1 = [D[1] * U1[2] - D[2] * U1[1], D[2] * U1[0] - D[0] * U1[2], D[0] * U1[1] - D[1] * U1[0]];
+      const R = v.R, wq = Math.max(.016, v.d0 * .001), fl = .9 + .1 * Math.sin(TIME * 37), far = v.d0 > 900, NS = far ? 12 : 26, ph = TIME * 2.3, NR = far ? 4 : 7;
+      for (let j = -1; j < NR; j++) {   // lonceng menyelubungi seluruh badan: tepi depan (j 0) tegas & terang di depan kepala, tudung kecil (j -1) membulatkan ujungnya, cincin ke belakang makin lebar & samar
+        const sq = Math.max(0, j) / (NR - 1), off = j < 0 ? 1.2 * R : 1.0 * R - sq * 3.4 * R, r = j < 0 ? R * .3 : R * (.55 + .75 * Math.sqrt(sq)), al = (j < 0 ? .22 : j === 0 ? .6 : .09 * (1 - sq) + .02) * v.k * fl, cx = v.p[0] + D[0] * off, cy = v.p[1] + D[1] * off, cz = v.p[2] + D[2] * off;
+        let px, py, pz;
+        for (let i = 0; i <= NS; i++) { const t = i / NS * 6.2832 + ph * (j % 2 ? 1 : -1), rr = r * (1 + .035 * Math.sin(t * 3 + j)), qx = cx + (U1[0] * Math.cos(t) + V1[0] * Math.sin(t)) * rr, qy = cy + (U1[1] * Math.cos(t) + V1[1] * Math.sin(t)) * rr, qz = cz + (U1[2] * Math.cos(t) + V1[2] * Math.sin(t)) * rr; if (i) line(px, py, pz, qx, qy, qz, wq * (j === 0 ? 1.5 : .6), [244, 246, 250], al); px = qx; py = qy; pz = qz; if (j >= 0 && i % 2 === 0) part(qx, qy, qz, r * .62 + wq * 3, [238, 242, 248], (j === 0 ? .1 : .085 - .06 * sq) * v.k, false); }
+      }
+    }
+    if (F.vcs) F.vcs.length = 0;
     for (const c of F.cuts || []) { if (c.t < 0) continue; const k = c.t / c.life, a = (c.full && !c.fade ? 1 : 1 - k * k) * (c.al || 1), g = c.full ? 1 : Math.min(1, c.t / .045), x1 = c.x0 + (c.x1 - c.x0) * g, y1 = c.y0 + (c.y1 - c.y0) * g, z1 = c.z0 + (c.z1 - c.z0) * g; line(c.x0, c.y0, c.z0, x1, y1, z1, c.w * 1.6, [255, 40, 26], .45 * a); line(c.x0, c.y0, c.z0, x1, y1, z1, c.w * .22, [255, 246, 240], a); }   // tebasan katana Cray (JCE / tebasan darat): inti putih + pendar merah
     if (P.laser) laserFx(P.laser);
     if (Q.nuke) { const n = Q.nuke, gz = F.hAt(n.x, n.y); for (let i = 0; i < 24; i++) { const a0 = i / 24 * 6.283, a1 = (i + 1) / 24 * 6.283; line(n.x + Math.cos(a0) * n.r, n.y + Math.sin(a0) * n.r, F.hAt(n.x + Math.cos(a0) * n.r, n.y + Math.sin(a0) * n.r) + 2, n.x + Math.cos(a1) * n.r, n.y + Math.sin(a1) * n.r, F.hAt(n.x + Math.cos(a1) * n.r, n.y + Math.sin(a1) * n.r) + 2, 1.5, [255, 50, 30], .6); } line(n.x, n.y, gz, n.x, n.y, gz + 400, 3, [255, 220, 60], .4); }
