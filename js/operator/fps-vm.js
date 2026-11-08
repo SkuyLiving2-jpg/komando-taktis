@@ -1373,48 +1373,56 @@
       ev: { t: [['magout', .15, [0, -.006, 0, -.04, 0, -.02], 3.4, 9], ['magin', .552, [0, .018, 0, .14, 0, .03], 3.4, 9, .006], ['tap', .612, [0, .015, 0, .12, 0, .02], 4, 10, .005]],
         e: [['magout', .11, [0, -.006, 0, -.04, 0, -.02], 3.4, 9], ['magin', .482, [0, .018, 0, .14, 0, .03], 3.4, 9, .006], ['slide', .702, [0, .01, .022, .18, 0, -.03], 3, 7, .01]] } }
   };
-  /* ---------- M4A1 = XM4 Black Ops Cold War (video rekaman pengguna: kosong 0:00,5–0:04,6 · taktis 0:11,0–0:13,2) ----------
-     Senapan diangkat ke kanan, moncong mendongak ±55° ke kiri, digulingkan sehingga sisi kiri & magwell menghadap kiri-bawah.
-     TAKTIS (mag-to-mag): tangan kiri ke rompi, membawa magasin baru SEJAJAR di samping magasin lama, mencabut keduanya sekaligus,
-       magasin lama dilepas jatuh, magasin baru didorong masuk & ditepuk, senapan sedikit ditegakkan lalu kembali.
-     KOSONG: magasin lama langsung dijatuhkan, magasin baru dibawa tegak dari kiri-bawah (pelan, dimiringkan ke magwell) lalu masuk;
-       senapan diayun TEGAK ke tengah layar (sisi kiri menghadap kamera) & telapak kiri menepuk bolt catch, ditahan sejenak, kembali.
+  /* ---------- M4A1 — reload TAKTIS ala doktrin infanteri (v2.16) ----------
+     Prinsip: senapan TIDAK diangkat ke langit. Senapan ditarik ke "workspace" (dekat dada, tepat di bawah garis pandang), moncong tetap
+     mengarah ke depan/ancaman, dimiringkan ±40° supaya magwell terlihat tanpa menunduk — mata tetap mengawasi medan.
+     TAKTIS (retensi, masih ada peluru): tangan kiri mengambil magasin baru dari rompi, membawanya SEJAJAR magasin lama, mencabut magasin lama
+       (keduanya di satu tangan), mendorong magasin baru masuk, PUSH-PULL (dorong lalu tarik untuk memastikan terkunci), lalu magasin lama yang
+       masih berisi DISIMPAN ke dump pouch (tidak dibuang), tangan kembali ke handguard.
+     KOSONG (speed reload): telunjuk menekan tombol magasin, magasin kosong jatuh bebas sementara tangan kiri sudah menuju rompi; magasin baru
+       dibawa dengan telunjuk di depan magasin, masuk, push-pull, telapak kiri menepuk bolt catch (baut menutup), senapan kembali ke bahu.
      g = kunci pose senjata [t, x, y, z, pitch, yaw, roll] relatif pose pinggul; mag = kunci magasin baru [t, x, y, z, rx, ry, rz] relatif magwell */
-  const XM = { t: { v0: .03, v1: .12, b0: .27, p0: .32, p1: .4, n2: .56, tap: .62, r0: .74, end: .88, g: [[0, 0, 0, 0, 0, 0, 0], [.1, .035, .045, .06, .65, -.32, -.5], [.16, .045, .055, .08, .77, -.4, -.62], [.32, .045, .055, .08, .78, -.4, -.63], [.4, .043, .05, .08, .72, -.4, -.6], [.5, .045, .055, .08, .78, -.4, -.63], [.56, .045, .06, .08, .84, -.4, -.66], [.64, .045, .055, .08, .78, -.4, -.63], [.76, .035, .06, .08, 1, -.35, -.72], [.88, .004, -.01, 0, -.035, .05, .05], [1, 0, 0, 0, 0, 0, 0]], mag: [[.12, 'P'], [.27, 'B'], [.32, 'B'], [.4, -.06, -.085, .01, -.2, 0, .12], [.49, 'W'], [.56, 'S']] },
-    e: { drop: .06, v0: .03, v1: .15, n2: .53, hold: .62, act: .7, r0: .9, end: .98, g: [[0, 0, 0, 0, 0, 0, 0], [.08, .035, .045, .06, .65, -.32, -.5], [.14, .045, .055, .08, .77, -.4, -.62], [.47, .045, .055, .08, .78, -.4, -.63], [.53, .045, .06, .08, .84, -.4, -.66], [.62, .045, .055, .08, .78, -.4, -.63], [.69, -.05, 0, .2, 1.3, -.05, -1.1], [.88, -.05, 0, .2, 1.32, -.05, -1.12], [.96, .01, 0, .01, .1, 0, 0], [1, 0, 0, 0, 0, 0, 0]], mag: [[.15, 'P'], [.3, -.16, -.15, .02, .3, .4, .6], [.4, -.12, -.13, .02, .22, .25, .4], [.47, 'W'], [.53, 'S']] },
+  const XM = { t: { v0: .02, v1: .14, b0: .3, p0: .35, p1: .43, n2: .55, pp: .6, st: .66, sv: .78, end: .9,
+      g: [[0, 0, 0, 0, 0, 0, 0], [0.1, -0.03, 0.035, -0.02, 0.2, 0.1, -0.82], [0.3, -0.03, 0.035, -0.02, 0.2, 0.1, -0.82], [0.43, -0.03, 0.031, -0.02, 0.18, 0.1, -0.79], [0.55, -0.03, 0.039, -0.02, 0.22, 0.1, -0.85], [0.74, -0.03, 0.035, -0.02, 0.2, 0.1, -0.82], [.9, .003, -.006, 0, -.02, .02, .03], [1, 0, 0, 0, 0, 0, 0]],
+      mag: [[.14, 'P'], [.24, -.13, -.16, .03, .35, .25, .35], [.3, 'B'], [.35, 'B'], [.43, -.05, -.075, .01, -.18, 0, .1], [.5, 'W'], [.55, 'S']],
+      dmp: [[.66, 0, 0, 0, 0, 0, 0], [.71, -.04, -.1, .01, .25, .1, .2], [.78, -.18, -.4, -.06, .7, .4, .6]] },
+    e: { drop: .04, v0: .02, v1: .14, n2: .42, pp: .48, cp0: .53, act: .6, r0: .66, end: .86,
+      g: [[0, 0, 0, 0, 0, 0, 0], [0.09, -0.03, 0.035, -0.02, 0.2, 0.1, -0.82], [0.36, -0.03, 0.035, -0.02, 0.2, 0.1, -0.82], [0.42, -0.03, 0.039, -0.02, 0.22, 0.1, -0.85], [0.52, -0.03, 0.035, -0.02, 0.2, 0.1, -0.82], [0.6, -0.025, 0.035, -0.01, 0.18, 0.13, -0.94], [0.66, -0.025, 0.035, -0.01, 0.18, 0.13, -0.94], [.84, .003, -.006, 0, -.02, .02, .03], [1, 0, 0, 0, 0, 0, 0]],
+      mag: [[.14, 'P'], [.26, -.13, -.16, .03, .35, .25, .35], [.35, 'W'], [.42, 'S']] },
     BES: [-.034, -.012, 0, 0, 0, 0], OLD: [.034, .012, 0, 0, 0, 0],
-    ev: { t: [['magout', .4, [0, -.008, 0, -.06, 0, -.03], 3.2, 8], ['magin', .562, [0, .018, 0, .1, 0, .03], 3.6, 9, .007], ['tap', .622, [0, .01, 0, .055, 0, .012], 4, 10, .003]],
-      e: [['magout', .06, [0, -.004, 0, -.03, 0, -.02], 3.2, 8], ['magin', .532, [0, .016, 0, .09, 0, .03], 3.6, 9, .006], ['boltrel', .703, [0, -.006, -.016, .12, .02, .05], 2.8, 7, .008, .002]] } };
+    ev: { t: [['magout', .43, [0, -.006, 0, -.04, 0, -.02], 3.2, 8], ['magin', .552, [0, .016, 0, .08, 0, .025], 3.6, 9, .005], ['tug', .6, [0, -.008, 0, -.04, 0, -.01], 4, 10, .002], ['reload', .76, [0, 0, 0, 0, 0, 0], 3, 9]],
+      e: [['magout', .04, [0, -.004, 0, -.03, 0, -.02], 3.2, 8], ['magin', .422, [0, .016, 0, .08, 0, .025], 3.6, 9, .005], ['tug', .48, [0, -.008, 0, -.04, 0, -.01], 4, 10, .002], ['boltrel', .602, [0, -.006, -.014, .1, .02, .04], 2.8, 7, .008, .002]] } };
   function xm4Rel(sp, t, R, out) {
     const E = R.empty, C = E ? XM.e : XM.t, pv = sp.mp, MX = v => bone(pv, [v[0], v[1], v[2]], v[3], v[4], v[5]), hold = M => pxf(M, sp.mh), SEAT = MX(Z6);
-    const BELp = mul(sp.mo, .75).concat([.14, 0, 0]), at = (K, u) => crv(K, u);
+    const BELp = mul(sp.mo, .75).concat([.14, 0, 0]), at = (K, u) => crv(K, u), addO = v => v.map((x, i) => x + XM.OLD[i]);
     out.g = at(C.g, t);
     const hr = sp.hr || Z6, ga = [hr[0] + out.g[3], hr[1] + out.g[4], hr[2] + out.g[5]], dn = rz(rx(ry([0, -1, 0], -ga[1]), -ga[0]), -ga[2]);
     const fallAt = (t0, o) => { const tau = (t - t0) * P.relD, d = 4.9 * tau * tau + .1 * tau; return t >= t0 && tau < .7 ? MX([o[0] + dn[0] * d - .02 * tau, o[1] + dn[1] * d, o[2] + dn[2] * d + .03 * tau, o[3] - 2.5 * tau, o[4], o[5] + 1.4 * tau]) : null; };
     const nk = C.mag.map(k => k.length === 2 ? [k[0], ...(k[1] === 'P' ? PUp : k[1] === 'B' ? XM.BES : k[1] === 'W' ? BELp : Z6)] : k);   // 'P' rompi, 'B' samping magasin lama, 'W' di bawah magwell, 'S' terpasang
     const nv = t >= C.v1 ? at(nk, Math.min(t, C.n2)) : null;
+    // push-pull: magasin didorong naik (pastikan terkunci) lalu ditarik sedikit — ikut menggerakkan magasin & tangan
+    const ppk = bump(t, C.n2, (C.pp - C.n2) * .55), pull = bump(t, C.n2 + (C.pp - C.n2) * .5, (C.pp - C.n2) * .7), PP = [0, .006 * ppk - .004 * pull, 0];
     if (!E) {
-      if (!nv) out.mag = SEAT;
-      else {
-        out.mag = MX(nv);
-        const ov = t < C.p0 ? Z6 : t < C.p1 ? nv.map((x, i) => x + XM.OLD[i]) : null;   // magasin lama ikut tercabut bersama yang baru (digenggam berdua)
-        out.mag2 = ov ? MX(ov) : fallAt(C.p1, at(nk, C.p1).map((x, i) => x + XM.OLD[i]));
-      }
+      out.mag = nv && t < C.n2 ? MX(nv) : SEAT;
+      // magasin lama: terpasang → dicabut bersama magasin baru (satu tangan) → dibawa tangan ke dump pouch (retensi, tidak dibuang)
+      const vd = t >= C.st ? at(C.dmp, t) : Z6;
+      out.mag2 = !nv ? null : t < C.p0 ? SEAT : t < C.n2 ? MX(addO(nv)) : t < C.sv ? MX(addO(vd)) : null;
       out.out = t >= C.p0 && t < C.n2;
     } else {
-      out.mag = t < C.drop ? SEAT : nv ? MX(nv) : null; out.mag2 = t >= C.drop ? fallAt(C.drop, Z6) : null; out.out = t >= C.drop && t < C.n2;
+      out.mag = t < C.drop ? SEAT : nv ? (t < C.n2 ? MX(nv) : SEAT) : null; out.mag2 = t >= C.drop ? fallAt(C.drop, Z6) : null; out.out = t >= C.drop && t < C.n2;
     }
     // tangan kiri
     const toVest = blend(sp.lh, hold(MX(PUp)), seg(t, C.v0, C.v1));
     if (t < C.v0) out.lh = sp.lh;
     else if (t < C.v1) out.lh = toVest;
     else if (t < C.n2) out.lh = hold(out.mag);
-    else if (!E) {   // tepuk dasar magasin, tetap memegang sampai senapan ditegakkan, lalu kembali ke handguard
-      const k = bump(t, C.n2 + .004, C.tap - C.n2 - .004), hs = shift(hold(SEAT), [0, -.034 * k, -.008 * k]);
-      out.lh = t < C.r0 ? hs : blend(hold(SEAT), sp.lh, seg(t, C.r0, C.end));
-    } else {         // senapan diayun tegak: telapak ke bolt catch, tepuk, tahan, kembali
+    else if (t < C.pp) out.lh = shift(hold(SEAT), PP);
+    else if (!E) {   // bawa magasin lama ke dump pouch (di luar layar, kiri bawah), lalu kembali ke handguard
+      const vd = at(C.dmp, Math.max(t, C.st)), hd = hold(MX(vd));
+      out.lh = t < C.sv ? hd : blend(hd, sp.lh, seg(t, C.sv, C.end));
+    } else {         // telapak kiri menepuk bolt catch di sisi kiri receiver, lalu kembali ke handguard
       const pr = shift(sp.cp, [.008 * bump(t, C.act - .015, .05), 0, 0]);
-      out.lh = t < C.hold ? hold(SEAT) : t < C.act - .015 ? blend(hold(SEAT), sp.cp, seg(t, C.hold, C.act - .015)) : t < C.r0 ? pr : blend(sp.cp, sp.lh, seg(t, C.r0, C.end));
+      out.lh = t < C.cp0 ? hold(SEAT) : t < C.act - .015 ? blend(hold(SEAT), sp.cp, seg(t, C.cp0, C.act - .015)) : t < C.r0 ? pr : blend(sp.cp, sp.lh, seg(t, C.r0, C.end));
     }
     return XM.ev[E ? 'e' : 't'];
   }
@@ -1631,7 +1639,7 @@
     else if (id === 'LMG') ev = lmgRel(sp, t, R, out);
     else if (id === 'SHOTGUN') { const r = sgRel(sp, R, out); ev = r.ev; ts = r.ts; T = r.T; t = ts / T; }
     else if (id === 'AR' && R.du && ATT.DUAL) ev = dualRel(sp, t, R, out);
-    else if (id === 'AR') ev = xm4Rel(sp, t, R, out);   // M4A1: koreografi XM4 BOCW sendiri
+    else if (id === 'AR') ev = xm4Rel(sp, t, R, out);   // M4A1: reload taktis doktrin infanteri (v2.16)
     else { magRel(sp, id, t, R, out); ev = RL[id].ev[R.empty ? 'e' : 't']; if (id === 'SNIPER' && R.empty) sniperBolt(sp, t, out); }
     for (const e of ev) {   // suara tepat saat kejadian + pegas
       if (!R.f[e[0] + e[1]] && t >= e[1]) { R.f[e[0] + e[1]] = 1; const a = AU(); if (a) a.local(e[0], .7); }

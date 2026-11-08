@@ -3,7 +3,7 @@
    di perangkat saat pertama dibuka, lalu game berjalan tanpa
    internet. Naikkan VERSI tiap rilis agar perangkat memperbarui.
    ============================================================ */
-const VERSI = 'kt-offline-v42';
+const VERSI = 'kt-offline-v43';
 const BERKAS = [
   'play.html',
   'manifest.webmanifest',
