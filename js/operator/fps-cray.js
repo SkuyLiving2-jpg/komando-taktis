@@ -14,7 +14,8 @@
   const Tt = (k, v) => TK.t(k, v), A = () => TK.fpsaudio;
   const real = t => t / (Q.speed || 1);   // detik sim → detik nyata (mode operator: sim ½ kecepatan)
   F.cuts = [];   // garis tebasan 3D {x0,y0,z0,x1,y1,z1,t (negatif = belum muncul),life,w,core}
-  const S = F.crayS = { duel: null, wind: null, flash: 0, slash2d: [], shat: null, msg: null, deflT: -9, hintT: -9, jce: null, par: 0, rd: 0 };
+  const S = F.crayS = { duel: null, wind: null, flash: 0, slash2d: [], shat: null, msg: null, deflT: -9, hintT: -9, jce: null, par: 0, rd: 0, swU: new Set(), back: null, rlock: null, rd2: null };
+  const wrapPi = a => { while (a > Math.PI) a -= 6.2832; while (a < -Math.PI) a += 6.2832; return a; };
 
   const chest = u => { const hb = F.hitbox(u); return [u.x, u.y, hb.z0 + hb.h * .62]; };
   const near = (x, y, r) => Math.hypot(x - P.x, y - P.y) < r;
@@ -49,10 +50,10 @@
       }
       case 'duel': S.duel = { u, t0: P.time }; a && a.at('kdraw', u.x, u.y, 1.3); F.msg(Tt('w_cray_duel', { u: Tt('wu_CLAY') }), 'w'); break;
       case 'duelEnd': if (S.duel && S.duel.u === u) { S.duel = null; S.wind = null; if (o.why === 'away' || o.why === 'time') F.msg(Tt('cr_end_away'), 'g'); } break;
-      case 'wind': S.wind = { u, t0: P.time, T: real(war.CRAY.duel.wind[Q.diff] || .4), win: .4 }; a && a.at('kdraw', u.x, u.y, .55); break;
+      case 'wind': S.wind = { u, t0: P.time, T: real(o.W || war.CRAY.duel.wind[Q.diff] || .4), win: war.CRAY.duel.par[Q.diff] || .5, hv: o.hv }; a && a.at('kdraw', u.x, u.y, o.hv ? .9 : .55); break;
       case 'slashOp': {
         const tp = bladeTip(u); arc(P.x, P.y, F.hAt(P.x, P.y) + 1.3, 1.6, (u.hdg || 0) + 2.2, (u.hdg || 0) + 4.1, .9, 0, .2, .18);
-        a && a.local('kcut', 1); a && a.local('hit', .8); P.shake = Math.min(1.5, (P.shake || 0) + .45); S.flash = Math.max(S.flash, .35); S.wind = null; void tp;
+        a && a.local('kcut', 1); a && a.local('hit', .8); P.shake = Math.min(1.5, (P.shake || 0) + (o.hv ? .75 : .45)); S.flash = Math.max(S.flash, o.hv ? .55 : .35); S.wind = null; void tp;
         break;
       }
       case 'whiff': a && a.at('slash', u.x, u.y, 1); S.wind = null; break;
@@ -114,6 +115,79 @@
         if (near(u.x, u.y, 1100) && P.time - S.rd > 8) { S.rd = P.time; say('cr_rail', '#ff6a50', 1.1); }
         break;
       }
+      case 'deflB': F.sparks(c[0], c[1], c[2] + .4, 20); a && a.at('kclang', u.x, u.y, 1.2); a && a.at('kcut', u.x, u.y, .8); say('cr_deflB', '#ffb0a0', .9); break;
+      case 'armor': F.sparks(c[0], c[1], c[2], 10); a && a.at('kclang', u.x, u.y, .7); if (P.time - (S.armT || -9) > 3) { S.armT = P.time; say('cr_armor', '#ff8a7a', .7); } break;
+      case 'evade': say('cr_evade', '#ff8a7a', .7); break;
+      case 'blink0': {   // lenyap: bayangan merah-hitam tertinggal di tempatnya
+        const g = F.gAt(o.x, o.y);
+        for (let i = 0; i < 16; i++) F.emit('dust', o.x + rand(-.5, .5), o.y + rand(-.5, .5), g + rand(.2, 2.2), { vx: rand(-1.5, 1.5), vy: rand(-1.5, 1.5), vz: rand(0, 1.5), life: rand(.3, .6), s0: .4, s1: 1.3, col: i % 3 ? [40, 8, 10] : [200, 30, 24], a: .7 });
+        F.emit('flash', o.x, o.y, g + 1.3, { life: .12, s0: 1.2, s1: 2.6, col: [255, 60, 40] });
+        cut3(o.x, o.y, g + .1, o.x, o.y, g + 2.3, 0, .18, .7);
+        a && a.at('zap', o.x, o.y, .5); a && a.at('slash', o.x, o.y, .7);
+        break;
+      }
+      case 'blink1': {   // muncul: kilat merah; dari belakang operator → peringatan
+        const g = F.gAt(u.x, u.y); F.emit('flash', u.x, u.y, g + 1.3, { life: .14, s0: 1.4, s1: 3, col: [255, 70, 50] });
+        for (let i = 0; i < 10; i++) F.emit('dust', u.x, u.y, g + rand(.2, 2), { vx: rand(-3, 3), vy: rand(-3, 3), vz: rand(0, 2), life: rand(.25, .5), s0: .3, s1: 1, col: [60, 10, 12], a: .6 });
+        cut3(o.x0, o.y0, F.gAt(o.x0, o.y0) + 1.2, u.x, u.y, g + 1.2, 0, .16, .35);   // jejak lesatan
+        a && a.at('kdraw', u.x, u.y, 1); a && a.at('zap', u.x, u.y, .4);
+        if ((o.to === 'back' || o.to === 'near') && S.duel && S.duel.u === u) { const an = Math.abs(wrapPi(Math.atan2(u.y - P.y, u.x - P.x) - P.yaw)); if (an > 1.5) { S.back = { u, t0: P.time }; say('cr_back', '#ff4a3a', .8); } }
+        break;
+      }
+      case 'iai0': a && a.at('ksheath', u.x, u.y, 1); break;
+      case 'iaiLock': {   // garis merah di tanah: jalur lesatan Iai Kilat
+        const n = 10, T = real(o.T) + .12;
+        for (let i = 0; i < n; i++) { const k0 = i / n, k1 = (i + 1) / n, x0 = o.x0 + (o.x1 - o.x0) * k0, y0 = o.y0 + (o.y1 - o.y0) * k0, x1 = o.x0 + (o.x1 - o.x0) * k1, y1 = o.y0 + (o.y1 - o.y0) * k1; F.cuts.push({ x0, y0, z0: F.gAt(x0, y0) + .15, x1, y1, z1: F.gAt(x1, y1) + .15, t: 0, life: T, w: .32, full: true, fade: true }); }
+        a && a.at('warn', u.x, u.y, .8); if (near(u.x, u.y, 60)) say('cr_iai', '#ff4a3a', real(o.T) + .3);
+        break;
+      }
+      case 'iaiCut': {   // lesatan menembus: satu garis tebasan panjang + sabit di titik operator
+        const z0 = F.gAt(o.x0, o.y0) + 1.25, z1 = F.gAt(o.x1, o.y1) + 1.25;
+        cut3(o.x0, o.y0, z0, o.x1, o.y1, z1, 0, .4, 1.1); cut3(o.x0, o.y0, z0 + .5, o.x1, o.y1, z1 - .4, .05, .3, .5);
+        for (let i = 0; i < 8; i++) { const k = i / 7; F.sparks(o.x0 + (o.x1 - o.x0) * k, o.y0 + (o.y1 - o.y0) * k, z0 + (z1 - z0) * k, 3); }
+        a && a.at('slashH', u.x, u.y, 1.4); a && a.at('kcut', u.x, u.y, 1.3);
+        if (o.hit) { arc(P.x, P.y, F.hAt(P.x, P.y) + 1.3, 1.5, (u.hdg || 0) + 1.2, (u.hdg || 0) + 3.4, .5, 0, .25, .3); a && a.local('kcut', 1.2); a && a.local('hit', 1); P.shake = Math.min(1.5, (P.shake || 0) + .8); S.flash = Math.max(S.flash, .6); }
+        break;
+      }
+      case 'sp0': {   // Tebasan Ruang: lingkaran merah di titik operator, menyempit sampai meledak
+        F.shock.push({ x: o.x, y: o.y, R: o.r, t: 0, life: real(o.T), col: [255, 40, 30], w: .14, fix: true, zo: .06, al: .85 });   // di permukaan tanah (dulu setinggi pinggang = dinding merah)
+        F.shock.push({ x: o.x, y: o.y, R: o.r, t: 0, life: real(o.T), col: [255, 140, 110], w: .08, lin: true, zo: .08 });
+        a && a.at('kdraw', o.x, o.y, .6); if (!o.i && P.time - (S.spT || -9) > 6) { S.spT = P.time; say('cr_space', '#ff4a3a', 1); }
+        break;
+      }
+      case 'sp1': {
+        const z = F.gAt(o.x, o.y) + 1.2, h = rand(0, 3.14);
+        arc(o.x, o.y, z, o.r * .9, h, h + 2.4, 1.3, 0, .22, .6); arc(o.x, o.y, z + .4, o.r * .8, h + 1.6, h + 3.9, -1.1, .03, .2, .5); arc(o.x, o.y, z - .3, o.r, h + 3.1, h + 5.3, .6, .06, .2, .45);
+        F.sparks(o.x, o.y, z, 14); F.shock.push({ x: o.x, y: o.y, R: o.r * 1.4, t: 0, life: .3, col: [255, 70, 50], w: .25, zo: .3 });
+        a && a.at('kcut', o.x, o.y, 1.2); a && a.at('zap', o.x, o.y, .5);
+        if (o.hit) { a && a.local('hit', .9); P.shake = Math.min(1.5, (P.shake || 0) + .5); S.flash = Math.max(S.flash, .45); }
+        break;
+      }
+      case 'sw0': S.swU.add(u); a && a.at('whine', u.x, u.y, .9); a && a.at('kdraw', u.x, u.y, .7); if (P.time - (S.swT || -9) > 6) { S.swT = P.time; say('cr_swords', '#ff4a3a', 1); } break;
+      case 'swFire': a && a.at('slash', o.s.x, o.s.y, .8); break;
+      case 'swHit': { const z = F.hAt(P.x, P.y) + 1.2; F.sparks(P.x, P.y, z, 8); a && a.local('kcut', .7); a && a.local('hit', .6); P.shake = Math.min(1.5, (P.shake || 0) + .25); S.flash = Math.max(S.flash, .25); break; }
+      case 'swCut': { const z = F.gAt(o.s.x, o.s.y) + o.s.h; F.sparks(o.s.x, o.s.y, z, 12); a && a.local('kclang', .85); break; }
+      case 'swEnd': F.emit('flash', o.s.x, o.s.y, F.gAt(o.s.x, o.s.y) + o.s.h, { life: .1, s0: .5, s1: 1, col: [255, 60, 40] }); break;
+      case 'rise0': a && a.at('kdraw', u.x, u.y, .9); break;
+      case 'rise': {   // tebasan naik: operator terlempar ke belakang & ke atas
+        if (o.hit && o.tg === P.unit) {
+          const an = Math.atan2(P.y - u.y, P.x - u.x); P.vx += Math.cos(an) * o.push; P.vy += Math.sin(an) * o.push; P.vz = 5.5; P.grounded = false;
+          arc(P.x, P.y, F.hAt(P.x, P.y) + .6, 1.4, an + 2, an + 4.3, 2.2, 0, .25, .4); a && a.local('kcut', 1.1); a && a.local('hit', 1); P.shake = Math.min(1.5, (P.shake || 0) + .9); S.flash = Math.max(S.flash, .5);
+        } else a && a.at('slash', u.x, u.y, 1);
+        break;
+      }
+      case 'rduel': S.rd2 = { u, v: o.tg }; a && a.at('whine', u.x, u.y, 1.2); F.msg(Tt('w_cray_rduel', { u: Tt('wu_CLAY') }), 'w'); break;
+      case 'rch': S.rlock = { u, v: o.tg, t0: P.time, T: real(o.T) }; a && a.at('whine', u.x, u.y, 1.3); if (P.veh || P.mnt) a && a.local('warn', .6); break;
+      case 'rfire': {
+        S.rlock = null; const m0 = u._mz && P.time - u._mzT < .3 ? u._mz : [c[0], c[1], c[2] + .4];
+        const b = o.hit ? chest(o.tg) : [o.x, o.y, F.gAt(o.x, o.y) + 1], dx = b[0] - m0[0], dy = b[1] - m0[1], dz = b[2] - m0[2], L = Math.hypot(dx, dy, dz) || 1, ex = o.hit ? b : [b[0] + dx / L * 60, b[1] + dy / L * 60, b[2] + dz / L * 60];
+        F.tracers.push({ x0: m0[0], y0: m0[1], z0: m0[2], x1: ex[0], y1: ex[1], z1: ex[2], t: 0, life: .55, w: .9, col: [255, 50, 34], inst: true, a: .8 }); F.tracers.push({ x0: m0[0], y0: m0[1], z0: m0[2], x1: ex[0], y1: ex[1], z1: ex[2], t: 0, life: .4, w: .2, col: [255, 240, 230], inst: true });
+        F.emit('flash', m0[0], m0[1], m0[2], { life: .2, s0: 3, s1: 7, col: [255, 90, 60] }); F.emit('flash', b[0], b[1], b[2], { life: .2, s0: 2.5, s1: 6, col: [255, 120, 80] }); F.sparks(b[0], b[1], b[2], 16);
+        a && a.at('rail', u.x, u.y, 1.8); a && a.at('railC', b[0], b[1], 1.3);
+        if (o.hit && (P.veh || P.mnt)) { P.shake = Math.min(1.5, (P.shake || 0) + .9); S.flash = Math.max(S.flash, .5); }
+        break;
+      }
+      case 'rduelEnd': S.rd2 = null; S.rlock = null; break;
       case 'leap': { const g = F.gAt(u.x, u.y); for (let i = 0; i < 14; i++) F.emit('dust', u.x, u.y, g + .3, { vx: rand(-6, 6), vy: rand(-6, 6), vz: rand(.5, 3), life: rand(.5, 1), s0: .8, s1: 3.2, col: [130, 120, 100], a: .55 }); a && a.at('jump', u.x, u.y, 1.6); a && a.at('whine', u.x, u.y, .7); break; }
       case 'slam': {
         const g = F.gAt(u.x, u.y);
@@ -127,6 +201,8 @@
     }
   };
   war.hooks.duelOK = src => src === P.unit && P.alive && !P.veh && !P.mnt && !P.gs && !(P.chute > 0) && !P.down;
+  /* v2.13: operator di kendaraan / Shadow Hunter → Cray menantang DUEL RAILGUN (bukan katana) */
+  war.hooks.duelVeh = src => src === P.unit && P.alive ? (P.veh && P.veh.u && !P.veh.u.dead ? P.veh.u : P.mnt && P.heli && P.heli.u && !P.heli.u.dead ? P.heli.u : null) : null;
 
   /* ---------- tiap frame ---------- */
   F.crayTick = function (dt) {
@@ -134,6 +210,21 @@
     if (S.duel && (S.duel.u.dead || !S.duel.u.duel)) { S.duel = null; S.wind = null; }
     if (S.wind && (P.time - S.wind.t0 > S.wind.T + .15 || !S.wind.u.act || S.wind.u.act.k !== 'duel' || S.wind.u.act.ph === 'rec')) S.wind = null;
     S.flash = Math.max(0, S.flash - dt * 2.5); S.par = Math.max(0, S.par - dt * 2);
+    for (const u of S.swU) {   // Pedang Bayangan: bilah merah menyala (inti putih), ujung menghadap operator / arah luncur
+      if (u.dead || !u.crSw || !u.crSw.length) { S.swU.delete(u); continue; }
+      for (const s of u.crSw) {
+        const z = F.gAt(s.x, s.y) + s.h + (s.ph === 'hold' ? Math.sin(P.time * 6 + s.i) * .08 : 0); let dx, dy, dz;
+        if (s.ph === 'fly') { const v = Math.hypot(s.vx, s.vy) || 1; dx = s.vx / v; dy = s.vy / v; dz = 0; } else { const L = Math.hypot(P.x - s.x, P.y - s.y) || 1, hx = (P.x - s.x) / L * .45, hy = (P.y - s.y) / L * .45, n = Math.hypot(hx, hy, 1); dx = hx / n; dy = hy / n; dz = 1 / n; }   // melayang: ujung ke atas, condong ke operator (tampak sebagai bilah, bukan titik)
+        F.cuts.push({ x0: s.x - dx * .55, y0: s.y - dy * .55, z0: z - dz * .55, x1: s.x + dx * .7, y1: s.y + dy * .7, z1: z + dz * .7, t: 0, life: 1e-4, w: .1, full: true });
+        if (s.ph === 'fly') F.cuts.push({ x0: s.x - dx * 2.6, y0: s.y - dy * 2.6, z0: z, x1: s.x - dx * .5, y1: s.y - dy * .5, z1: z, t: 0, life: .06, w: .05 });   // jejak
+      }
+    }
+    if (S.rlock) {   // sinar bidik railgun terisi: makin tebal menjelang tembak
+      const L = S.rlock, u = L.u;
+      if (u.dead || L.v.dead || P.time - L.t0 > L.T + .3) S.rlock = null;
+      else { const m0 = u._mz && P.time - u._mzT < .3 ? u._mz : chest(u), b = chest(L.v), k = Math.min(1, (P.time - L.t0) / L.T); F.cuts.push({ x0: m0[0], y0: m0[1], z0: m0[2], x1: b[0], y1: b[1], z1: b[2], t: 0, life: 1e-4, w: .05 + .12 * k, full: true, al: .35 + .5 * k }); }
+    }
+    if (S.back && P.time - S.back.t0 > 1.1) S.back = null;
     if (S.msg) { S.msg.t += dt; if (S.msg.t > S.msg.dur) S.msg = null; }
     if (S.shat) { S.shat.t += dt; if (S.shat.t > S.shat.life) S.shat = null; }
     for (const q of S.slash2d) q.t += dt;
@@ -185,6 +276,11 @@
         tx(ctx, Tt('cr_parry'), CW / 2, CH / 2 - 84 * s, (live ? 24 : 18) * s, live ? '#fff3d6' : '#ff6a50');
       } else if (u.act && u.act.k === 'stun') tx(ctx, Tt('cr_stag'), CW / 2, CH / 2 - 84 * s, 22 * s, '#ffe08a');
     }
+    if (S.back && P.alive && !P.gs) {   // panah merah: arah Cray yang muncul di belakang / samping
+      const u = S.back.u, an = wrapPi(Math.atan2(u.y - P.y, u.x - P.x) - P.yaw), R0 = 92 * s, x = CW / 2 - Math.sin(an) * R0, y = CH / 2 - Math.cos(an) * R0, f = 1 - (P.time - S.back.t0) / 1.1, ux = -Math.sin(an), uy = -Math.cos(an);
+      ctx.fillStyle = 'rgba(255,50,35,' + (.9 * f).toFixed(3) + ')'; ctx.beginPath(); ctx.moveTo(x + ux * 22 * s, y + uy * 22 * s); ctx.lineTo(x - uy * 16 * s, y + ux * 16 * s); ctx.lineTo(x + uy * 16 * s, y - ux * 16 * s); ctx.closePath(); ctx.fill();
+    }
+    if (S.rlock && (P.veh || P.mnt) && (P.time * 6 | 0) % 2) tx(ctx, Tt('cr_rlock'), CW / 2, CH * .36, 22 * s, '#ff5040');
     if (S.msg) { const m = S.msg, a = Math.min(1, (m.dur - m.t) * 4, m.t * 8); ctx.globalAlpha = clamp(a, 0, 1); tx(ctx, m.s, CW / 2, CH * .3, 34 * s, m.col); ctx.globalAlpha = 1; }
     ctx.restore();
   };

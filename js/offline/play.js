@@ -22,15 +22,18 @@
   const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 
   /* ---------- pengaturan ---------- */
-  const SET = { diff: 1, doc: 'tni', ctl: 'auto', q: 'auto', cap: touchDev ? 30 : 60 };
+  const SET = { diff: 1, doc: 'tni', ctl: 'auto', q: 'auto', cap: 60, cv: 2 };   // v2.13: HP juga 60 FPS (dulu 30)
   try { Object.assign(SET, JSON.parse(localStorage.getItem('tk_play') || '{}')); } catch (e) { /* ok */ }
+  if (SET.cv !== 2) { if (SET.cap === 30) SET.cap = 60; SET.cv = 2; }   // simpanan lama (batas 30 bawaan HP) → 60
+  let vol0 = null; try { vol0 = localStorage.getItem('tk_fps_vol'); } catch (e) { /* ok */ }
+  F.opts.vol = vol0 !== null && vol0 !== '' && isFinite(+vol0) ? +vol0 : touchDev ? .9 : .15;   // volume bawaan: HP 90% (speaker kecil), PC 15%
   const save = () => { try { localStorage.setItem('tk_play', JSON.stringify(SET)); } catch (e) { /* ok */ } };
   let qInit = false;
   const isTouch = () => SET.ctl === 'touch' || (SET.ctl === 'auto' && touchDev);
   function apply() {
     S.doc = SET.doc; document.body.dataset.doc = SET.doc; document.documentElement.lang = TK.doc().lang;
     U.touch = isTouch(); document.body.classList.toggle('touch', U.touch);
-    F.opts.mobile = touchDev; F.opts.cap = SET.cap; F.opts.gsStab = U.touch;   // AC-130: bidikan stabil-darat untuk layar sentuh
+    F.opts.mobile = touchDev; F.opts.cap = SET.cap; U.host.caps = touchDev ? [30, 60] : [30, 60, 0]; F.opts.gsStab = U.touch;   // AC-130: bidikan stabil-darat untuk layar sentuh
     if (SET.q !== 'auto') F.opts.quality = +SET.q; else if (touchDev && !qInit) F.opts.quality = 0;   // OTOMATIS: HP mulai RENDAH; PC memakai deteksi GPU / pilihan terakhir di menu jeda
     qInit = true;
     const ro = $('#protate'); if (ro) ro.textContent = Tt('pl_rotate');
@@ -45,6 +48,7 @@
   /* ---------- kait fps-ui: kembali / ulang / bahasa ---------- */
   Object.assign(U.host, {
     doc: id => { SET.doc = id; save(); apply(); U.applyLang(); },
+    setCap: c => { SET.cap = c; save(); F.opts.cap = c; nextT = 0; },   // batas FPS dari menu jeda
     back: () => goTitle(),
     restart: () => restart(),
     overHint: false, backKey: 'pl_menu'

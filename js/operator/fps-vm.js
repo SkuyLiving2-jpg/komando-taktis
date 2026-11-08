@@ -801,29 +801,48 @@
     },
     PISTOLmag(clip, out) { ext([[-.017, -.05], [-.026, -.128], [-.064, -.131], [-.054, -.05]], 0, .0112, ANO, { clip, ms: ANO }); box([0, -.1315, -.045], [.0125, .0025, .021], RUB); if (out) tube([-.035, -.047, -.01], [-.035, -.047, .006], .0045, .0045, 8, BRS); },
     /* ----- pistol per kelas: sumbu bidik y = 0, slide pada bone (mundur saat menembak / terkunci saat kosong) ----- */
-    /* Kimber M1911 (ASSAULT): slide ramping hitam bergerigi, bushing laras, pejera Novak, beavertail, palu berlubang,
-       pengaman ibu jari, gagang kayu rosewood bersekrup, magasin satu baris */
+    /* Kimber 1911 gaya "Rapide" (sesuai foto pengguna): slide DUA WARNA — sisi stainless, punggung hitam dengan 3 jendela potong
+       di atas, potongan peringan miring hitam di depan, gerigi belakang; red dot reflex (gaya RMR) di belakang slide menggantikan
+       pejera belakang; bushing & hidung guide rod hitam; rangka stainless, pegangan G10 hitam berstippling, magwell, pelatuk
+       berongga, pengaman ambidextrous, beavertail hitam */
     M1911(st) {
-      const X0 = X;
+      const X0 = X, SS = mt([178, 180, 184], .72, 30), BK = mt([24, 25, 27], .35, 22), G10 = mt([20, 21, 23], .05);
       X = cmp(X0, bone([0, 0, 0], [0, 0, -st.slide], 0, 0, 0));
-      ext([[-.05, -.0075], [.154, -.0075], [.157, -.011], [.157, -.035], [-.05, -.035], [-.053, -.011]], 0, .0118, ANO);
-      for (let k = 0; k < 9; k++) for (const s of [-1, 1]) box([s * .0119, -.021, -.045 + k * .0045], [.0006, .0105, .0011], INN, { zb: -.001 });
-      box([0, -.0048, -.04], [.0085, .003, .0062], ANO); for (const s of [-1, 1]) box([s * .0045, -.0012, -.04], [.0026, .0012, .005], ANO);   // pejera belakang (takik)
-      box([0, -.0044, .147], [.0013, .0034, .0045], ANO); box([0, -.0016, .1445], [.0008, .0008, .0004], WHT, { zb: -.002 });
-      box([.0119, -.019, .035], [.0006, .0075, .021], INN, { zb: -.002 });   // lubang ejeksi
-      tube([0, -.03, .153], [0, -.03, .159], .0088, .0088, 12, STL); disc([0, -.03, .1592], [0, 0, 1], .0048, 10, INN, 0, -.001);   // bushing + mulut laras
-      X = X0;
-      ext([[-.032, -.035], [.118, -.035], [.118, -.047], [.06, -.049], [0, -.049], [-.036, -.044]], 0, .0115, ANO);
-      tube([0, -.0425, .118], [0, -.0425, .156], .0062, .0062, 10, ANO); disc([0, -.0425, .1562], [0, 0, 1], .003, 8, INN, 0, -.001);   // sumbat pegas
-      ext([[-.014, -.045], [-.019, -.07], [-.026, -.124], [-.061, -.127], [-.059, -.07], [-.055, -.045]], 0, .0122, ANO);
-      for (const s of [-1, 1]) {   // gagang kayu + sekrup
-        ext([[-.02, -.054], [-.025, -.118], [-.057, -.12], [-.055, -.054]], s * .0126, .0012, WOOD);
-        for (const y of [-.062, -.11]) tube([s * .0136, y, -.039], [s * .0142, y, -.039], .0028, .0028, 8, STL, { up: [0, 0, 1] });
+      ext([[-.05, -.0165], [.157, -.0165], [.157, -.035], [-.05, -.035], [-.053, -.026]], 0, .0118, SS);                     // sisi slide stainless
+      ext([[-.05, -.0075], [.154, -.0075], [.157, -.0105], [.157, -.0168], [-.053, -.0168], [-.053, -.011]], 0, .01185, BK);   // punggung slide hitam (rata di atas)
+      for (let k = 0; k < 3; k++) box([0, -.0074, .052 + k * .016], [.0046, .0006, .0055], INN, { zb: -.002 });                // 3 jendela potong di punggung
+      for (let k = 0; k < 3; k++) for (const sd of [-1, 1]) {
+        box([sd * .0119, -.0245, .108 + k * .0125], [.0007, .0075, .0026], BK, { p: .5, zb: -.001 });                          // potongan peringan miring di depan (hitam)
+        box([sd * .0121, -.0245, .108 + k * .0125], [.0004, .0058, .0012], INN, { p: .5, zb: -.002 });
       }
-      ext([[-.05, -.035], [-.071, -.031], [-.077, -.035], [-.074, -.04], [-.059, -.047], [-.056, -.058]], 0, .0098, ANO);   // beavertail
-      box([0, -.026, -.061], [.0035, .0075, .0032], ANO, { p: .35 }); box([0, -.022, -.0625], [.0036, .0025, .0012], INN, { p: .35, zb: -.001 });   // palu berlubang
-      box([-.0127, -.036, -.044], [.0012, .0028, .011], ANO); box([-.0122, -.038, .014], [.0012, .003, .016], ANO);   // pengaman ibu jari + slide stop
-      box([0, -.0715, .018], [.003, .0021, .022], ANO); box([0, -.06, .038], [.003, .011, .0024], ANO); box([0, -.058, .012], [.0024, .0075, .0022], STL, { p: -.2 + st.trig * .35 });
+      for (let k = 0; k < 7; k++) for (const sd of [-1, 1]) box([sd * .0119, -.025, -.046 + k * .0048], [.0006, .0075, .0011], INN, { zb: -.001 });   // gerigi belakang
+      box([0, -.0044, .147], [.0013, .0034, .0045], BK); box([0, -.0016, .1445], [.0008, .0008, .0004], mt([255, 120, 40], 0), { zb: -.002 });   // pejera depan fiber
+      box([.0119, -.021, .035], [.0006, .0065, .019], INN, { zb: -.002 });   // lubang ejeksi
+      tube([0, -.03, .153], [0, -.03, .159], .0088, .0088, 12, BK); disc([0, -.03, .1592], [0, 0, 1], .0048, 10, INN, 0, -.001);   // bushing hitam + mulut laras
+      // red dot reflex di belakang slide: pelat dasar, rumah emitor rendah (di bawah garis bidik), tudung depan berjendela, lensa
+      box([0, -.0055, -.029], [.0102, .002, .0165], BK);
+      box([0, -.0045, -.041], [.0095, .0025, .0045], BK); box([0, -.0035, -.0372], [.0016, .0008, .0006], mt([255, 40, 30], 0), { zb: -.002 });   // emitor LED
+      for (const sd of [-1, 1]) { ext([[-.026, -.0035], [-.012, -.0035], [-.0145, .0125], [-.0225, .0125]], sd * .0089, .0017, BK); box([sd * .0104, -.002, -.031], [.0005, .0012, .0035], STL); }   // tiang tudung + tombol
+      box([0, .0125, -.0185], [.0106, .0016, .0042], BK);                                                                       // atap tudung
+      disc([0, .0038, -.0175], [0, 0, 1], .0083, 16, GLS, st.lens * .8);                                                         // lensa (titik merah digambar di sp.dot)
+      X = X0;
+      ext([[-.032, -.035], [.118, -.035], [.118, -.047], [.06, -.049], [0, -.049], [-.036, -.044]], 0, .0115, SS);               // rangka stainless
+      ext([[.118, -.035], [.155, -.035], [.155, -.05], [.118, -.05]], 0, .0112, BK); tube([0, -.0425, .155], [0, -.0425, .159], .0062, .0062, 10, BK); disc([0, -.0425, .1592], [0, 0, 1], .003, 8, INN, 0, -.001);   // hidung guide rod hitam
+      for (const sd of [-1, 1]) box([sd * .0113, -.0415, .136], [.0006, .0028, .015], INN, { zb: -.001 });
+      ext([[-.014, -.045], [-.019, -.07], [-.026, -.124], [-.061, -.127], [-.059, -.07], [-.055, -.045]], 0, .0122, BK);           // pegangan
+      ext([[-.023, -.12], [-.028, -.131], [-.066, -.134], [-.062, -.122]], 0, .0138, BK);                                          // magwell
+      for (const sd of [-1, 1]) {   // panel G10 hitam berstippling + sekrup
+        ext([[-.02, -.054], [-.025, -.118], [-.057, -.12], [-.055, -.054]], sd * .0126, .0012, G10);
+        for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++) if ((i + j) % 2 === 0 || j === 1) box([sd * .0139, -.064 - i * .011, -.026 - j * .0075 - i * .0012], [.0004, .0032, .0026], mt([34, 35, 38], .02), { zb: -.001 });
+        for (const y of [-.06, -.112]) tube([sd * .0136, y, -.039], [sd * .0142, y, -.039], .0026, .0026, 8, STL, { up: [0, 0, 1] });
+      }
+      for (let k = 0; k < 5; k++) box([0, -.06 - k * .012, -.0145 - k * .0013], [.0118, .0028, .0006], G10, { zb: -.001 });      // front strap bergerigi
+      ext([[-.05, -.035], [-.071, -.031], [-.077, -.035], [-.074, -.04], [-.059, -.047], [-.056, -.058]], 0, .0098, BK);            // beavertail
+      box([0, -.026, -.061], [.0035, .0075, .0032], BK, { p: .35 }); box([0, -.022, -.0625], [.0036, .0025, .0012], INN, { p: .35, zb: -.001 });   // palu berlubang
+      for (const sd of [-1, 1]) box([sd * .0127, -.036, -.044], [.0012, .0028, .011], BK);                                         // pengaman ibu jari ambidextrous
+      box([-.0122, -.038, .014], [.0012, .003, .016], BK);                                                                          // slide stop
+      box([0, -.0715, .018], [.003, .0021, .022], SS); box([0, -.06, .038], [.003, .011, .0024], SS);                              // pelindung pelatuk
+      box([0, -.058, .012], [.0024, .0075, .0022], BK, { p: -.2 + st.trig * .35 }); box([.0025, -.057, .012], [.0004, .0035, .0014], INN, { p: -.2 + st.trig * .35, zb: -.001 });   // pelatuk berongga
     },
     M1911mag(clip, out) { ext([[-.017, -.05], [-.025, -.126], [-.058, -.128], [-.05, -.05]], 0, .0082, ANO, { clip, ms: ANO }); box([0, -.1295, -.042], [.0095, .0024, .019], RUB); if (out) tube([0, -.0475, -.046], [0, -.0475, -.03], .0057, .0052, 8, BRS); },
     /* Glock 34 TTI Combat Master (CQB, gaya John Wick): slide persegi berjendela memperlihatkan laras emas, gerigi depan &
@@ -999,7 +1018,7 @@
   const hipOf = adsZ => [HIPO[0], HIPO[1], adsZ + HIPO[2]];
   const SPEC = {
     AR: { hip: hipOf(.23), hr: HIPR, ads: [0, 0, .23], muz: [0, B4, .5], fl: .8, ej: [.016, -.061, -.033], sh: 'r',   // hr: laras sejajar garis pandang → garis laras menuju crosshair (dulu yaw −0,15 = laras menunjuk ±8,6° di kiri titik bidik)
-      rh: gripR([0, -.096, -.072], [0, .09, .023], true), lh: hgL([0, B4, .175], .031, -.6), mp: [.01, -.088, 0], well: -.13, mo: [-.004, -.1, .006], mh: magL([.042, -.165, .043], [0, -1, .12]),
+      rh: gripR([0, -.096, -.072], [0, .09, .023], true), lh: hgL([0, B4, .175], .031, -.6), mp: [.01, -.088, 0], well: -.13, mo: [-.004, -.1, .006], mh: magL([0, -.165, .043], [0, -1, .12]),
       cp: pressL([-.0134, -.082, -.036]) },
     AK: { hip: hipOf(.3), hr: HIPR, ads: [0, 0, .3], muz: [0, AKB, .667], fl: .9, ej: [.017, -.058, -.03], sh: 'r',
       rh: gripR([0, -.101, -.101], [0, .09, .025], true), lh: hgL([0, -.066, .24], .025, -.6), mp: [0, -.096, .048], well: -.1, mo: [-.004, -.1, .006], mh: magL([.064, -.165, .062], [0, -1, .42]),
@@ -1017,7 +1036,7 @@
     PISTOL: { hip: [.09, -.066, .42], hr: [.03, -.08, .05], ads: [0, 0, .45], muz: [0, -.031, .155], fl: .55, ej: [.016, -.02, .03], sh: 'p',
       rh: gripR([0, -.05, -.013], [0, .082, .012], true), lh: pose([-.028, -.098, .004], [0, .98, .12], [.25, -.12, .95], [[1.1, 1.2, .7], [1.1, 1.2, .7], [1.1, 1.2, .7], [1.15, 1.15, .7]], [[.35, -.2, .9], [.25, -.15, .95], [.2, -.1, .97]], true),
       mp: [-.04, -.05, 0], well: -.125, mo: [-.01, -.1, -.015], mh: magL([-.022, -.145, -.02], [0, -1, -.1]) },
-    M1911: pistolSpec([0, .001, -.002], .15, { muz: [0, -.03, .159], ej: [.013, -.019, .035], well: -.124, mh: magL([-.021, -.143, -.02], [0, -1, -.1]) }),
+    M1911: pistolSpec([0, .001, -.002], .15, { muz: [0, -.03, .159], ej: [.013, -.019, .035], well: -.124, mh: magL([-.021, -.143, -.02], [0, -1, -.1]), dot: -.0175 }),   // dot: red dot reflex Kimber
     GLOCK: pistolSpec([0, 0, 0], .24, { muz: [0, -.0285, .167], ej: [.014, -.019, .035], well: -.126, mh: magL([-.024, -.158, -.02], [0, -1, -.14]) }),
     M93R: pistolSpec([0, 0, 0], .15, { muz: [0, -.0255, .19], ej: [.015, -.012, .015], well: -.124, mh: magL([-.033, -.205, -.022], [0, -1, -.1]), fl: .5 }),
     DEAGLE: pistolSpec([0, -.01, -.005], .165, { hip: [.09, -.068, .43], ads: [0, 0, .47], muz: [0, -.026, .203], fl: .85, ej: [.017, -.02, 0], slt: .026, mp: [-.045, -.06, 0], well: -.139, mo: [-.012, -.11, -.015], mh: magL([-.028, -.16, -.024], [0, -1, -.1]) }),
@@ -1284,17 +1303,6 @@
      gt/ge = kunci pose senjata [t, x, y, z, pitch, yaw, roll] untuk reload taktis / magasin kosong (relatif pose pinggul, t = 0..1),
      t/e = waktu kunci tangan & magasin, ev = hentakan [suara, t, dorongan senjata 6, frekuensi Hz, redaman, kamera pitch, kamera yaw] */
   const RL = {
-    /* M4A1 (video MW2 2:35): senapan diayun ke TEPI KANAN layar, moncong diputar jauh ke kiri sehingga sisi kiri & lubang
-       magasin menghadap kamera; tangan kiri mencabut magasin ke kiri, membawa magasin baru dekat kamera, menghantamnya masuk
-       dari bawah (moncong terdongak); kosong: magasin dijatuhkan, telapak menepuk bolt catch → bolt menghantam maju */
-    AR: { pu: [-.17, -.1, .04, .3, .4, .6],   // magasin baru dibawa di kiri, dekat kamera (bukan dari bawah layar)
-      t: { o0: .07, o1: .17, o2: .27, p: .38, n0: .42, n1: .53, n2: .6, tap: .66, end: .84 }, e: { drop: .1, n0: .27, n1: .39, n2: .46, act: .575, end: .76 },
-      gt: [[0, 0, 0, 0, 0, 0, 0], [.1, .045, .06, .03, .16, -.48, -.3], [.22, .065, .082, .04, .25, -.68, -.43], [.38, .067, .087, .04, .24, -.67, -.45], [.52, .064, .085, .04, .28, -.65, -.47],
-        [.6, .06, .095, .04, .36, -.62, -.5], [.7, .045, .072, .03, .25, -.45, -.36], [.86, .004, -.01, 0, -.035, .05, .05], [1, 0, 0, 0, 0, 0, 0]],
-      ge: [[0, 0, 0, 0, 0, 0, 0], [.1, .05, .065, .03, .18, -.52, -.32], [.22, .065, .082, .04, .25, -.68, -.43], [.4, .066, .086, .04, .25, -.67, -.45], [.46, .06, .095, .04, .36, -.62, -.5],
-        [.53, .05, .088, .03, .24, -.52, -.2], [.6, .045, .083, .03, .22, -.46, -.14], [.74, .02, .05, .01, .12, -.28, -.14], [.9, .004, -.008, 0, -.03, .04, .04], [1, 0, 0, 0, 0, 0, 0]],
-      ev: { t: [['magout', .19, [0, -.006, 0, -.045, 0, -.03], 3.2, 8], ['magin', .602, [0, .016, 0, .09, 0, .03], 3.6, 9, .006], ['tap', .662, [0, .009, 0, .05, 0, .012], 4, 10, .003]],
-        e: [['magout', .1, [0, -.004, 0, -.03, 0, -.02], 3.2, 8], ['magin', .462, [0, .013, 0, .075, 0, .025], 3.6, 9, .005], ['boltrel', .578, [0, -.004, -.018, .1, .02, .05], 2.8, 7, .008, .002]] } },
     /* AK-74M (video MW2 3:09, AK-47): senapan diangkat hampir TEGAK di tepi kanan, sisi magasin menghadap kiri; magasin lama
        diayun ke depan pada lug depannya lalu dibawa/dilepas ke kiri; magasin baru datang dari kiri, lug depan dikaitkan
        lalu diayun ke belakang sampai terkunci (cara khas AK). Kosong: senapan diturunkan miring, tangan kiri melewati atas
@@ -1365,6 +1373,51 @@
       ev: { t: [['magout', .15, [0, -.006, 0, -.04, 0, -.02], 3.4, 9], ['magin', .552, [0, .018, 0, .14, 0, .03], 3.4, 9, .006], ['tap', .612, [0, .015, 0, .12, 0, .02], 4, 10, .005]],
         e: [['magout', .11, [0, -.006, 0, -.04, 0, -.02], 3.4, 9], ['magin', .482, [0, .018, 0, .14, 0, .03], 3.4, 9, .006], ['slide', .702, [0, .01, .022, .18, 0, -.03], 3, 7, .01]] } }
   };
+  /* ---------- M4A1 = XM4 Black Ops Cold War (video rekaman pengguna: kosong 0:00,5–0:04,6 · taktis 0:11,0–0:13,2) ----------
+     Senapan diangkat ke kanan, moncong mendongak ±55° ke kiri, digulingkan sehingga sisi kiri & magwell menghadap kiri-bawah.
+     TAKTIS (mag-to-mag): tangan kiri ke rompi, membawa magasin baru SEJAJAR di samping magasin lama, mencabut keduanya sekaligus,
+       magasin lama dilepas jatuh, magasin baru didorong masuk & ditepuk, senapan sedikit ditegakkan lalu kembali.
+     KOSONG: magasin lama langsung dijatuhkan, magasin baru dibawa tegak dari kiri-bawah (pelan, dimiringkan ke magwell) lalu masuk;
+       senapan diayun TEGAK ke tengah layar (sisi kiri menghadap kamera) & telapak kiri menepuk bolt catch, ditahan sejenak, kembali.
+     g = kunci pose senjata [t, x, y, z, pitch, yaw, roll] relatif pose pinggul; mag = kunci magasin baru [t, x, y, z, rx, ry, rz] relatif magwell */
+  const XM = { t: { v0: .03, v1: .12, b0: .27, p0: .32, p1: .4, n2: .56, tap: .62, r0: .74, end: .88, g: [[0, 0, 0, 0, 0, 0, 0], [.1, .035, .045, .06, .65, -.32, -.5], [.16, .045, .055, .08, .77, -.4, -.62], [.32, .045, .055, .08, .78, -.4, -.63], [.4, .043, .05, .08, .72, -.4, -.6], [.5, .045, .055, .08, .78, -.4, -.63], [.56, .045, .06, .08, .84, -.4, -.66], [.64, .045, .055, .08, .78, -.4, -.63], [.76, .035, .06, .08, 1, -.35, -.72], [.88, .004, -.01, 0, -.035, .05, .05], [1, 0, 0, 0, 0, 0, 0]], mag: [[.12, 'P'], [.27, 'B'], [.32, 'B'], [.4, -.06, -.085, .01, -.2, 0, .12], [.49, 'W'], [.56, 'S']] },
+    e: { drop: .06, v0: .03, v1: .15, n2: .53, hold: .62, act: .7, r0: .9, end: .98, g: [[0, 0, 0, 0, 0, 0, 0], [.08, .035, .045, .06, .65, -.32, -.5], [.14, .045, .055, .08, .77, -.4, -.62], [.47, .045, .055, .08, .78, -.4, -.63], [.53, .045, .06, .08, .84, -.4, -.66], [.62, .045, .055, .08, .78, -.4, -.63], [.69, -.05, 0, .2, 1.3, -.05, -1.1], [.88, -.05, 0, .2, 1.32, -.05, -1.12], [.96, .01, 0, .01, .1, 0, 0], [1, 0, 0, 0, 0, 0, 0]], mag: [[.15, 'P'], [.3, -.16, -.15, .02, .3, .4, .6], [.4, -.12, -.13, .02, .22, .25, .4], [.47, 'W'], [.53, 'S']] },
+    BES: [-.034, -.012, 0, 0, 0, 0], OLD: [.034, .012, 0, 0, 0, 0],
+    ev: { t: [['magout', .4, [0, -.008, 0, -.06, 0, -.03], 3.2, 8], ['magin', .562, [0, .018, 0, .1, 0, .03], 3.6, 9, .007], ['tap', .622, [0, .01, 0, .055, 0, .012], 4, 10, .003]],
+      e: [['magout', .06, [0, -.004, 0, -.03, 0, -.02], 3.2, 8], ['magin', .532, [0, .016, 0, .09, 0, .03], 3.6, 9, .006], ['boltrel', .703, [0, -.006, -.016, .12, .02, .05], 2.8, 7, .008, .002]] } };
+  function xm4Rel(sp, t, R, out) {
+    const E = R.empty, C = E ? XM.e : XM.t, pv = sp.mp, MX = v => bone(pv, [v[0], v[1], v[2]], v[3], v[4], v[5]), hold = M => pxf(M, sp.mh), SEAT = MX(Z6);
+    const BELp = mul(sp.mo, .75).concat([.14, 0, 0]), at = (K, u) => crv(K, u);
+    out.g = at(C.g, t);
+    const hr = sp.hr || Z6, ga = [hr[0] + out.g[3], hr[1] + out.g[4], hr[2] + out.g[5]], dn = rz(rx(ry([0, -1, 0], -ga[1]), -ga[0]), -ga[2]);
+    const fallAt = (t0, o) => { const tau = (t - t0) * P.relD, d = 4.9 * tau * tau + .1 * tau; return t >= t0 && tau < .7 ? MX([o[0] + dn[0] * d - .02 * tau, o[1] + dn[1] * d, o[2] + dn[2] * d + .03 * tau, o[3] - 2.5 * tau, o[4], o[5] + 1.4 * tau]) : null; };
+    const nk = C.mag.map(k => k.length === 2 ? [k[0], ...(k[1] === 'P' ? PUp : k[1] === 'B' ? XM.BES : k[1] === 'W' ? BELp : Z6)] : k);   // 'P' rompi, 'B' samping magasin lama, 'W' di bawah magwell, 'S' terpasang
+    const nv = t >= C.v1 ? at(nk, Math.min(t, C.n2)) : null;
+    if (!E) {
+      if (!nv) out.mag = SEAT;
+      else {
+        out.mag = MX(nv);
+        const ov = t < C.p0 ? Z6 : t < C.p1 ? nv.map((x, i) => x + XM.OLD[i]) : null;   // magasin lama ikut tercabut bersama yang baru (digenggam berdua)
+        out.mag2 = ov ? MX(ov) : fallAt(C.p1, at(nk, C.p1).map((x, i) => x + XM.OLD[i]));
+      }
+      out.out = t >= C.p0 && t < C.n2;
+    } else {
+      out.mag = t < C.drop ? SEAT : nv ? MX(nv) : null; out.mag2 = t >= C.drop ? fallAt(C.drop, Z6) : null; out.out = t >= C.drop && t < C.n2;
+    }
+    // tangan kiri
+    const toVest = blend(sp.lh, hold(MX(PUp)), seg(t, C.v0, C.v1));
+    if (t < C.v0) out.lh = sp.lh;
+    else if (t < C.v1) out.lh = toVest;
+    else if (t < C.n2) out.lh = hold(out.mag);
+    else if (!E) {   // tepuk dasar magasin, tetap memegang sampai senapan ditegakkan, lalu kembali ke handguard
+      const k = bump(t, C.n2 + .004, C.tap - C.n2 - .004), hs = shift(hold(SEAT), [0, -.034 * k, -.008 * k]);
+      out.lh = t < C.r0 ? hs : blend(hold(SEAT), sp.lh, seg(t, C.r0, C.end));
+    } else {         // senapan diayun tegak: telapak ke bolt catch, tepuk, tahan, kembali
+      const pr = shift(sp.cp, [.008 * bump(t, C.act - .015, .05), 0, 0]);
+      out.lh = t < C.hold ? hold(SEAT) : t < C.act - .015 ? blend(hold(SEAT), sp.cp, seg(t, C.hold, C.act - .015)) : t < C.r0 ? pr : blend(sp.cp, sp.lh, seg(t, C.r0, C.end));
+    }
+    return XM.ev[E ? 'e' : 't'];
+  }
   /* reload magasin (M4A1, SMG, senapan runduk, pistol) */
   function magRel(sp, id, t, R, out) {
     const C = RL[id], E = R.empty, T = E ? C.e : C.t, drop = E || T.drop !== undefined, pv = sp.mp;
@@ -1389,7 +1442,8 @@
       if (t < T.drop) out.mag = SEAT;
       else if (t < T.n0) { out.mag = fall; out.out = true; }
       else { out.mag2 = fall; out.mag = fresh(T.n0, T.n1); out.out = t < T.n2; }
-      out.lh = t < T.drop - .02 ? (t < T.drop - .05 ? sp.lh : blend(sp.lh, shift(sp.lh, [0, -.012, -.01]), seg(t, T.drop - .05, T.drop - .02))) : t < T.n0 ? blend(shift(sp.lh, [0, -.012, -.01]), hold(MX(C.pu ? PUp : pu)), seg(t, T.drop - .02, T.n0)) : hold(out.mag);
+      if (T.grab) out.lh = t < T.drop ? blend(sp.lh, hold(SEAT), seg(t, .02, T.drop - .03)) : t < T.n0 ? blend(hold(SEAT), hold(MX(C.pu ? PUp : pu)), seg(t, T.drop, T.n0)) : hold(out.mag);   // M4A1: tangan menggenggam magasin di magwell lalu melepasnya
+      else out.lh = t < T.drop - .02 ? (t < T.drop - .05 ? sp.lh : blend(sp.lh, shift(sp.lh, [0, -.012, -.01]), seg(t, T.drop - .05, T.drop - .02))) : t < T.n0 ? blend(shift(sp.lh, [0, -.012, -.01]), hold(MX(C.pu ? PUp : pu)), seg(t, T.drop - .02, T.n0)) : hold(out.mag);
     } else if (C.pu) {   // taktis gaya MW2: magasin lama dicabut lalu dilepas jatuh, tangan ke rompi, magasin baru naik lewat sisi kiri
       if (t < T.o2) { out.mag = MX(crv([[T.o1, ...Z6], [T.o2, ...OUTp]], t)); out.out = t > T.o1 + .005; }
       else { out.mag2 = fallAt(T.o2, OUTp); out.mag = t < T.p ? null : fresh(T.p, T.n1); out.out = true; }
@@ -1406,9 +1460,6 @@
       const w = T.tap - n2, k = bump(t, n2 + .004, w - .004), hs = shift(hold(SEAT), [0, -(id === 'SNIPER' ? -.004 : id === 'SMG' ? .05 : .034) * k, -.008 * k]);
       out.lh = t < T.tap + .02 ? hs : rel(hs, T.tap + .02, T.end);
       if (id === 'SNIPER') out.lh = shift(out.lh, [0, -.01 * bump(t, T.tap - .02, .06), 0]);   // tarik magasin sekali: memastikan terkunci
-    } else if (E && id === 'AR') {     // tepuk bolt catch di sisi kiri
-      const pr = shift(sp.cp, [.007 * bump(t, T.act - .015, .05), 0, 0]);
-      out.lh = t < n2 + .03 ? hold(SEAT) : t < T.act - .015 ? blend(hold(SEAT), sp.cp, seg(t, n2 + .03, T.act - .015)) : t < T.act + .05 ? pr : rel(sp.cp, T.act + .05, T.end);
     } else if (E && id === 'AK') {     // tangan kiri melewati atas receiver, tarik tuas kokang kanan sampai mentok, lepas → bolt menghantam maju
       const ck = topL(sp.ck, WRAP), pull = .075 * seg(t, T.act, T.act + .05) * (1 - seg(t, T.act1, T.act1 + .012)); out.ch = pull;
       out.lh = t < n2 + .02 ? hold(SEAT) : t < T.act ? blend(hold(SEAT), ck, seg(t, n2 + .02, T.act)) : t < T.act1 + .03 ? shift(ck, [0, 0, -pull]) : rel(ck, T.act1 + .03, T.end);
@@ -1580,6 +1631,7 @@
     else if (id === 'LMG') ev = lmgRel(sp, t, R, out);
     else if (id === 'SHOTGUN') { const r = sgRel(sp, R, out); ev = r.ev; ts = r.ts; T = r.T; t = ts / T; }
     else if (id === 'AR' && R.du && ATT.DUAL) ev = dualRel(sp, t, R, out);
+    else if (id === 'AR') ev = xm4Rel(sp, t, R, out);   // M4A1: koreografi XM4 BOCW sendiri
     else { magRel(sp, id, t, R, out); ev = RL[id].ev[R.empty ? 'e' : 't']; if (id === 'SNIPER' && R.empty) sniperBolt(sp, t, out); }
     for (const e of ev) {   // suara tepat saat kejadian + pegas
       if (!R.f[e[0] + e[1]] && t >= e[1]) { R.f[e[0] + e[1]] = 1; const a = AU(); if (a) a.local(e[0], .7); }

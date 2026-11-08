@@ -241,7 +241,7 @@
     if (t.cr) {   // CRAY: kebal peluru biasa; katana operator diproses khusus (duel / tangkis)
       if (t.vanish) return;
       if (war.blade && src && src.player) { a = crayBlade(t, dmg, src); if (a <= 0) return; }
-      else { if (src && src.player) crayProvoke(t, src); if (dt === 'small') { t.defl = Q.t; crEv('defl', t, { src }); const bk = CRAY.bullet[Q.diff]; if (!bk) return; a *= bk; } }
+      else { if (src && src.player) { crayProvoke(t, src); if ((dt === 'he' || dt === 'ap') && t.duel && !t.jf && dist(t, src) < 80 && (!t.act || t.act.k !== 'stun') && Math.random() < crK(CRAY.parE)) { crEv('deflB', t, { src, dt }); return; } } if (dt === 'small') { t.defl = Q.t; crEv('defl', t, { src }); const bk = CRAY.bullet[Q.diff]; if (!bk) return; a *= bk; } }   // duel: roket / ledakan operator kadang ditebas di udara (parE)
     }
     if (src && src.dmgK) a *= src.dmgK;
     if (src && t.tc === 'A' && src.team === 'B' && src.armor === 'inf' && !src.player && (dt === 'small' || dt === 'ap')) a = dmg * (dt === 'small' ? AAI.small : m) * aaK(t);   // tembakan prajurit ke heli / bos udara
@@ -1126,7 +1126,8 @@
         if (Q.t >= u.jt0) u.alt = Math.max(0, u.alt + clamp(want - u.alt, -T.jetSink * 2.6 * dt, T.jetClimb * dt));
         u.jpk = dd < 20 && u.alt < 1.5 ? 0 : Q.t + 1; if (u.jpk === 0) u.alt = 0;
       }
-      else if (on()) { if (Q.t >= u.jt0) u.alt = Math.min(T.jetAlt, u.alt + T.jetClimb * dt); if (!mv && u.bph < 2) u.jpk -= dt * 1.5; }   // melayang diam menghabiskan bahan bakar lebih cepat
+      else if (on()) { const top = u.rduel ? CRAY.rduel.alt : T.jetAlt; if (Q.t >= u.jt0) u.alt = u.alt > top ? Math.max(top, u.alt - T.jetSink * dt) : Math.min(top, u.alt + T.jetClimb * dt);   // duel railgun: terbang rendah (±70 m) mengitari kendaraan operator
+        if (!mv && u.bph < 2) u.jpk -= dt * 1.5; }   // melayang diam menghabiskan bahan bakar lebih cepat
       else if (u.alt < 40 && (terAt(u.x, u.y) === W.TER.WATER || (war.hooks.roofAt && war.hooks.roofAt(u.x, u.y)))) { u.jpk = Q.t + 2; if (!u.path.length) { const a = (u.hdg || 0) + rand(-.6, .6); u.path = [{ x: u.x + Math.cos(a) * 70, y: u.y + Math.sin(a) * 70 }]; } }   // jangan mendarat di air atau menembus gedung: meluncur mencari tempat lapang
       else u.alt = Math.max(0, u.alt - T.jetSink * dt);
       u.lowA = u.alt < 40;
@@ -1149,18 +1150,30 @@
   const CRAY = {
     hpK: [1, 1, 1, 3], dmgK: [1, 1, 1, 1.35], rage: [1, 1, 1, .8],
     bullet: [1, 1, .2, 0],   // peluru biasa yang tembus: SULIT 20% (sisanya terpental), PRO kebal total
-    blade: [.7, .7, .7, .8], stunK: 2.2, guard: [0, 0, .22, .45],   // katana operator: pengali damage (lewati zirah), saat limbung ×stunK; peluang menahan tebasan biasa
+    blade: [.7, .7, .7, .8], stunK: 2.2, guard: [0, 0, .4, .6],   // katana operator: pengali damage (lewati zirah), saat limbung ×stunK; peluang menahan tebasan biasa
+    evade: [0, 0, .2, .32], flee: [0, 0, .25, .45], parE: [0, 0, .3, .45],   // v2.13: lenyap menghindari tebasan (lalu menyerang dari belakang); kabur dari limbung; menebas roket/ledakan operator
     cut: { r: 42, cd: [9, 9, 9, 3], dash: .2, swing: .1, rec: .38, dmgV: [0, 0, 170, 380], dmgI: 320, cleave: 10 },
     jce: { r: [0, 0, 55, 85], cd: [0, 0, 48, 22], min: 4, sheath: .9, slash: 1.15, end: .7, dmgV: [0, 0, 220, 500], dmgI: 520, op: [0, 0, 38, 48] },
     rail: { cd: [0, 0, 11, 6.5], n: [0, 0, 4, 7], chain: [0, 0, 2, 4], jump: 110, rng: 1000, dmg: [0, 0, 120, 170], decay: .72, op: [0, 0, 20, 24] },
-    duel: { wind: [0, 0, .42, .32], swing: .1, rec: [0, 0, .44, .36], dmg: [0, 0, 24, 22], reach: 5, stun: [0, 0, 1.1, .85], combo: [0, 0, 2, 3], rest: [0, 0, .7, .5], cd: 16, lose: 7, max: 60 }
+    /* duel katana: rentetan tebasan (combo n hit, hit berikutnya ancang-ancang ×fast), par = mulai jendela TANGKIS (bagian dari ancang-ancang) */
+    duel: { wind: [0, 0, .36, .28], swing: .1, rec: [0, 0, .32, .24], dmg: [0, 0, 18, 18], hv: [0, 0, 30, 34], reach: 5, stun: [0, 0, .9, .7], combo: [0, 0, 3, 5], rest: [0, 0, .45, .28], cd: 12, lose: 7, max: 60, par: [0, 0, .5, .62], fast: .62, step: 16 },
+    /* v2.13 jurus duel (gaya pendekar iaido): */
+    blink: { cd: [0, 0, 4.5, 2.8], out: .12, back: 2.6, wind: [0, 0, .26, .2], far: 9 },   // LANGKAH BAYANGAN: lenyap → muncul di belakang operator & langsung menebas (pasif)
+    iai: { cd: [0, 0, 9, 6], back: 13, aim: [0, 0, .6, .46], lock: .55, dash: .1, over: 7, w: 2.3, dmg: [0, 0, 36, 46], rec: .32 },   // IAI KILAT: mundur, kuda-kuda, melesat menembus
+    space: { cd: [0, 0, 10, 7], n: [0, 0, 2, 4], mark: [0, 0, .6, .46], r: 3.6, dmg: [0, 0, 24, 30], gap: .14, lead: .3 },   // TEBASAN RUANG: lingkaran di titik operator lalu meledak
+    swords: { cd: [0, 0, 12, 8], n: [0, 0, 5, 8], form: .5, gap: [0, 0, .13, .09], spd: 60, dmg: [0, 0, 8, 10], turn: 1.6, life: 2.4, r: 1.3 },   // PEDANG BAYANGAN: bilah merah melayang lalu meluncur
+    rise: { cd: [0, 0, 8, 6], wind: [0, 0, .34, .26], dmg: [0, 0, 24, 30], push: 11, reach: 5.5 },   // TEBASAN NAIK: operator terlempar, lalu disusul Tebasan Ruang
+    mv: { combo: 3, blink: 1.6, rise: 1.2, iai: 1.1, space: 1, swords: .9 },   // bobot pilihan jurus
+    /* DUEL RAILGUN: operator menyerang dari kendaraan / Shadow Hunter → Cray mengudara, mengitari, menembak railgun terisi (bisa dihindari dengan bergerak) */
+    rduel: { cd: [0, 0, 4, 2.8], ch: [0, 0, .75, .6], lock: .55, dmg: [0, 0, 110, 150], R: [0, 0, 170, 150], alt: 70, burst: [0, 0, 3, 2], miss: 5.5, lose: 3, max: 90 }
   };
   war.CRAY = CRAY;
   const crK = a => a[Q.diff] || a[2];
   const crEv = (k, u, o) => { if (war.hooks.cray) war.hooks.cray(k, u, o || {}); };
+  const inMap = p => { p.x = Math.max(30, Math.min(W.WW - 30, p.x)); p.y = Math.max(30, Math.min(W.WH - 30, p.y)); return p; };
   function crayInit(u) {
     const d = Q.diff, k = CRAY.hpK[d] || 1; u.hp *= k; u.hpMax *= k; u.dmgK = CRAY.dmgK[d] || 1; u.rage = u.rage0 = CRAY.rage[d] || 1;
-    u.cr = { cut: 3, jce: 10, rail: 3 }; u.act = null; u.duel = null; u.duelCD = 0; u.dash = 1;
+    u.cr = { cut: 3, jce: 10, rail: 3, blink: 0, iai: 3, space: 2, swords: 4, rise: 2 }; u.crSw = []; u.act = null; u.duel = null; u.rduel = null; u.duelCD = 0; u.dash = 1;
   }
   function crFoes(x, y, team, r, gOnly) {   // unit lawan (bukan struktur / penumpang / berparasut) dalam r m dari (x,y)
     const out = [], r2 = r * r;
@@ -1171,24 +1184,40 @@
     return out;
   }
   const opKnows = (u, e) => !e.player || (war.hooks.knows ? war.hooks.knows(u) : e.seen[u.team]);
-  function crayProvoke(u, src) {   // operator menyerang → duel (bila sedang berjalan kaki)
+  const clearAct = u => { if (u.act && u.act.k !== 'jce') { u.act = null; u.vanish = false; } };
+  function crayProvoke(u, src) {   // operator menyerang → duel katana (berjalan kaki) atau duel railgun (dari kendaraan / heli)
     if (!src || !src.player || src.dead || u.dead) return;
+    const v = war.hooks.duelVeh ? war.hooks.duelVeh(src) : null;
+    if (v) { rduelStart(u, v, src); return; }
     if (u.duel) { if (u.duel.tg === src) u.duel.seen = Q.t; return; }
     if (Q.t < u.duelCD || (war.hooks.duelOK && !war.hooks.duelOK(src))) return;
-    u.duel = { tg: src, ph: 'go', t0: Q.t, seen: Q.t, n: 0, rest: 0 }; u._kn = Q.t + 30;
-    if (u.act && u.act.k !== 'jce') u.act = null;
+    if (u.rduel) { u.rduel = null; crEv('rduelEnd', u, {}); }   // operator turun dari kendaraan → kembali ke katana
+    u.duel = { tg: src, ph: 'go', t0: Q.t, seen: Q.t, n: 0, rest: 0, lx: src.x, ly: src.y, vx: 0, vy: 0, last: '' }; u._kn = Q.t + 30;
+    clearAct(u);
     bossEv('w_cray_duel', u); crEv('duel', u, { tg: src });
   }
-  function crayBlade(u, dmg, src) {   // tebasan katana operator: damage, TANGKIS (ia limbung), atau ditahan
+  function rduelStart(u, v, op) {
+    if (u.rduel) { if (u.rduel.tg === v) u.rduel.seen = Q.t; else { u.rduel.tg = v; u.rduel.ch = null; } return; }
+    if (u.duel) { u.duel = null; crEv('duelEnd', u, { why: 'veh' }); }
+    clearAct(u);
+    u.rduel = { tg: v, op, t0: Q.t, seen: Q.t, k: crK(CRAY.rduel.cd) * .6, n: 0, ch: null }; u._kn = Q.t + 30;
+    u.jpk = Q.t + 3;
+    bossEv('w_cray_rduel', u); crEv('rduel', u, { tg: v });
+  }
+  function crayBlade(u, dmg, src) {   // tebasan katana operator: damage, TANGKIS (ia limbung), ditahan, atau dihindari (lenyap)
     crayProvoke(u, src); if (u.duel) u.duel.seen = Q.t;
     const A = u.act, DU = CRAY.duel, k = crK(CRAY.blade);
-    if (A && A.k === 'duel' && ((A.ph === 'wind' && A.t >= crK(DU.wind) * .4) || A.ph === 'swing')) {
+    if (A && A.k === 'duel' && ((A.ph === 'wind' && A.t >= (A.W || crK(DU.wind)) * crK(DU.par)) || A.ph === 'swing')) {
       u.act = { k: 'stun', t: 0, dur: crK(DU.stun) }; if (u.duel) u.duel.rest = 0; crEv('parry', u, { tg: src });
       if (!u.par1) { u.par1 = true; bossEv('w_cray_parry', u); }
       return dmg * k * .5;
     }
     if (A && A.k === 'stun') { crEv('hitStun', u, { tg: src }); return dmg * k * CRAY.stunK; }
-    if (u.duel && (!A || (A.k === 'duel' && A.ph === 'wind')) && Math.random() < crK(CRAY.guard)) { u.act = { k: 'guard', t: 0 }; crEv('guard', u, { tg: src }); return 0; }
+    if (A && (A.k === 'iai' || A.k === 'rise' || A.k === 'blink')) { crEv('armor', u, { tg: src }); return dmg * k * .3; }   // jurus berat: tidak terhenti oleh tebasan (zirah super)
+    if (u.duel && (!A || A.k !== 'jce')) {
+      if (u.cr.blink <= 0 && Math.random() < crK(CRAY.evade)) { crEv('evade', u, { tg: src }); crBlink(u, 'back'); return 0; }   // lenyap lalu menebas dari belakang
+      if (Math.random() < crK(CRAY.guard)) { u.act = { k: 'guard', t: 0 }; crEv('guard', u, { tg: src }); return 0; }
+    }
     return dmg * k;
   }
   function crayCut(u) {   // tebasan katana ke unit darat terdekat (bukan operator — operator dilawan lewat duel)
@@ -1226,9 +1255,9 @@
   }
   function crayRail(u) {   // RAILING POWER: n peluru ke segala arah sekaligus, masing-masing merembet ke c sasaran berikutnya
     const R = CRAY.rail, n = crK(R.n), ch = crK(R.chain), dm = crK(R.dmg);
-    const cand = crFoes(u.x, u.y, u.team, R.rng, false).filter(e => e.player ? opKnows(u, e) : e.seen[u.team]);
+    const cand = crFoes(u.x, u.y, u.team, R.rng, false).filter(e => e.player ? opKnows(u, e) : e.seen[u.team] || (u.rduel && e === u.rduel.tg));
     if (!cand.length) { u.cr.rail = 1; return false; }
-    cand.sort((a, b) => dist(u, a) - dist(u, b));
+    cand.sort((a, b) => (u.rduel && a === u.rduel.tg ? -1e9 : dist(u, a)) - (u.rduel && b === u.rduel.tg ? -1e9 : dist(u, b)));   // duel railgun: kendaraan operator selalu disasar
     const ang = e => Math.atan2(e.y - u.y, e.x - u.x), gap = Math.PI * 2 / n * .55, pk = [];
     for (const e of cand) { if (pk.length >= n) break; if (pk.every(p => Math.abs(wrapPi(ang(p) - ang(e))) > gap)) pk.push(e); }   // sebar ke berbagai arah dulu
     for (const e of cand) { if (pk.length >= n) break; if (!pk.includes(e)) pk.push(e); }
@@ -1248,6 +1277,84 @@
     if (!u.rail1) { u.rail1 = true; bossEv('w_cray_rail', u, { n: pk.length }); }
     return true;
   }
+  /* ---------- v2.13 jurus duel ---------- */
+  function duelSwing(u, hv, W, ci, cn, back) {   // satu tebasan duel: ancang-ancang W dtk (ditandai cincin), lalu ayun
+    const D = u.duel, n = D ? D.n++ : 0;
+    u.act = { k: 'duel', ph: 'wind', t: 0, n, W, hv: !!hv, ci: ci || 0, cn: cn || 1, back: !!back };
+    crEv('wind', u, { tg: D && D.tg, W, hv: !!hv, back: !!back, n });
+  }
+  function crBlink(u, mode) {   // lenyap sesaat lalu muncul di titik lain: 'back' di belakang operator & menebas, 'away' menjauh, 'iai' titik awal Iai Kilat, 'near' mendekat
+    u.act = { k: 'blink', ph: 'out', t: 0, to: mode }; u.vanish = true; u.path = []; u.cr.blink = crK(CRAY.blink.cd);
+    crEv('blink0', u, { x: u.x, y: u.y, to: mode });
+  }
+  function blinkDest(u, tg, mode) {
+    const h = tg.hdg || 0, B = CRAY.blink, aw = Math.atan2(u.y - tg.y, u.x - tg.x);
+    let a = aw, r = 9;
+    if (mode === 'back' || mode === 'near') { a = h + Math.PI + rand(-.45, .45); r = B.back; }
+    else if (mode === 'iai') { a = aw + rand(-.7, .7); r = CRAY.iai.back; }
+    else a = aw + rand(-.9, .9);
+    let p = inMap({ x: tg.x + Math.cos(a) * r, y: tg.y + Math.sin(a) * r });
+    if (terAt(p.x, p.y) === W.TER.WATER || (war.hooks.roofAt && war.hooks.roofAt(p.x, p.y))) p = inMap({ x: tg.x + Math.cos(a) * r * .5, y: tg.y + Math.sin(a) * r * .5 });   // jangan muncul di air / di atap
+    return p;
+  }
+  function pickMove(u, D, d) {   // pilih jurus berikutnya (bobot × siap, tidak mengulang jurus non-combo yang sama)
+    const C = u.cr, M = CRAY.mv, L = [];
+    const add = (k, w, ok) => { if (ok && (k === 'combo' || D.last !== k)) L.push([k, w]); };
+    add('combo', M.combo, d <= CRAY.duel.reach + .6);
+    add('rise', M.rise, C.rise <= 0 && d <= CRAY.rise.reach + .6);
+    add('blink', M.blink, C.blink <= 0);
+    add('iai', M.iai, C.iai <= 0);
+    add('space', M.space, C.space <= 0);
+    add('swords', M.swords, C.swords <= 0);
+    let s = 0; for (const [, w] of L) s += w; let r = Math.random() * s;
+    for (const [k, w] of L) { r -= w; if (r <= 0) return k; }
+    return L.length ? L[0][0] : 'combo';
+  }
+  function startMove(u, k) {
+    const D = u.duel, tg = D.tg, C = u.cr; D.last = k;
+    if (k === 'combo') { const cn = crK(CRAY.duel.combo) - (Math.random() < .35 ? 1 : 0); duelSwing(u, false, crK(CRAY.duel.wind), 0, Math.max(1, cn)); }
+    else if (k === 'rise') { C.rise = crK(CRAY.rise.cd); u.act = { k: 'rise', ph: 'wind', t: 0 }; crEv('rise0', u, { tg }); }
+    else if (k === 'blink') crBlink(u, 'back');
+    else if (k === 'iai') { C.iai = crK(CRAY.iai.cd); crBlink(u, 'iai'); }
+    else if (k === 'space') { C.space = crK(CRAY.space.cd); spaceMark(u, { k: 'space', ph: 'mark', t: 0, i: 0, n: crK(CRAY.space.n) }); }
+    else if (k === 'swords') {
+      const S = CRAY.swords, n = crK(S.n); C.swords = crK(S.cd);
+      u.act = { k: 'swords', ph: 'form', t: 0, i: 0, n };
+      for (let i = 0; i < n; i++) u.crSw.push({ i, n, ph: 'hold', x: u.x, y: u.y, h: 2.4, vx: 0, vy: 0, t: 0, own: u.act });
+      crEv('sw0', u, { n });
+    }
+  }
+  function spaceMark(u, A) {   // tandai titik operator (+ sedikit mendahului larinya)
+    const D = u.duel, tg = D.tg, S = CRAY.space, L = crK(S.mark) * S.lead;
+    A.x = tg.x + (D.vx || 0) * L; A.y = tg.y + (D.vy || 0) * L; A.ph = 'mark'; A.t = 0; u.act = A;
+    crEv('sp0', u, { x: A.x, y: A.y, r: S.r, T: crK(S.mark), i: A.i });
+  }
+  function crSwTick(u, dt) {   // Pedang Bayangan: melayang di sekitar Cray lalu meluncur mengejar operator
+    const S = CRAY.swords, D = u.duel, tg = D && D.tg;
+    for (let i = u.crSw.length - 1; i >= 0; i--) {
+      const s = u.crSw[i]; s.t += dt;
+      if (s.ph === 'hold') {
+        const own = s.own; if (u.act !== own || !tg) { u.crSw.splice(i, 1); crEv('swEnd', u, { s }); continue; }
+        const f = (s.i / Math.max(1, s.n - 1) - .5) * 2.6, a = (u.hdg || 0) + Math.PI + f; s.x = u.x + Math.cos(a) * 1.9; s.y = u.y + Math.sin(a) * 1.9; s.h = 2.5 + Math.abs(f) * .35;
+        continue;
+      }
+      if (s.t > S.life || !tg || tg.dead) { u.crSw.splice(i, 1); crEv('swEnd', u, { s }); continue; }
+      const want = Math.atan2(tg.y - s.y, tg.x - s.x), cur = Math.atan2(s.vy, s.vx), e = wrapPi(want - cur), tr = S.turn * dt, a = cur + Math.max(-tr, Math.min(tr, e));
+      s.vx = Math.cos(a) * S.spd; s.vy = Math.sin(a) * S.spd; s.x += s.vx * dt; s.y += s.vy * dt; s.h += (1.3 - s.h) * Math.min(1, dt * 4);
+      if (Math.hypot(tg.x - s.x, tg.y - s.y) < S.r) { u.crSw.splice(i, 1); hurt(tg, crK(S.dmg), 'small', u); crEv('swHit', u, { s, tg }); }
+    }
+  }
+  war.crSwCut = function (x, y, vx, vy, r, cone) {   // katana operator menebas Pedang Bayangan di depannya
+    let n = 0;
+    for (const u of Q.units) {
+      if (!u.crSw || !u.crSw.length || u.dead) continue;
+      for (let i = u.crSw.length - 1; i >= 0; i--) {
+        const s = u.crSw[i]; if (s.ph !== 'fly') continue; const dx = s.x - x, dy = s.y - y, d = Math.hypot(dx, dy);
+        if (d < r && (dx * vx + dy * vy) / (d || 1) > cone) { u.crSw.splice(i, 1); n++; crEv('swCut', u, { s }); }
+      }
+    }
+    return n;
+  };
   function crayAct(u, dt) {
     const A = u.act, C = CRAY; A.t += dt;
     if (A.k === 'cut') {
@@ -1268,21 +1375,99 @@
       else { if (!A.hit && A.t >= J.end * .62) { A.hit = true; jceHit(u, A); } if (A.t >= J.end) u.act = null; }
       return;
     }
-    const DU = C.duel, tg = u.duel && u.duel.tg;
+    const DU = C.duel, D = u.duel, tg = D && D.tg;
+    if (!tg) { u.act = null; u.vanish = false; return; }
+    const face = () => { u.face = u.hdg = Math.atan2(tg.y - u.y, tg.x - u.x); };
     if (A.k === 'duel') {
-      if (!tg) { u.act = null; return; }
-      if (A.ph === 'wind') { u.face = u.hdg = Math.atan2(tg.y - u.y, tg.x - u.x); if (A.t >= crK(DU.wind)) { A.ph = 'swing'; A.t = 0; } }
-      else if (A.ph === 'swing') {
+      const W = A.W || crK(DU.wind);
+      if (A.ph === 'wind') {
+        face(); const d = dist(u, tg);
+        if (d > DU.reach - .8) { const s = Math.min(d - (DU.reach - 1), DU.step * dt); u.x += Math.cos(u.hdg) * s; u.y += Math.sin(u.hdg) * s; }   // melangkah maju sambil ancang-ancang (operator mundur tidak lantas lolos)
+        if (A.t >= W) { A.ph = 'swing'; A.t = 0; }
+      } else if (A.ph === 'swing') {
         if (!A.hit && A.t >= DU.swing * .5) {
           A.hit = true; const d = dist(u, tg), fa = Math.abs(wrapPi(Math.atan2(tg.y - u.y, tg.x - u.x) - u.hdg));
-          if (d <= DU.reach + 1.2 && fa < 1.3 && !tg.dead) { hurt(tg, crK(DU.dmg), 'small', u); crEv('slashOp', u, { tg }); } else crEv('whiff', u, { tg });
+          if (d <= DU.reach + 1.2 && fa < 1.3 && !tg.dead) { hurt(tg, crK(A.hv ? DU.hv : DU.dmg), 'small', u); crEv('slashOp', u, { tg, hv: A.hv, n: A.n }); } else crEv('whiff', u, { tg });
         }
         if (A.t >= DU.swing) { A.ph = 'rec'; A.t = 0; }
-      } else if (A.t >= crK(DU.rec)) { u.act = null; if (u.duel && (A.n + 1) % crK(DU.combo) === 0) u.duel.rest = crK(DU.rest); }
+      } else if (A.t >= crK(DU.rec) * (A.ci + 1 < A.cn ? .45 : 1)) {
+        if (A.ci + 1 < A.cn) duelSwing(u, A.ci + 2 === A.cn, W * DU.fast, A.ci + 1, A.cn);   // rentetan: tebasan berikut lebih cepat, terakhir = tebasan berat
+        else { u.act = null; D.rest = crK(DU.rest); }
+      }
       return;
     }
-    if (A.k === 'stun') { if (A.t >= A.dur) u.act = null; return; }
-    if (A.k === 'guard') { if (A.t >= .22) u.act = tg ? { k: 'duel', ph: 'wind', t: crK(DU.wind) * .45, n: 0 } : null; return; }   // menahan → langsung membalas (ancang-ancang lebih pendek)
+    if (A.k === 'blink') {
+      if (A.t >= C.blink.out) {
+        const x0 = u.x, y0 = u.y, p = blinkDest(u, tg, A.to); u.x = p.x; u.y = p.y; face(); u.vanish = false;
+        crEv('blink1', u, { x0, y0, to: A.to, tg });
+        if (A.to === 'back' || A.to === 'near') duelSwing(u, true, crK(C.blink.wind), 0, 1, true);
+        else if (A.to === 'iai') { u.act = { k: 'iai', ph: 'aim', t: 0 }; crEv('iai0', u, { tg }); }
+        else { u.act = null; D.rest = .2; }
+      }
+      return;
+    }
+    if (A.k === 'iai') {
+      const I = C.iai, AIM = crK(I.aim);
+      if (A.ph === 'aim') {
+        if (!A.lk) face();
+        if (!A.lk && A.t >= AIM * I.lock) { A.lk = true; const a = u.hdg, L = dist(u, tg) + I.over, e = inMap({ x: u.x + Math.cos(a) * L, y: u.y + Math.sin(a) * L }); A.x0 = u.x; A.y0 = u.y; A.x1 = e.x; A.y1 = e.y; crEv('iaiLock', u, { x0: A.x0, y0: A.y0, x1: A.x1, y1: A.y1, T: AIM * (1 - I.lock) }); }
+        if (A.t >= AIM) { A.ph = 'dash'; A.t = 0; }
+      } else if (A.ph === 'dash') {
+        const k = Math.min(1, A.t / I.dash); u.x = A.x0 + (A.x1 - A.x0) * k; u.y = A.y0 + (A.y1 - A.y0) * k;
+        if (k >= 1) {
+          const sx = A.x1 - A.x0, sy = A.y1 - A.y0, L2 = sx * sx + sy * sy || 1, q = Math.max(0, Math.min(1, ((tg.x - A.x0) * sx + (tg.y - A.y0) * sy) / L2)), dd = Math.hypot(A.x0 + sx * q - tg.x, A.y0 + sy * q - tg.y), hit = dd < I.w && !tg.dead;
+          if (hit) hurt(tg, crK(I.dmg), 'small', u);
+          for (const e of crFoes((A.x0 + A.x1) / 2, (A.y0 + A.y1) / 2, u.team, Math.sqrt(L2) / 2 + 3, true)) if (!e.player) hurt(e, e.armor === 'inf' ? C.cut.dmgI : crK(C.cut.dmgV) * .6, 'bomb', u);   // pasukan di lintasan ikut tertebas
+          crEv('iaiCut', u, { x0: A.x0, y0: A.y0, x1: A.x1, y1: A.y1, hit, tg });
+          A.ph = 'rec'; A.t = 0; face();
+        }
+      } else if (A.t >= I.rec) { u.act = null; D.rest = .15; }
+      return;
+    }
+    if (A.k === 'space') {
+      const S = C.space; face();
+      if (A.ph === 'mark') {
+        if (A.t >= crK(S.mark)) {
+          const hit = Math.hypot(tg.x - A.x, tg.y - A.y) <= S.r && !tg.dead; if (hit) hurt(tg, crK(S.dmg), 'small', u);
+          crEv('sp1', u, { x: A.x, y: A.y, r: S.r, hit, tg }); A.i++;
+          if (A.i >= A.n) { u.act = null; D.rest = crK(DU.rest); } else { A.ph = 'gap'; A.t = 0; }
+        }
+      } else if (A.t >= S.gap) spaceMark(u, A);
+      return;
+    }
+    if (A.k === 'swords') {
+      const S = C.swords; face();
+      if (A.ph === 'form') { if (A.t >= S.form) { A.ph = 'fire'; A.t = 0; } }
+      else {
+        const gp = crK(S.gap);
+        while (A.i < A.n && A.t >= A.i * gp) {
+          const s = u.crSw.find(q => q.own === A && q.ph === 'hold' && q.i === A.i);
+          if (s) { s.ph = 'fly'; s.t = 0; const a = Math.atan2(tg.y - s.y, tg.x - s.x) + rand(-.25, .25); s.vx = Math.cos(a) * S.spd; s.vy = Math.sin(a) * S.spd; s.own = null; crEv('swFire', u, { s }); }
+          A.i++;
+        }
+        if (A.i >= A.n && A.t >= A.n * gp + .1) { u.act = null; D.rest = crK(DU.rest) * .5; }
+      }
+      return;
+    }
+    if (A.k === 'rise') {
+      const R = C.rise; face();
+      if (A.ph === 'wind') { const d = dist(u, tg); if (d > R.reach - 1) { const st = Math.min(d - (R.reach - 1.2), DU.step * 1.4 * dt); u.x += Math.cos(u.hdg) * st; u.y += Math.sin(u.hdg) * st; } if (A.t >= crK(R.wind)) { A.ph = 'swing'; A.t = 0; } }   // merunduk sambil menerjang maju
+      else if (A.ph === 'swing') {
+        if (!A.hit && A.t >= DU.swing * .5) {
+          A.hit = true; const d = dist(u, tg), hit = d <= R.reach + 1.2 && !tg.dead;
+          if (hit) hurt(tg, crK(R.dmg), 'small', u);
+          crEv('rise', u, { tg, hit, push: R.push });
+          if (hit) { u.act = { k: 'space', ph: 'gap', t: -.1, i: 0, n: Math.max(1, crK(C.space.n) - 1) }; return; }   // operator terlempar → disusul Tebasan Ruang di titik jatuhnya
+        }
+        if (A.t >= DU.swing) { A.ph = 'rec'; A.t = 0; }
+      } else if (A.t >= crK(DU.rec)) { u.act = null; D.rest = crK(DU.rest); }
+      return;
+    }
+    if (A.k === 'stun') {
+      if (A.t >= A.dur) { u.act = null; if (u.cr.blink <= 0 && Math.random() < crK(C.flee)) crBlink(u, 'away'); }   // PRO: sering lenyap begitu pulih (tidak bisa terus dihukum)
+      return;
+    }
+    if (A.k === 'guard') { if (A.t >= .2) duelSwing(u, true, crK(DU.wind) * .6, 0, 1); return; }   // menahan → langsung membalas dengan tebasan berat
     u.act = null;
   }
   function crayDuel(u, dt, T) {   // true = gerak diatur duel
@@ -1290,24 +1475,57 @@
     const d = dist(u, tg), a = Math.atan2(tg.y - u.y, tg.x - u.x);
     if (u.jf) { D.ph = 'go'; u.path = [{ x: tg.x - Math.cos(a) * 3, y: tg.y - Math.sin(a) * 3 }]; return true; }   // mengudara: menukik turun ke operator (ketinggian & pendaratan di clayJet)
     if (d > 70) { D.ph = 'go'; if (!(u.jpk > Q.t)) u.jpk = Q.t + Math.min(T.jetBurn, 3 + d / 60); u.path = [{ x: tg.x, y: tg.y }]; return true; }   // jauh: terbang rendah ke operator
-    if (d > DU.reach + .6) {   // dekat: berlari menerjang
-      D.ph = d < 14 ? 'fight' : 'go'; u.dash = 2.4; u.spdK = 2.4; u.path = [{ x: tg.x - Math.cos(a) * 2.5, y: tg.y - Math.sin(a) * 2.5 }]; follow(u, dt); return true;
+    if (D.rest > 0) { D.rest -= dt; if (d > DU.reach + .6 && d < 40) { u.dash = 2.4; u.spdK = 2.4; u.path = [{ x: tg.x - Math.cos(a) * 2.5, y: tg.y - Math.sin(a) * 2.5 }]; follow(u, dt); } else { u.path = []; u.face = u.hdg = a; } return true; }
+    if (d > DU.reach + .6) {
+      if (d > CRAY.blink.far && u.cr.blink <= 0) { crBlink(u, 'near'); return true; }   // LANGKAH BAYANGAN (pasif): langsung muncul di belakang operator
+      if (d > 12 && d < 45 && (u.cr.space <= 0 || u.cr.swords <= 0)) { startMove(u, u.cr.space <= 0 && (u.cr.swords > 0 || Math.random() < .5) ? 'space' : 'swords'); return true; }   // jarak menengah: serang dari jauh
+      D.ph = d < 14 ? 'fight' : 'go'; u.dash = 2.4; u.spdK = 2.4; u.path = [{ x: tg.x - Math.cos(a) * 2.5, y: tg.y - Math.sin(a) * 2.5 }]; follow(u, dt); return true;   // dekat: berlari menerjang
     }
     D.ph = 'fight'; u.path = []; u.face = u.hdg = a;
-    if (D.rest > 0) { D.rest -= dt; return true; }
-    u.act = { k: 'duel', ph: 'wind', t: 0, n: D.n++ }; crEv('wind', u, { tg });
+    startMove(u, pickMove(u, D, d));
     return true;
   }
   function duelCheck(u, dt) {   // tiap langkah: operator gugur / naik kendaraan / menghilang terlalu lama → duel selesai
     const D = u.duel, tg = D.tg, DU = CRAY.duel;
-    const end = why => { u.duel = null; if (u.act && u.act.k !== 'jce') u.act = null; u.duelCD = Q.t + DU.cd; u.dash = 1; crEv('duelEnd', u, { why }); };
+    const end = why => { u.duel = null; clearAct(u); u.duelCD = Q.t + (why === 'veh' ? 0 : DU.cd); u.dash = 1; crEv('duelEnd', u, { why }); };
     if (!tg || tg.dead || !tg.player) return end('dead');
-    if (war.hooks.duelOK && !war.hooks.duelOK(tg)) { D.away = (D.away || 0) + dt; if (D.away > DU.lose) return end('away'); } else D.away = 0;
+    if (dt > 0) { const k = Math.min(1, dt * 6); D.vx += ((tg.x - D.lx) / dt - D.vx) * k; D.vy += ((tg.y - D.ly) / dt - D.vy) * k; D.lx = tg.x; D.ly = tg.y; }   // laju operator (untuk Tebasan Ruang)
+    if (war.hooks.duelOK && !war.hooks.duelOK(tg)) {
+      const v = war.hooks.duelVeh ? war.hooks.duelVeh(tg) : null;
+      if (v) { end('veh'); rduelStart(u, v, tg); return; }   // operator naik kendaraan / heli → duel railgun
+      D.away = (D.away || 0) + dt; if (D.away > DU.lose) return end('away');
+    } else D.away = 0;
     if (Q.t - D.seen > DU.max) end('time');
+  }
+  function rduelTick(u, dt, T) {   // DUEL RAILGUN melawan kendaraan operator
+    const R = CRAY.rduel, D = u.rduel, v = D.tg;
+    const live = v && !v.dead && war.hooks.duelVeh && war.hooks.duelVeh(D.op) === v;
+    const end = why => { u.rduel = null; u.rdCD = Q.t + 4; crEv('rduelEnd', u, { why }); return false; };
+    if (!live) { D.away = (D.away || 0) + dt; if (D.away > R.lose || !v || v.dead) return end('away'); } else D.away = 0;
+    if (Q.t - D.seen > R.max) return end('time');
+    u.jpk = Q.t + 2;   // tetap mengudara
+    if (u.jf && Q.t >= u.jt0 && live) { const a = Math.atan2(u.y - v.y, u.x - v.x) + .35, Rr = crK(R.R); u.path = [inMap({ x: v.x + Math.cos(a) * Rr, y: v.y + Math.sin(a) * Rr })]; }   // mengitari pada jarak tembak
+    if (live) u.face = Math.atan2(v.y - u.y, v.x - u.x);
+    if (D.ch) {   // railgun terisi: bidikan mengunci posisi kendaraan menjelang tembak — bergerak = selamat
+      const C = D.ch, T0 = crK(R.ch); C.t += dt;
+      if (!C.lk && C.t >= T0 * R.lock) { C.lk = true; C.x = v.x; C.y = v.y; }
+      if (C.t >= T0) {
+        const hit = live && Math.hypot(v.x - C.x, v.y - C.y) < R.miss;
+        if (hit) hurt(v, crK(R.dmg), 'ap', u);
+        crEv('rfire', u, { tg: v, x: C.x, y: C.y, hit });
+        D.n++; D.ch = null; D.k = crK(R.cd);
+        if (D.n % crK(R.burst) === 0) u.cr.rail = 0;   // tiap beberapa tembakan: Railing Power menyusul
+      }
+    } else if (live) { D.k -= dt; if (D.k <= 0 && (!u.jf || u.alt > 15)) { D.ch = { t: 0 }; crEv('rch', u, { tg: v, T: crK(R.ch) }); } }
+    if (u.jf && u.cr.rail <= 0 && u.alt > 25) crayRail(u);
+    return true;
   }
   function crayTick(u, dt, T) {   // true = gerak diatur di sini (raidMove dilewati)
     const C = u.cr; for (const k in C) C[k] -= dt;
     u.dash = 1; if (u.duel) duelCheck(u, dt);
+    if (u.crSw && u.crSw.length) crSwTick(u, dt);
+    if (u.act && (u.act.k === 'jce' || u.act.k === 'cut')) { crayAct(u, dt); if (u.act) return true; }   // jurus darat yang sedang berjalan diselesaikan dulu
+    if (u.rduel && !u.duel) return rduelTick(u, dt, T);
     if (u.act) { crayAct(u, dt); if (u.act) return true; }
     if (u.duel) return crayDuel(u, dt, T);
     if (u.jf) { if (C.rail <= 0 && u.alt > 25 && Q.t >= u.jt0) crayRail(u); return false; }

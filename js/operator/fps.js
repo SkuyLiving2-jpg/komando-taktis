@@ -261,6 +261,7 @@
   /* serang musuh manusia di depan (jarak r, kerucut cos ≥ cone). n = jumlah sasaran satu ayunan (katana menebas beberapa orang); cut = bilah (suara & darah), tanpa cut = pukulan granat/bayonet */
   function meleeHit(r, dmg, cone, n, cut) {
     const ox = P.x, oy = P.y, v = F.aimVec(P.yaw, P.pitch), L = [];
+    if (cut && war.crSwCut && war.crSwCut(ox, oy, Math.cos(P.yaw), Math.sin(P.yaw), r + 2.5, .1)) { P.melHS = .06; P.shake = Math.min(1.5, P.shake + .12); }   // v2.13: katana menebas Pedang Bayangan Cray di depan
     for (const u of Q.units) {
       if (u.dead || u.team === 'B' || u.chute > 0) continue;
       if (u.vanish) continue;

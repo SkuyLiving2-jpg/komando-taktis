@@ -197,6 +197,7 @@
     const seg = (lb, items) => '<div class="tp-r"><span>' + lb + '</span><div class="tx-seg">' + items + '</div></div>';
     const pane = tab === 'v'
       ? seg(Tt('f_set_q'), [0, 1, 2].map(i => '<button data-q="' + i + '"' + (q === i ? ' class="on"' : '') + '>' + Tt('f_q' + i) + '</button>').join('')) + sw('fpsc', F.opts.fps, Tt('f_tp_fps')) +
+        (U.host.caps ? seg(Tt('pl_cap'), U.host.caps.map(c => '<button data-cap="' + c + '"' + ((F.opts.cap || 0) === c ? ' class="on"' : '') + '>' + (c ? c + ' FPS' : 'MAKS') + '</button>').join('')) : '') +
         sl(Tt('f_set_vol'), 'v3', 'vol', 0, 1, .05, F.opts.vol, Math.round(F.opts.vol * 100) + '%')
       : tab === 'c' ? (U.touch ? (U.pauseExtra ? U.pauseExtra() : '') : sl(Tt('f_set_sens'), 'v1', 'sens', .3, 3, .05, P.sens, P.sens.toFixed(2)) + '<div class="tp-keys">' + Tt('f_ctl_t').split(' · ').map(k => { const i = k.indexOf(' '); return '<span><b>' + esc(k.slice(0, i)) + '</b>' + esc(k.slice(i + 1)) + '</span>'; }).join('') + '</div>')
         : sl(Tt('f_set_fov'), 'v2', 'fov', 60, 105, 1, P.fov, P.fov + '°') + sw('inv', P.inv, Tt('f_set_inv')) + sw('nvg', R.nvg, Tt('f_nvg')) +
@@ -232,6 +233,7 @@
     const b = e.target.closest('button'); if (!b) return;
     if (U.pauseAct && U.pauseAct(b)) { pauseEl.innerHTML = pauseHTML(); return; }   // pengaturan kontrol sentuh (fps-touch)
     if (b.dataset.q !== undefined) { F.opts.quality = +b.dataset.q; M.qUser = true; try { localStorage.setItem('tk_fps_q3', F.opts.quality); } catch (x) { /* ok */ } if (F.GLW) F.GLW.dy = 1; resize(); pauseEl.innerHTML = pauseHTML(); return; }
+    if (b.dataset.cap !== undefined && U.host.setCap) { U.host.setCap(+b.dataset.cap); pauseEl.innerHTML = pauseHTML(); return; }   // batas FPS (edisi offline)
     if (b.dataset.pt) { M.pTab = b.dataset.pt; A() && A().local('ui', .4); pauseEl.innerHTML = pauseHTML(); return; }
     if (b.dataset.doc) { U.host.doc(b.dataset.doc); if (!U.oldUI) setTimeout(() => { if (M.pause) pauseEl.innerHTML = pauseHTML(); }, 0); return; }
     const a = b.dataset.p;
@@ -247,7 +249,7 @@
     if (U.pauseInput && U.pauseInput(e.target)) return;
     const s = e.target.dataset.s; if (!s) return; const v = +e.target.value;
     if (s === 'sens') { P.sens = v; $('#v1').textContent = v.toFixed(2); try { localStorage.setItem('tk_fps_sens', v); } catch (x) { /* ok */ } }
-    else if (s === 'fov') { P.fov = v; $('#v2').textContent = v + '°'; } else if (s === 'vol') { F.opts.vol = v; $('#v3').textContent = Math.round(v * 100) + '%'; }
+    else if (s === 'fov') { P.fov = v; $('#v2').textContent = v + '°'; } else if (s === 'vol') { F.opts.vol = v; $('#v3').textContent = Math.round(v * 100) + '%'; try { localStorage.setItem('tk_fps_vol', v); } catch (x) { /* ok */ } }
   });
 
   /* ---------------- PASUKAN & KOMANDO (tombol T) ---------------- */

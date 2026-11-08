@@ -607,11 +607,17 @@ vec3 n=normalize(vec3(-dx*uK,-dy*uK,1.));o=vec4(n.xy*.5+.5,clamp(.92+(c-av)*2.6,
   /* v2.12 CRAY: pose katana dari aksi sim. Kunci = [tsuba x,y,z, arah bilah, arah mata] di kerangka bahu (x depan, z atas, +y sisi tangan kanan / gagang).
      G siaga chudan · W ancang-ancang di atas bahu · C akhir tebasan diagonal · S limbung · B menahan (bilah melintang) · D melesat (bilah rendah di belakang) */
   const KK = { G: [.42, .03, .2, .75, -.05, .66, .66, 0, -.75], W: [.16, .18, .66, -.3, .15, .94, .94, 0, .3], C: [.5, -.12, .02, .45, -.55, -.7, .3, -.4, -.85],
-    S: [.22, .1, .55, -.2, .5, .84, .8, 0, .2], B: [.4, .2, .38, .15, -.97, .2, .95, .1, .2], D: [.18, .22, .15, -.75, .3, -.55, 0, 0, -1] };
+    S: [.22, .1, .55, -.2, .5, .84, .8, 0, .2], B: [.4, .2, .38, .15, -.97, .2, .95, .1, .2], D: [.18, .22, .15, -.75, .3, -.55, 0, 0, -1],
+    L: [.3, -.22, .05, -.35, -.5, -.6, .3, -.2, .9], U: [.35, .3, .55, .25, .5, .83, .9, -.2, 0] };   // v2.13: L ancang-ancang rendah kiri → U akhir tebasan naik di kanan atas (backhand / Tebasan Naik)
   const kcurve = (keys, t) => { for (let i = 1; i < keys.length; i++) if (t <= keys[i][0]) { const a = keys[i - 1], b = keys[i], f = clamp((t - a[0]) / (b[0] - a[0]), 0, 1), e = f * f * (3 - 2 * f); return a[1].map((v, j) => v + (b[1][j] - v) * e); } return keys[keys.length - 1][1].slice(); };
   function crayPose(u, s, m, dt) {
     const A = u.act, C = TK.war.CRAY, dif = Q.diff; let tgt = null, kat = 0, iai = 0, fast = false;
-    if (A && A.k === 'duel') { const W0 = C.duel.wind[dif] || .4, R0 = C.duel.rec[dif] || .4, t = A.ph === 'wind' ? .45 * Math.min(1, A.t / W0) : A.ph === 'swing' ? .45 + .17 * Math.min(1, A.t / C.duel.swing) : .62 + .38 * Math.min(1, A.t / R0); tgt = kcurve([[0, KK.G], [.45, KK.W], [.62, KK.C], [1, KK.G]], t); kat = 1; fast = A.ph === 'swing'; }
+    const W0 = A && A.W || C.duel.wind[dif] || .4, R0 = C.duel.rec[dif] || .4, ph3 = (wd, sw, rc) => A.ph === 'wind' ? .45 * Math.min(1, A.t / wd) : A.ph === 'swing' ? .45 + .17 * Math.min(1, A.t / sw) : .62 + .38 * Math.min(1, A.t / rc);
+    if (A && A.k === 'duel') { tgt = kcurve(A.n % 2 && !A.hv ? [[0, KK.G], [.45, KK.L], [.62, KK.U], [1, KK.G]] : [[0, KK.G], [.45, KK.W], [.62, KK.C], [1, KK.G]], ph3(W0, C.duel.swing, R0)); kat = 1; fast = A.ph === 'swing'; }   // rentetan: tebasan bergantian turun-diagonal / naik-backhand
+    else if (A && A.k === 'rise') { tgt = kcurve([[0, KK.G], [.45, KK.L], [.62, KK.U], [1, KK.G]], ph3(C.rise.wind[dif] || .3, C.duel.swing, R0)); kat = 1; fast = A.ph === 'swing'; s.cr = A.ph === 'wind' ? .4 * Math.min(1, A.t / .15) : 0; }
+    else if (A && A.k === 'iai') { if (A.ph === 'aim') { iai = .22 * Math.min(1, A.t / .2); s.cr = .6; s.mv = 0; s.aim = 0; } else { tgt = A.ph === 'dash' ? KK.D : kcurve([[0, KK.C], [1, KK.G]], Math.min(1, A.t / C.iai.rec)); kat = 1; fast = true; } }   // kuda-kuda iai: tangan di gagang, badan merendah → melesat
+    else if (A && A.k === 'space') { const MK = C.space.mark[dif] || .5; tgt = A.ph === 'mark' && A.t > MK * .72 ? KK.C : KK.W; kat = 1; fast = A.ph === 'mark' && A.t > MK * .72; }
+    else if (A && (A.k === 'swords' || A.k === 'blink')) { tgt = KK.G; kat = 1; }
     else if (A && A.k === 'cut') { const t = A.ph === 'dash' ? .4 * Math.min(1, A.t / C.cut.dash) : A.ph === 'swing' ? .4 + .22 * Math.min(1, A.t / C.cut.swing) : .62 + .38 * Math.min(1, A.t / C.cut.rec); tgt = kcurve([[0, KK.D], [.4, KK.W], [.62, KK.C], [1, KK.G]], t); kat = 1; fast = A.ph !== 'rec'; }
     else if (A && A.k === 'stun') { tgt = KK.S; kat = 1; }
     else if (A && A.k === 'guard') { tgt = KK.B; kat = 1; fast = true; }
@@ -855,9 +861,9 @@ vec3 n=normalize(vec3(-dx*uK,-dy*uK,1.));o=vec4(n.xy*.5+.5,clamp(.92+(c-av)*2.6,
     let o = ln * 42; for (const i of [0, 1, 2, 0, 2, 3]) { const p = P4[i]; LB[o] = p[0]; LB[o + 1] = p[1]; LB[o + 2] = p[2]; LB[o + 3] = r; LB[o + 4] = g; LB[o + 5] = b; LB[o + 6] = a; o += 7; }
     ln++;
   }
-  function ringG(x, y, r, col, a, w, n) {   // cincin mengikuti permukaan tanah
-    let px = x + r, py = y, pz = F.hAt(px, py) + .8;
-    for (let i = 1; i <= n; i++) { const t = i / n * 6.283, qx = x + Math.cos(t) * r, qy = y + Math.sin(t) * r, qz = F.hAt(qx, qy) + .8; line(px, py, pz, qx, qy, qz, w, col, a); px = qx; py = qy; pz = qz; }
+  function ringG(x, y, r, col, a, w, n, zo) {   // cincin mengikuti permukaan tanah (zo: tinggi di atas tanah, bawaan .8 m)
+    const h = zo === undefined ? .8 : zo; let px = x + r, py = y, pz = F.hAt(px, py) + h;
+    for (let i = 1; i <= n; i++) { const t = i / n * 6.283, qx = x + Math.cos(t) * r, qy = y + Math.sin(t) * r, qz = F.hAt(qx, qy) + h; line(px, py, pz, qx, qy, qz, w, col, a); px = qx; py = qy; pz = qz; }
   }
   function laserFx(L) {   // SATELIT HELIOS: isi daya (sinar pemandu + cincin menyempit) → sinar 3 lapis + spiral energi + cincin kejut → SUPERNOVA
     const LS = F.LASER, gz = F.hAt(L.x, L.y), T = TIME, top = gz + 2600, WK = LS.r / 13;   // WK: tebal sinar mengikuti radius bakar
@@ -977,12 +983,12 @@ vec3 n=normalize(vec3(-dx*uK,-dy*uK,1.));o=vec4(n.xy*.5+.5,clamp(.92+(c-av)*2.6,
       part(c.x, c.y, gz + .15, c.r, [24, 20, 17], (CAM.air ? .6 : .3) * (1 - k * k), false);
       if (heat > 0) part(c.x, c.y, gz + .3, c.r * (.35 + .25 * heat), [255, 110 + 90 * heat, 40 + 60 * heat], heat * .85, true);
     }
-    for (const c of F.shock || []) { const k = c.t / c.life; ringG(c.x, c.y, c.fix ? c.R : c.lin ? c.R * k : c.R * (.15 + .85 * Math.sqrt(k)), c.col || [255, 225, 175], c.fix ? .55 + .3 * Math.sin(TIME * 18) : c.lin ? .75 * (1 - k * k) : .85 * (1 - k), c.w || c.R * .03, c.R > 300 ? 96 : 36); }   // cincin kejut 40/105 mm & gelombang pindai kemampuan (lin)
+    for (const c of F.shock || []) { const k = c.t / c.life; ringG(c.x, c.y, c.fix ? c.R : c.lin ? c.R * k : c.R * (.15 + .85 * Math.sqrt(k)), c.col || [255, 225, 175], (c.fix ? .55 + .3 * Math.sin(TIME * 18) : c.lin ? .75 * (1 - k * k) : .85 * (1 - k)) * (c.al || 1), c.w || c.R * .03, c.R > 300 ? 96 : 36, c.zo); }   // cincin kejut 40/105 mm & gelombang pindai kemampuan (lin)
     for (const g of F.stun || []) { part(g.x, g.y, g.z, .3, [255, 250, 230], .5 + .5 * ((TIME * 14 | 0) % 2), true); }   // granat kejut: lampu berkedip
     const D = F.abDrone; if (D) { const bl = (TIME * 2.5 | 0) % 2; part(D.x, D.y, D.z + .2, bl ? 1.1 : .5, bl ? [255, 60, 50] : [80, 255, 120], .95, true); line(D.x, D.y, D.z, D.x, D.y, F.hAt(D.x, D.y), .25, [120, 255, 150], .12 + .1 * Math.sin(TIME * 5)); }   // drone intai: lampu navigasi + sinar pindai
     for (const u of Q.units) if (u.paintT > Q.t && !u.dead && u.team === 'R') { const gz = F.hAt(u.x, u.y), a = .35 + .25 * Math.sin(TIME * 6); line(u.x, u.y, gz, u.x, u.y, gz + 60, .45, [255, 50, 40], a); part(u.x, u.y, gz + 4.5, 1.4, [255, 60, 50], .8, true); }   // kendaraan dicat laser
     for (const a of F.arcs || []) { const k = 1 - a.t / a.life, col = a.col || [150, 220, 255]; for (let i = 0; i < a.p.length - 1; i++) { const p = a.p[i], q = a.p[i + 1]; line(p[0], p[1], p[2], q[0], q[1], q[2], a.w || .14, col, k); if (a.w) line(p[0], p[1], p[2], q[0], q[1], q[2], a.w * .3, [255, 240, 230], k); } part(a.p[0][0], a.p[0][1], a.p[0][2], 1.2, col, .8 * k, true); }   // busur listrik ZEUS / rambatan Railing Power (merah)
-    for (const c of F.cuts || []) { if (c.t < 0) continue; const k = c.t / c.life, a = 1 - k * k, g = Math.min(1, c.t / .045), x1 = c.x0 + (c.x1 - c.x0) * g, y1 = c.y0 + (c.y1 - c.y0) * g, z1 = c.z0 + (c.z1 - c.z0) * g; line(c.x0, c.y0, c.z0, x1, y1, z1, c.w * 1.6, [255, 40, 26], .45 * a); line(c.x0, c.y0, c.z0, x1, y1, z1, c.w * .22, [255, 246, 240], a); }   // tebasan katana Cray (JCE / tebasan darat): inti putih + pendar merah
+    for (const c of F.cuts || []) { if (c.t < 0) continue; const k = c.t / c.life, a = (c.full && !c.fade ? 1 : 1 - k * k) * (c.al || 1), g = c.full ? 1 : Math.min(1, c.t / .045), x1 = c.x0 + (c.x1 - c.x0) * g, y1 = c.y0 + (c.y1 - c.y0) * g, z1 = c.z0 + (c.z1 - c.z0) * g; line(c.x0, c.y0, c.z0, x1, y1, z1, c.w * 1.6, [255, 40, 26], .45 * a); line(c.x0, c.y0, c.z0, x1, y1, z1, c.w * .22, [255, 246, 240], a); }   // tebasan katana Cray (JCE / tebasan darat): inti putih + pendar merah
     if (P.laser) laserFx(P.laser);
     if (Q.nuke) { const n = Q.nuke, gz = F.hAt(n.x, n.y); for (let i = 0; i < 24; i++) { const a0 = i / 24 * 6.283, a1 = (i + 1) / 24 * 6.283; line(n.x + Math.cos(a0) * n.r, n.y + Math.sin(a0) * n.r, F.hAt(n.x + Math.cos(a0) * n.r, n.y + Math.sin(a0) * n.r) + 2, n.x + Math.cos(a1) * n.r, n.y + Math.sin(a1) * n.r, F.hAt(n.x + Math.cos(a1) * n.r, n.y + Math.sin(a1) * n.r) + 2, 1.5, [255, 50, 30], .6); } line(n.x, n.y, gz, n.x, n.y, gz + 400, 3, [255, 220, 60], .4); }
     for (const n of Q.strk || []) { const gz = F.hAt(n.x, n.y), bl = (TIME * 4 | 0) % 2; for (let i = 0; i < 20; i++) { const a0 = i / 20 * 6.283, a1 = (i + 1) / 20 * 6.283; line(n.x + Math.cos(a0) * n.r, n.y + Math.sin(a0) * n.r, F.hAt(n.x + Math.cos(a0) * n.r, n.y + Math.sin(a0) * n.r) + 1.5, n.x + Math.cos(a1) * n.r, n.y + Math.sin(a1) * n.r, F.hAt(n.x + Math.cos(a1) * n.r, n.y + Math.sin(a1) * n.r) + 1.5, 1.2, [255, 40, 30], bl ? .8 : .45); } line(n.x, n.y, gz, n.x, n.y, gz + 250, 2.5, [255, 60, 40], .45); }   // zona jatuh rudal TITAN

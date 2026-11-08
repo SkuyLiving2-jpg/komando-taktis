@@ -26,7 +26,7 @@
   F.AB_ANIM = { ADRENALINE: { t: 1.15, at: .6, s0: 'switch' }, PULSE: { t: 1.05, at: .5, s0: 'beep' }, DRONE: { t: 1.1, at: .55, s0: 'switch' },
     ARMOR: { t: 1.15, at: .62, s0: 'switch' }, STUN: { t: .9, at: .43, s0: 'pin' }, PAINT: { t: 1.25, at: .55, s0: 'beep' } };
   F.WEAPONS = {
-    AR:      { slot: 0, mode: 'auto', rpm: 700, dmg: 22, dt: 'small', rng0: 60, rng1: 420, mag: 30, res: 150, rel: 2.1, spread: [1.9, .22], kick: .4, mv: .96, zoom: .78, ads: 7, snd: 'm4', ico: 'AR' },
+    AR:      { slot: 0, mode: 'auto', rpm: 700, dmg: 22, dt: 'small', rng0: 60, rng1: 420, mag: 30, res: 240, rel: 2.6, spread: [1.9, .22], kick: .4, mv: .96, zoom: .78, ads: 7, snd: 'm4', ico: 'AR' },
     AK:      { slot: 0, mode: 'auto', rpm: 650, dmg: 25, dt: 'small', rng0: 55, rng1: 400, mag: 30, res: 150, rel: 2.5, spread: [2, .25], kick: .5, mv: .95, zoom: .78, ads: 6.5, snd: 'rifleE', ico: 'AR',
       bay: { r: 3.8, dmg: 400, cone: .5, t: .62, hit: .24 } },   // bayonet (V lalu klik kiri): jangkauan m, damage, kerucut arah, lama tusukan, saat kena (dtk)
     SMG:     { slot: 0, mode: 'auto', rpm: 940, dmg: 14, dt: 'small', rng0: 25, rng1: 190, mag: 32, res: 192, rel: 1.7, spread: [1.6, .3], kick: .27, mv: 1.06, zoom: .85, ads: 10, snd: 'smg', ico: 'SMG' },
