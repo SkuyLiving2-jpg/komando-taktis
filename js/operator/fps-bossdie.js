@@ -308,7 +308,7 @@
        sea  kapal: ledakan beruntun, miring, tenggelam
      ============================================================ */
   const WRECK = 5;
-  F.dieK = { HELI: 'rot', MEDHELI: 'rot', ATK2: 'rot', AH64: 'rot', VTOL: 'rot', UAV: 'jet', UCAV: 'jet', FGT: 'jet', CAS: 'jet', BMB: 'jet', UFO: 'jet', TANK: 'veh', LTANK: 'veh', MBT: 'veh', IFV: 'veh', APC: 'veh', ARTY: 'veh', ZSU: 'veh', AA: 'veh', MLRS: 'trk', REPAIR: 'trk', JEEP: 'trk', HMV: 'trk', SHIP: 'sea', GBOAT: 'sea' };
+  F.dieK = { HELI: 'rot', MEDHELI: 'rot', ATK2: 'rot', AH64: 'rot', VTOL: 'rot', WOLF: 'jet', UAV: 'jet', UCAV: 'jet', FGT: 'jet', CAS: 'jet', BMB: 'jet', UFO: 'jet', TANK: 'veh', LTANK: 'veh', MBT: 'veh', IFV: 'veh', APC: 'veh', ARTY: 'veh', ZSU: 'veh', AA: 'veh', MLRS: 'trk', REPAIR: 'trk', JEEP: 'trk', HMV: 'trk', SHIP: 'sea', GBOAT: 'sea' };
   const near = d => Math.hypot(d.x - P.x, d.y - P.y);
   const jolt = (d, k, rng) => { const nd = near(d); if (nd < rng) P.shake = Math.min(1.6, P.shake + k * (1 - nd / rng)); };
   const scar = (x, y, r) => { for (let i = 0; i < 2; i++) F.scorch.push({ x: x + rand(-r, r) * .5, y: y + rand(-r, r) * .5, r: rand(r * .7, r), t: 0, life: WRECK + 1 }); };

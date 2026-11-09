@@ -198,10 +198,15 @@
     const pane = tab === 'v'
       ? seg(Tt('f_set_q'), [0, 1, 2].map(i => '<button data-q="' + i + '"' + (q === i ? ' class="on"' : '') + '>' + Tt('f_q' + i) + '</button>').join('')) + sw('fpsc', F.opts.fps, Tt('f_tp_fps')) +
         (U.host.caps ? seg(Tt('pl_cap'), U.host.caps.map(c => '<button data-cap="' + c + '"' + ((F.opts.cap || 0) === c ? ' class="on"' : '') + '>' + (c ? c + ' FPS' : 'MAKS') + '</button>').join('')) : '') +
-        sl(Tt('f_set_vol'), 'v3', 'vol', 0, 1, .05, F.opts.vol, Math.round(F.opts.vol * 100) + '%')
+        sl(Tt('f_set_vol'), 'v3', 'vol', 0, 1, .05, F.opts.vol, Math.round(F.opts.vol * 100) + '%') +
+        (TK.fpsbeta ? sl(Tt('b_mus'), 'v4', 'mus', 0, 1, .05, F.opts.mus, Math.round(F.opts.mus * 100) + '%') + sl(Tt('b_sfx'), 'v5', 'sfx', 0, 1, .05, F.opts.sfx, Math.round(F.opts.sfx * 100) + '%') +
+          sl(Tt('b_hud'), 'v6', 'hud', .8, 1.3, .05, F.opts.hudK, Math.round(F.opts.hudK * 100) + '%') + sl(Tt('b_shk'), 'v7', 'shk', 0, 1, .1, F.shakeK, Math.round(F.shakeK * 100) + '%') +
+          sw('calm', F.opts.calm, Tt('b_calm')) + sw('cb', F.opts.cb, Tt('b_cb') + ' · ' + Tt('b_cb_s')) : '')
       : tab === 'c' ? (U.touch ? (U.pauseExtra ? U.pauseExtra() : '') : sl(Tt('f_set_sens'), 'v1', 'sens', .3, 3, .05, P.sens, P.sens.toFixed(2)) + '<div class="tp-keys">' + Tt('f_ctl_t').split(' · ').map(k => { const i = k.indexOf(' '); return '<span><b>' + esc(k.slice(0, i)) + '</b>' + esc(k.slice(i + 1)) + '</span>'; }).join('') + '</div>')
         : sl(Tt('f_set_fov'), 'v2', 'fov', 60, 105, 1, P.fov, P.fov + '°') + sw('inv', P.inv, Tt('f_set_inv')) + sw('nvg', R.nvg, Tt('f_nvg')) +
-          seg(Tt('f_set_doc'), '<button data-doc="tni"' + (S.doc === 'tni' ? ' class="on"' : '') + '>TNI</button><button data-doc="us"' + (S.doc === 'us' ? ' class="on"' : '') + '>US</button>');
+          seg(Tt('f_set_doc'), '<button data-doc="tni"' + (S.doc === 'tni' ? ' class="on"' : '') + '>TNI</button><button data-doc="us"' + (S.doc === 'us' ? ' class="on"' : '') + '>US</button>') +
+          (TK.fpsbeta ? '<div class="tp-r"><span>' + Tt('b_pad_s') + '</span><b style="font-size:.85em;opacity:.85">' + esc(TK.fpsbeta.padName() || Tt('b_pad_none')) + '</b></div>' + (TK.fpsbeta.padName() ? '<small class="ctl" style="display:block;opacity:.7;margin:2px 0 8px">' + Tt('b_pad_map') + '</small>' : '') +
+            '<div class="tp-r"><span>' + Tt('b_rep') + '</span><button data-p="report" class="tx-sw" style="width:auto;padding:0 12px">⚑</button></div>' : '');
     const tile = (lb, v) => '<div><em>' + lb + '</em><b>' + v + '</b></div>';
     return '<div class="fm-box tx-box tp"><aside class="tp-side"><div class="tx-ttl"><i></i><div><b>' + Tt('f_pause') + '</b><small>' + esc(opName()) + ' · ' + Tt('w_d' + (Q.diff || 0)) + '</small></div></div>' +
       '<div class="tp-st">' + tile(Tt('f_sc'), P.score) + tile('K / D', P.kills + ' / ' + P.deaths) + tile(Tt('f_credits'), Math.floor(Q.cr)) + tile(Tt('f_sb_time'), pad(t / 60) + ':' + pad(t % 60)) + '</div>' +
@@ -244,12 +249,15 @@
     else if (a === 'back') { setPause(false); U.host.back(); }
     else if (a === 'inv') { P.inv = !P.inv; pauseEl.innerHTML = pauseHTML(); }
     else if (a === 'nvg') { R.nvg = !R.nvg; pauseEl.innerHTML = pauseHTML(); }
+    else if ((a === 'calm' || a === 'cb') && TK.fpsbeta) { TK.fpsbeta.set(a, TK.fpsbeta.get(a) ? 0 : 1); pauseEl.innerHTML = pauseHTML(); }
+    else if (a === 'report' && TK.fpsbeta) TK.fpsbeta.report();
   });
   pauseEl.addEventListener('input', e => {
     if (U.pauseInput && U.pauseInput(e.target)) return;
     const s = e.target.dataset.s; if (!s) return; const v = +e.target.value;
     if (s === 'sens') { P.sens = v; $('#v1').textContent = v.toFixed(2); try { localStorage.setItem('tk_fps_sens', v); } catch (x) { /* ok */ } }
-    else if (s === 'fov') { P.fov = v; $('#v2').textContent = v + '°'; } else if (s === 'vol') { F.opts.vol = v; $('#v3').textContent = Math.round(v * 100) + '%'; try { localStorage.setItem('tk_fps_vol', v); } catch (x) { /* ok */ } }
+    else if (s === 'fov') { P.fov = v; $('#v2').textContent = v + '°'; }
+    else if ((s === 'mus' || s === 'sfx' || s === 'hud' || s === 'shk') && TK.fpsbeta) { TK.fpsbeta.set(s, v); const el = $('#v' + { mus: 4, sfx: 5, hud: 6, shk: 7 }[s]); if (el) el.textContent = Math.round(v * 100) + '%'; } else if (s === 'vol') { F.opts.vol = v; $('#v3').textContent = Math.round(v * 100) + '%'; try { localStorage.setItem('tk_fps_vol', v); } catch (x) { /* ok */ } }
   });
 
   /* ---------------- PASUKAN & KOMANDO (tombol T) ---------------- */
@@ -271,9 +279,9 @@
     let body;
     if (tab === 'veh') {
       body = '<p class="ta-note">' + Tt('f_vh_sub') + '</p><div class="ta-grid">' + F.VEH_ORDER.map((id, i) => {
-        const st = F.vehState(id), c = F.vehPrice(id), ok = Q.cr >= c && st !== 'in';
-        return '<button class="ta-u' + (ok ? '' : ' dis') + '" data-v="' + id + '" style="--d:' + i + '">' + aIco('CAR') + '<b>' + esc(Tt('f_vh_' + id)) + '</b><span class="ta-c">' + c + '<small> KR</small></span>' +
-          '<small>' + (st === 'ok' ? Tt('f_vh_refit') + ' · ' : '') + Tt('f_vh_d_' + id) + '</small>' + (st === 'in' ? '<i class="w">' + Tt('f_vh_inb') + '</i>' : st === 'ok' ? '<i>' + Tt('f_vh_have') + '</i>' : '') + '</button>';
+        const st = F.vehState(id), c = F.vehPrice(id), lk = F.lockR('veh', id), ok = Q.cr >= c && st !== 'in' && !lk;
+        return '<button class="ta-u' + (ok ? '' : ' dis') + '" data-v="' + id + '" style="--d:' + i + '">' + aIco('CAR') + '<b>' + esc(Tt('f_vh_' + id)) + '</b><span class="ta-c">' + (lk ? '🔒' : c + '<small> KR</small>') + '</span>' +
+          '<small>' + (lk ? Tt('b_lockt', { r: Tt('f_rank_' + lk) }) + ' · ' : '') + (st === 'ok' ? Tt('f_vh_refit') + ' · ' : '') + Tt('f_vh_d_' + id) + '</small>' + (st === 'in' ? '<i class="w">' + Tt('f_vh_inb') + '</i>' : st === 'ok' ? '<i>' + Tt('f_vh_have') + '</i>' : '') + '</button>';
       }).join('') + '</div>';
     } else if (tab === 'cmd') {
       const grp = F.ARMY_GRP.map(g => '<button data-g="' + g + '"' + (M.grp === g ? ' class="on"' : '') + '>' + Tt('f_grp_' + g) + ' <i>' + F.myArmy(g).length + '</i></button>').join('');
@@ -311,8 +319,8 @@
       const c = UT[t].cost, ok = Q.cr >= c;
       return '<div class="ar-u' + (ok ? '' : ' dis') + '" data-r="' + t + '"><b>' + esc(uname(t)) + '</b><small>' + c + (M.arN > 1 ? ' × ' + M.arN + ' = ' + c * M.arN : '') + '</small>' + (t === 'INF' || t === 'SF' ? '<small class="ar-kit">' + Tt('f_ar_kitrand') + '</small>' : '') + (have[t] ? '<i>' + have[t].length + ' ' + Tt('f_ar_own') + '</i>' : '') + '</div>';
     }).join('') + '</div>').join(''), vh = '<h3>' + Tt('f_vh_cat') + '</h3><small class="ctl">' + Tt('f_vh_sub') + '</small><div class="ar-grid ar-vg">' + F.VEH_ORDER.map(id => {   // kendaraan yang dikemudikan sendiri (fps-veh)
-        const st = F.vehState(id), c = F.vehPrice(id), ok = Q.cr >= c && st !== 'in';
-        return '<div class="ar-u ar-v' + (ok ? '' : ' dis') + '" data-v="' + id + '"><b>' + esc(Tt('f_vh_' + id)) + '</b><small>' + (st === 'ok' ? Tt('f_vh_refit') + ' · ' : '') + c + '</small><small class="ar-kit">' + Tt('f_vh_d_' + id) + '</small>' +
+        const st = F.vehState(id), c = F.vehPrice(id), lk = F.lockR('veh', id), ok = Q.cr >= c && st !== 'in' && !lk;
+        return '<div class="ar-u ar-v' + (ok ? '' : ' dis') + '" data-v="' + id + '"><b>' + esc(Tt('f_vh_' + id)) + '</b><small>' + (lk ? '🔒 ' + Tt('b_lockt', { r: Tt('f_rank_' + lk) }) : (st === 'ok' ? Tt('f_vh_refit') + ' · ' : '') + c) + '</small><small class="ar-kit">' + Tt('f_vh_d_' + id) + '</small>' +
           (st === 'in' ? '<i>' + Tt('f_vh_inb') + '</i>' : st === 'ok' ? '<i>' + Tt('f_vh_have') + '</i>' : '') + '</div>';
       }).join('') + '</div>';
     const grp = F.ARMY_GRP.map(g => '<div class="fm-opt' + (M.grp === g ? ' on' : '') + '" data-g="' + g + '">' + Tt('f_grp_' + g) + ' <i>' + F.myArmy(g).length + '</i></div>').join('');
@@ -513,7 +521,7 @@
   cv.addEventListener('wheel', e => { e.preventDefault(); if (!playing()) return; if (P.gs) F.gsZoom(); else if (P.mnt) F.heliZoom(); else if (P.veh) F.vehKey('wheel'); else F.cycleWeapon(); }, { passive: false });
 
   /* ---------------- GAMBAR UTAMA ---------------- */
-  const sc = () => U.touch ? clamp(CH / 520, .62, 1) : CH / 720;   // HP: 390 px tinggi → .75 (dulu .54 = teks HUD 5–6 px)
+  const sc = () => (U.touch ? clamp(CH / 520, .62, 1) : CH / 720) * (F.opts.hudK || 1);   // HP: 390 px tinggi → .75 (dulu .54 = teks HUD 5–6 px)
   const TX = () => U.touch ? -(U.hudR || 0) : 0;
   const LX = () => U.touch ? (U.hudL || 0) : 0;
   const TOPY = () => U.touch ? (U.topY || 60) : 0;   // layar sentuh: HUD kanan atas mulai di bawah bilah ❚❚ / RADIO (fps-touch mengisi U.topY & U.topR)   // layar sentuh: HUD kiri menghindari poni/lubang kamera (area aman dari fps-touch)   // layar sentuh: panel kanan-bawah digeser ke kiri gugus tombol (fps-touch mengisi U.hudR)
@@ -912,7 +920,7 @@
     if (!M.ci) return;
     const x = 24 * s, y = 272 * s, w = 330 * s; ctx.fillStyle = 'rgba(0,0,0,.62)'; ctx.fillRect(x, y, w, (F.CALLINS.length * 26 + 44) * s); ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = 1.5; ctx.strokeRect(x, y, w, (F.CALLINS.length * 26 + 44) * s);
     text(Tt('f_ci_title') + ' · ' + Math.floor(Q.cr), x + 12 * s, y + 24 * s, 14 * s, '#ffd24a');
-    F.CALLINS.forEach((c, i) => { const ok = Q.cr >= c.cost, yy = y + (48 + i * 26) * s; text((i + 1) + '  ' + Tt('f_ci_' + c.id), x + 12 * s, yy, 12 * s, ok ? '#fff' : 'rgba(255,255,255,.35)'); text(String(c.cost), x + w - 12 * s, yy, 12 * s, ok ? '#ffd24a' : 'rgba(255,210,74,.35)', 'right'); });
+    F.CALLINS.forEach((c, i) => { const lk = F.lockR('ci', c.id), ok = Q.cr >= c.cost && !lk, yy = y + (48 + i * 26) * s; text((i + 1) + '  ' + Tt('f_ci_' + c.id) + (lk ? '  🔒 ' + Tt('f_rank_' + lk) : ''), x + 12 * s, yy, 12 * s, ok ? '#fff' : 'rgba(255,255,255,.35)'); text(String(c.cost), x + w - 12 * s, yy, 12 * s, ok ? '#ffd24a' : 'rgba(255,210,74,.35)', 'right'); });
   }
   function cmdPanel(s) {
     if (!M.cmd) return;
@@ -1560,7 +1568,7 @@
     if (F.heliNear()) text(dry ? Tt(H.drop > 0 ? 'f_ah_dropin' : 'f_ah_nofuel', { s: Math.ceil(H.drop) }) : Tt('f_ah_board'), CW / 2, slotY(16 * s), 16 * s, dry ? '#ffb000' : '#ffd24a', 'center');
   }
   /* ---------------- HUD KENDARAAN OPERATOR (fps-veh) ---------------- */
-  const VNAME = { HMV: 'HUMVEE M1151', APC: 'SANCA 6×6', MBT: 'MBT BADAI', VTOL: 'JET VTOL ELANG' };
+  const VNAME = { HMV: 'HUMVEE M1151', APC: 'SANCA 6×6', MBT: 'MBT BADAI', VTOL: 'JET VTOL ELANG', WOLF: 'WOLFPACK A-10' };
   function vehHud(s) {
     const V = P.veh; if (!V || !V.u) return;
     const cx = CW / 2, cy = CH / 2, G = '#9dffb5', AMB = '#ffd24a', D = V.D, u = V.u, bl = (P.time * 3 % 1) < .5, zm = F.in.ads && !V.air, cy0 = P.cam ? P.cam.yaw : P.yaw;
@@ -1583,6 +1591,20 @@
       const ix = cx, iy = CH - 104 * s; ctx.save(); ctx.translate(ix, iy); ctx.globalAlpha = .85;
       ctx.save(); ctx.rotate(V.yaw - cy0 + Math.PI / 2); ctx.strokeRect(-9 * s, -15 * s, 18 * s, 30 * s); ctx.beginPath(); ctx.moveTo(-9 * s, -15 * s); ctx.lineTo(0, -21 * s); ctx.lineTo(9 * s, -15 * s); ctx.stroke(); ctx.restore();
       ctx.rotate(V.ty - cy0 + Math.PI / 2); ctx.beginPath(); ctx.arc(0, 0, 6 * s, 0, 6.283); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, -6 * s); ctx.lineTo(0, -26 * s); ctx.lineWidth = 3 * s; ctx.stroke(); ctx.restore();
+    } else if (D.fw) {   // WOLFPACK: kotak kunci rudal otomatis (≤6 sasaran), penanda arah terbang & cakrawala saat di udara
+      const H2 = D.hom;
+      for (const q of V.hl) {
+        const p = at(q.u); if (!p) continue; const lk = q.t >= H2.lock, b = (lk ? 13 : 24 - 11 * Math.min(1, q.t / H2.lock)) * s;
+        ctx.strokeStyle = lk ? AMB : 'rgba(255,210,74,.65)'; ctx.setLineDash(lk ? [] : [4 * s, 4 * s]); ctx.strokeRect(p.x - b, p.y - b, b * 2, b * 2); ctx.setLineDash([]);
+        if (lk) { ctx.beginPath(); ctx.moveTo(p.x - b - 6 * s, p.y); ctx.lineTo(p.x - b, p.y); ctx.moveTo(p.x + b, p.y); ctx.lineTo(p.x + b + 6 * s, p.y); ctx.moveTo(p.x, p.y - b - 6 * s); ctx.lineTo(p.x, p.y - b); ctx.stroke(); }
+      }
+      ctx.strokeStyle = G;
+      const sp = Math.hypot(V.vx, V.vy, V.vz);
+      if (!V.gnd && sp > 8) { const p = R.project(V.x + V.vx / sp * 400, V.y + V.vy / sp * 400, V.z + V.vz / sp * 400, CW, CH); if (p) { ctx.beginPath(); ctx.arc(p.x, p.y, 6 * s, 0, 6.283); ctx.moveTo(p.x - 6 * s, p.y); ctx.lineTo(p.x - 16 * s, p.y); ctx.moveTo(p.x + 6 * s, p.y); ctx.lineTo(p.x + 16 * s, p.y); ctx.moveTo(p.x, p.y - 6 * s); ctx.lineTo(p.x, p.y - 12 * s); ctx.stroke(); } }
+      if (!V.gnd) { ctx.save(); ctx.translate(cx, cy); ctx.rotate(V.rol); ctx.globalAlpha = .7; const hy = (V.pit - (P.cam ? P.cam.pitch : 0)) * 260 * s; ctx.beginPath(); ctx.moveTo(-130 * s, hy); ctx.lineTo(-60 * s, hy); ctx.moveTo(60 * s, hy); ctx.lineTo(130 * s, hy); ctx.stroke(); ctx.restore(); }
+      else {   // di darat: pita laju menuju Vr
+        const k = clamp(V.spd / D.vr, 0, 1), bw = 150 * s, bx = cx - bw / 2, by = cy + 92 * s; ctx.globalAlpha = .85; ctx.strokeRect(bx, by, bw, 7 * s); ctx.fillStyle = k >= 1 ? AMB : G; ctx.fillRect(bx, by, bw * k, 7 * s); ctx.globalAlpha = 1;
+      }
     } else {
       const A2 = D.aam;
       if (V.lock && !V.lock.dead && V.agm > 0) { lockP = at(V.lock); if (lockP) { ctx.strokeStyle = V.mcd <= 0 ? AMB : G; dia(lockP, 16 * s); } }
@@ -1603,8 +1625,10 @@
     if (aaP) { const aaL = V.aaT >= D.aam.lock; text('AIM-9 ' + (aaL ? Tt('f_ah_lock') + ' [R]' : '…'), aaP.x, aaP.y + (aaL ? 38 : 48) * s, 10 * s, aaL && bl ? '#ffffff' : '#8fd8ff', 'center'); }
     const kmh = Math.hypot(V.vx, V.vy) * 3.6, fwd = V.vx * Math.cos(V.yaw) + V.vy * Math.sin(V.yaw);
     if (u.seats > 1) text(Tt('f_bd_seat', { s: F.seatStr(u) }), cx - 130 * s, cy + 24 * s, 11 * s, u.pax && u.pax.length ? G : 'rgba(157,255,181,.6)', 'right');   // kursi terisi (operator + pasukan penumpang)
-    text(Math.round(V.air && V.mode === 'jet' ? V.spd * 3.6 : kmh) + ' KM/J', cx - 130 * s, cy + 5 * s, 15 * s, G, 'right');
-    if (V.air) { text(Math.round(Math.max(0, V.z - F.hAt(V.x, V.y) - F.MDL.VEHX.VTOL.gear * V.gear)) + ' m', cx + 130 * s, cy + 5 * s, 15 * s, G, 'left'); text(V.mode === 'jet' ? 'JET · ' + (F.in.sprint ? 'AB' : Math.round(V.thr * 100) + '%') : 'VTOL', cx + 130 * s, cy + 22 * s, 10 * s, V.mode === 'jet' ? AMB : G, 'left'); }
+    text(Math.round(V.air && (V.mode === 'jet' || D.fw) ? Math.abs(V.spd) * 3.6 : kmh) + ' KM/J', cx - 130 * s, cy + 5 * s, 15 * s, G, 'right');
+    if (D.fw && V.gnd) text('Vr ' + Math.round(D.vr * 3.6), cx - 130 * s, cy + 22 * s, 10 * s, V.spd >= D.vr ? AMB : 'rgba(157,255,181,.7)', 'right');
+    if (D.fw) { text(Math.round(Math.max(0, V.z - F.hAt(V.x, V.y) - F.MDL.VEHX.WOLF.gear)) + ' m', cx + 130 * s, cy + 5 * s, 15 * s, G, 'left'); text(V.gnd ? (V.toga ? Tt('f_wf_toga') : Tt('f_wf_taxi') + ' · ' + Math.round(V.thr * 100) + '%') : (V.toga ? 'MAX' : 'GAS ' + Math.round(V.thr * 100) + '%'), cx + 130 * s, cy + 22 * s, 10 * s, V.toga ? AMB : G, 'left'); text((V.gear > .5 ? '▼ ' : '▲ ') + Tt('f_wf_gear', { s: Tt(V.gear > .5 ? 'f_wf_gdn' : 'f_wf_gup') }), cx + 130 * s, cy + 37 * s, 9.5 * s, V.gear > .5 ? G : 'rgba(157,255,181,.6)', 'left'); }
+    else if (V.air) { text(Math.round(Math.max(0, V.z - F.hAt(V.x, V.y) - F.MDL.VEHX.VTOL.gear * V.gear)) + ' m', cx + 130 * s, cy + 5 * s, 15 * s, G, 'left'); text(V.mode === 'jet' ? 'JET · ' + (F.in.sprint ? 'AB' : Math.round(V.thr * 100) + '%') : 'VTOL', cx + 130 * s, cy + 22 * s, 10 * s, V.mode === 'jet' ? AMB : G, 'left'); }
     else { text(fwd < -.5 ? Tt('f_vh_rev') : (F.in.sprint ? 'TURBO' : 'D'), cx + 130 * s, cy + 5 * s, 13 * s, fwd < -.5 ? AMB : G, 'left'); if (V.aim) text(Math.round(V.aim.d) + ' m', cx + 34 * s, cy - 8 * s, 10 * s, G, 'left'); }
     // panel status & senjata (kanan bawah)
     const rows = [];
@@ -1614,6 +1638,10 @@
       rows.push([(V.wi === 1 ? '▶ ' : '  ') + 'SMB KOAKS', rel(1) || ammo(1), V.mag[1] > 0 && !rel(1)]);
       rows.push(['RUDAL AT [G]', (V.lock ? '◆ ' : '') + V.atg + (V.acd > 0 ? ' · ' + Math.ceil(V.acd) + 's' : ''), V.atg > 0 && V.acd <= 0]);
       rows.push([Tt('f_vh_smk') + ' [F]', V.smk + (V.smT > 0 ? ' · ' + Math.ceil(V.smT) + 's' : ''), V.smk > 0 && V.smCd <= 0]);
+    } else if (D.fw) {
+      const nl = V.hl.filter(q => q.t >= D.hom.lock).length;
+      rows.push(['GAU-8 [LMB]', V.mag[0], V.mag[0] > 0], [Tt('f_wf_msl') + ' [RMB]', (nl ? '◆' + nl + ' · ' : '') + V.hom + (V.hcd > 0 ? ' · ' + V.hcd.toFixed(1) + 's' : ''), V.hom > 0 && V.hcd <= 0],
+        ['FLARE [F]', V.fl + (V.fcd > 0 ? ' · ' + Math.ceil(V.fcd) + 's' : ''), V.fl > 0 && V.fcd <= 0], [Tt('f_wf_gear', { s: '' }).trim() + ' [G]', Tt(V.gear > .5 ? 'f_wf_gdn' : 'f_wf_gup'), !V.gnd]);
     } else if (V.air) {
       rows.push(['KANON 25MM [LMB]', V.mag[0], V.mag[0] > 0], ['AGM [RMB]', (V.lock ? '◆ ' : '') + V.agm, V.agm > 0 && V.mcd <= 0], ['AIM-9 [R]', (V.aaU && V.aaT >= D.aam.lock ? '◉ ' : '') + V.aam, V.aam > 0 && V.aaCd <= 0],
         ['BOM [G]', V.bomb, V.bomb > 0 && V.bcd <= 0], ['FLARE [F]', V.fl + (V.fcd > 0 ? ' · ' + Math.ceil(V.fcd) + 's' : ''), V.fl > 0 && V.fcd <= 0], ['MODE [X]', V.mode === 'jet' ? 'JET' : 'VTOL', true]);
@@ -1621,7 +1649,7 @@
       rows.push([(V.id === 'HMV' ? 'M2 .50' : 'MK19 40MM') + ' [LMB]', rel(0) || ammo(0), V.mag[0] > 0 && !rel(0)]);
       rows.push([Tt('f_vh_smk') + ' [G]', V.smk + (V.smT > 0 ? ' · ' + Math.ceil(V.smT) + 's' : ''), V.smk > 0 && V.smCd <= 0]);
     }
-    const tc = U.touch, rs = !tc ? rows : (V.id === 'MBT' ? rows.slice(0, 2) : V.air ? [rows[0], rows[5]] : rows.slice(0, 1)).map(q => [q[0].replace(/\s*\[.*\]/, ''), q[1], q[2]]);   // layar sentuh: sisanya tampil di tombol
+    const tc = U.touch, rs = !tc ? rows : (V.id === 'MBT' || D.fw ? rows.slice(0, 2) : V.air ? [rows[0], rows[5]] : rows.slice(0, 1)).map(q => [q[0].replace(/\s*\[.*\]/, ''), q[1], q[2]]);   // layar sentuh: sisanya tampil di tombol
     const x = tc ? CW - U.topR : CW - 28 * s, w = (tc ? 210 : 250) * s, ph = (44 + rs.length * 19) * s, y0 = tc ? TOPY() + 54 * s : CH - 32 * s - ph;
     ctx.fillStyle = 'rgba(0,14,6,.55)'; ctx.fillRect(x - w, y0, w, ph); ctx.strokeStyle = 'rgba(157,255,181,.6)'; ctx.lineWidth = 1.5; ctx.strokeRect(x - w, y0, w, ph);
     const hp = clamp(u.hp / u.hpMax, 0, 1), hc = hp > .5 ? G : hp > .25 ? '#ffb000' : '#ff3b3b';
@@ -1632,7 +1660,12 @@
     if (V.smT > 0) text(Tt('f_vh_smoke') + ' · ' + Math.ceil(V.smT) + 's', cx, 104 * s, 13 * s, '#dfe6e0', 'center');
     if (V.mw) { ctx.fillStyle = 'rgba(255,30,20,' + (bl ? .16 : .05) + ')'; ctx.fillRect(0, 0, CW, CH); text(V.air ? Tt('f_ah_mw') : Tt(V.smk > 0 ? 'f_vh_mw' : 'f_vh_mw0', { k: F.vehSmkKey(V) }), cx, 128 * s, 20 * s, bl ? '#ff3b3b' : '#ffdd33', 'center'); }
     else if (V.flT > 0) text(Tt('f_ah_flare'), cx, 128 * s, 14 * s, G, 'center');
-    if (V.air && V.mode === 'jet' && V.pull) text(Tt('f_vh_pull'), cx, cy + 60 * s, 18 * s, bl ? '#ff3b3b' : '#ffdd33', 'center');
+    if (V.air && (V.mode === 'jet' || D.fw) && V.pull) text(Tt('f_vh_pull'), cx, cy + 60 * s, 18 * s, bl ? '#ff3b3b' : '#ffdd33', 'center');
+    if (D.fw) {   // WOLFPACK: petunjuk rotasi, stall, roda belum turun saat mendekat tanah
+      if (V.gnd && V.rotHint) text(Tt('f_wf_rot'), cx, cy + 72 * s, 15 * s, bl ? '#ffffff' : AMB, 'center');
+      else if (!V.gnd && V.stall) { text(Tt('f_wf_stall'), cx, cy + 72 * s, 18 * s, bl ? '#ff3b3b' : '#ffdd33', 'center'); }
+      else if (!V.gnd && V.gear < .5 && V.vz < -1 && V.z - F.hAt(V.x, V.y) < 45) text(Tt('f_wf_nogear'), cx, cy + 72 * s, 15 * s, bl ? '#ff3b3b' : '#ffdd33', 'center');
+    }
     if (hp < .25) { ctx.fillStyle = 'rgba(255,40,20,' + (bl ? .1 : .03) + ')'; ctx.fillRect(0, 0, CW, CH); text(Tt('f_vh_dmg'), cx, cy - 70 * s, 16 * s, bl ? '#ff3b3b' : '#ffdd33', 'center'); }
     if (!U.touch) text(Tt('f_vk_' + V.id), cx, CH - 10 * s, 10.5 * s, 'rgba(200,255,210,.85)', 'center');
   }

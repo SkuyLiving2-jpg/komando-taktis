@@ -149,7 +149,7 @@
     return { x, y, z: Math.max(H.z + 3.6 - v[2] * D, F.hAt(x, y) + 1.5), v };
   }
   F.heliCamera = function () {
-    const H = P.heli, c = camPose(H), sh = (Math.random() - .5) * P.shake * .02;
+    const H = P.heli, c = camPose(H), sh = (Math.random() - .5) * P.shake * F.shakeK * .02;
     F.camHide = H.cam ? H.u : null;
     return { x: c.x, y: c.y, z: c.z, yaw: P.yaw + sh, pitch: P.pitch + sh, fov: (H.cam ? [62, 30, 12][H.zoom] : 74) * D2R };
   };

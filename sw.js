@@ -3,7 +3,7 @@
    di perangkat saat pertama dibuka, lalu game berjalan tanpa
    internet. Naikkan VERSI tiap rilis agar perangkat memperbarui.
    ============================================================ */
-const VERSI = 'kt-offline-v45';
+const VERSI = 'kt-offline-v46';
 const BERKAS = [
   'play.html',
   'manifest.webmanifest',
@@ -44,6 +44,7 @@ const BERKAS = [
   'js/operator/fps-bossdie.js',
   'js/operator/fps-ui.js',
   'js/operator/fps-touch.js',
+  'js/operator/fps-beta.js',
   'js/offline/play.js'
 ];
 self.addEventListener('install', e => {

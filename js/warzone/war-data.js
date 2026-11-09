@@ -194,6 +194,7 @@
     APC: { cat: 'G', dom: 'G', armor: 'light', hp: 1000, spd: 0, vis: 600, cost: 900, sz: 1.3, w: [] },
     MBT: { cat: 'G', dom: 'G', armor: 'heavy', hp: 1500, spd: 0, vis: 650, cost: 1500, sz: 1.55, w: [] },
     VTOL: { cat: 'A', dom: 'A', fly: true, armor: 'air', hp: 1100, spd: 0, vis: 1100, cost: 2400, sz: 1.7, w: [] },
+    WOLF: { cat: 'A', dom: 'A', fly: true, armor: 'air', hp: 2070, spd: 0, vis: 1100, cost: 2800, sz: 1.8, w: [] },   // v3.0 WOLFPACK (A-10 hitam milik operator): nyawa 90% Shadow Hunter (AH64 2300), dikali F.APACHE.hpK seperti heli
     // struktur (tidak bergerak)
     HQ: { cat: 'X', dom: 'G', armor: 'struct', hp: 1800, spd: 0, vis: 700, cost: 0, struct: true, sz: 2.4,
       w: [{ vs: 'G', dt: 'small', dmg: 8, cd: .4, rng: 420, proj: 'bullet', acc: .7 }] },
@@ -250,6 +251,15 @@
     };
   };
 
+  /* v3.0 lapangan terbang MARKAS KITA (selatan HQ): landasan timur–barat (lepas landas menghadap medan tempur di timur), 2 hanggar di selatan landasan
+     berpintu ke utara, apron beton, menara kontrol. Hanggar pertama = tempat WOLFPACK muncul. Bay: x,y = pintu, yaw = arah keluar, sx,sy = posisi di dalam */
+  W.facB = function (hx, hy) {
+    const ry = hy + 215, han = [];
+    for (const dx of [-160, -95]) { const x = hx + dx, y = ry + 52; han.push({ k: 'han', x, y, yaw: -Math.PI / 2, sx: x, sy: y + 21, ex: x, ey: ry + 24, w: 44, h: 9, door: 0, u: null }); }
+    return { hx, hy, han, bays: han, run: { y: ry, x0: hx - 300, x1: hx + 420, hw: 15 }, apron: [hx - 190, ry + 15, hx - 65, ry + 52], atc: [hx - 20, ry + 66],
+      rects: [[hx - 320, ry - 30, hx + 440, ry + 98]] };
+  };
+
   /* ---------------- generator medan ---------------- */
   W.gen = function (seed) {
     const T = W.TER, t = new Uint8Array(GW * GH), e = new Float32Array(GW * GH);
@@ -274,6 +284,13 @@
     {   // pangkalan musuh: seluruh areanya tanah keras (bukan air, bukit, atau hutan)
       const hx = (HQR[0] + .5) * CELL, hy = (HQR[1] + .5) * CELL, B0 = W.FACB;
       for (let y = Math.floor((hy + B0[2]) / CELL); y <= Math.floor((hy + B0[3]) / CELL); y++) for (let x = Math.floor((hx + B0[0]) / CELL); x <= Math.floor((hx + B0[1]) / CELL); x++) {
+        if (x < 0 || y < 0 || x >= GW || y >= GH) continue;
+        t[y * GW + x] = T.URBAN; e[y * GW + x] = Math.max(e[y * GW + x], .4);
+      }
+    }
+    {   // v3.0 lapangan terbang markas kita: tanah keras rata (bukan air / bukit / hutan)
+      const B1 = W.facB((HQB[0] + .5) * CELL, (HQB[1] + .5) * CELL).rects[0];
+      for (let y = Math.floor(B1[1] / CELL); y <= Math.floor(B1[3] / CELL); y++) for (let x = Math.floor(B1[0] / CELL); x <= Math.floor(B1[2] / CELL); x++) {
         if (x < 0 || y < 0 || x >= GW || y >= GH) continue;
         t[y * GW + x] = T.URBAN; e[y * GW + x] = Math.max(e[y * GW + x], .4);
       }

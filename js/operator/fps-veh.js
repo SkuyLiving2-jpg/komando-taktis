@@ -45,18 +45,19 @@
   /* ---------- membuat / mengisi ulang ---------- */
   function mkVeh(id, x, y, z, yaw, noUnit) {
     const D = VD[id];
-    const V = { id, D, u: null, gen: Q.g, air: D.arr === 'vtol', x, y, z, yaw, pit: 0, rol: 0, vx: 0, vy: 0, vz: 0, yr: 0, ty: yaw, gE: 0, rec: 0, st: 'in', arr: null,
+    const V = { id, D, u: null, gen: Q.g, air: D.arr === 'vtol' || !!D.fw, gnd: !!D.fw, spin: 0, sndT: 0, hl: [], hq: [], hs: 0, hcd: 0, hom: 0, hpi: 0, gearCmd: 1, gearMan: false, x, y, z, yaw, pit: 0, rol: 0, vx: 0, vy: 0, vz: 0, yr: 0, ty: yaw, gE: 0, rec: 0, st: 'in', arr: null,
       cam: 0, wi: 0, mag: [], res: [], cd: [], relT: 0, relI: 0, dry: false, smk: 0, smT: 0, smCd: 0, atg: 0, aq: 0, as: 0, acd: 0, agm: 0, aam: 0, bomb: 0, fl: 0,
       mcd: 0, aaCd: 0, bcd: 0, fcd: 0, flT: 0, lock: null, aaU: null, aaT: 0, aaB: 0, mode: 'hov', spd: 0, thr: .3, noz: Math.PI / 2, gear: 1, fly: false, gvz: 0,
       engT: 0, lastHp: 0, mw: false, warnT: 0, aim: null, bAim: null, adsPrev: false, hornT: 0, bump: 0, acc: 0, dmgT: 0 };
     refit(V); F.vehs.push(V); if (!noUnit) attach(V); return V;
   }
   function attach(V) {   // unit sim dibuat saat kendaraan benar-benar ada di medan (kargo pesawat: saat diterjunkan)
-    V.u = war.mk('B', V.id, V.x, V.y, { ctl: true, hdg: V.yaw, face: V.yaw }); V.u.seats = V.D.seats || 1; V.lastHp = V.u.hp; sync(V);   // seats: pasukan bisa menumpang (war.board)
+    V.u = war.mk('B', V.id, V.x, V.y, { ctl: true, hdg: V.yaw, face: V.yaw }); V.u.seats = V.D.seats || 1;
+    if (V.D.hpK) V.u.hp = V.u.hpMax = V.u.hpMax * (F.APACHE.hpK[Q.diff] || 1);   // WOLFPACK: lapis baja diperkuat per tingkat kesulitan persis seperti Shadow Hunter (nyawa dasar 90%) V.lastHp = V.u.hp; sync(V);   // seats: pasukan bisa menumpang (war.board)
   }
   function refit(V) {
     const D = V.D; D.w.forEach((w, i) => { V.mag[i] = w.mag || w.n; V.res[i] = w.n - V.mag[i]; V.cd[i] = 0; });
-    Object.assign(V, { smk: D.smoke ? D.smoke.n : 0, atg: D.atgm ? D.atgm.n : 0, agm: D.agm ? D.agm.n : 0, aam: D.aam ? D.aam.n : 0, bomb: D.bomb ? D.bomb.n : 0, fl: D.flare ? D.flare.n : 0, relT: 0 });
+    Object.assign(V, { smk: D.smoke ? D.smoke.n : 0, atg: D.atgm ? D.atgm.n : 0, agm: D.agm ? D.agm.n : 0, aam: D.aam ? D.aam.n : 0, bomb: D.bomb ? D.bomb.n : 0, fl: D.flare ? D.flare.n : 0, hom: D.hom ? D.hom.n : 0, relT: 0 });
     if (V.u) { V.u.hp = V.u.hpMax; V.lastHp = V.u.hp; }
   }
   function sync(V) {
@@ -128,6 +129,12 @@
       CR.push(pl); V.arr = { k: 'drop', pad, t: 0, pl, ph: 'wait', hd };
       return (R + DROP.D) / DROP.spd + 10;
     },
+    base(id, D) {   // WOLFPACK: hanya muncul di HANGGAR MARKAS — pintu geser terbuka lalu pesawat taksi keluar ke depan pintu
+      const B = Q.facB; if (!B) return 0; const b = B.han[0];
+      const V = mkVeh(id, b.sx, b.sy, floorZ(b.sx, b.sy) + VX(id).gear, b.yaw);
+      Object.assign(V, { gnd: true, spd: 0, thr: 0, gear: 1, gearCmd: 1 }); V.arr = { k: 'base', b, t: 0 };
+      return 3.2 + Math.hypot(b.ex - b.sx, b.ey - b.sy) / 5;
+    },
     vtol(id, D, pad) {   // ELANG: masuk dengan kecepatan jelajah, mengerem dengan nosel vektor, roda turun, mendarat tegak
       let R = 2200, hd = null; while (hd === null && R >= 400) { hd = inbound(pad, R); if (hd === null) R -= 300; }
       if (hd === null) { hd = fromBase(pad); R = 400; }
@@ -145,6 +152,12 @@
     if (st === 'in') return { ok: false, msg: 'f_vh_busy' };
     if (Q.cr < cost) return { ok: false, msg: 'w_e_cr' };
     if (st === 'ok') { refit(F.vehs.find(v => v.id === id)); Q.cr -= cost; A() && A().local('reload', .8); return { ok: true, msg: 'f_vh_refd' }; }
+    if (D.arr === 'base') {   // WOLFPACK: tidak datang ke operator — disiapkan di hanggar markas
+      if (!Q.facB) return { ok: false, msg: 'f_vh_nospot' };
+      if (instant) { const b = Q.facB.han[0], V = mkVeh(id, b.ex, b.ey, floorZ(b.ex, b.ey) + VX(id).gear, b.yaw); Object.assign(V, { gnd: true, spd: 0, thr: 0 }); b.door = 1; arrived(V); Q.cr -= cost; return { ok: true, msg: 'f_vh_refd', eta: 0 }; }
+      START.base(id, D); Q.cr -= cost; Q.stats.dep++;
+      const b = Q.facB.han[0]; return { ok: true, msg: 'f_wf_call', eta: Math.round(Math.hypot(b.ex - P.x, b.ey - P.y)) };
+    }
     const pad = padSpot(D); if (!pad) return { ok: false, msg: 'f_vh_nospot' };
     if (instant) { const V = mkVeh(id, pad[0], pad[1], F.hAt(pad[0], pad[1]) + (D.arr === 'vtol' ? VX(id).gear : 0), P.yaw); arrived(V); Q.cr -= cost; return { ok: true, msg: 'f_vh_refd', eta: 0 }; }
     const eta = START[D.arr](id, D, pad); if (!eta) return { ok: false, msg: 'f_vh_nospot' };
@@ -154,11 +167,19 @@
   function arrived(V) {
     V.st = 'ready'; V.arr = null; V.hide = false;
     if (Math.hypot(V.x - P.x, V.y - P.y) < 400) F.msg(Tt('f_vh_arr', { u: vname(V) }), 'g');
+    else if (V.D.arr === 'base') F.msg(Tt('f_wf_ready', { s: Math.round(Math.hypot(V.x - P.x, V.y - P.y)) }), 'g');
     A() && A().local('obj', .7);
   }
 
   /* ---------- kedatangan ---------- */
   const ARR = {
+    base(V, dt) {   // pintu hanggar terbuka ±4 dtk, lalu taksi lurus keluar sampai di depan pintu (apron)
+      const a = V.arr, b = a.b; a.t += dt; b.door = Math.min(1, b.door + dt / 4);
+      if (a.t < 3.2) return;
+      const d = Math.hypot(b.ex - V.x, b.ey - V.y); V.spd = Math.min(6, d * .5 + .4);
+      V.x += Math.cos(V.yaw) * V.spd * dt; V.y += Math.sin(V.yaw) * V.spd * dt; V.z = floorZ(V.x, V.y) + VX(V.id).gear; V.vx = Math.cos(V.yaw) * V.spd; V.vy = Math.sin(V.yaw) * V.spd;
+      if (d < .8 || a.t > 30) { V.spd = 0; V.vx = V.vy = 0; arrived(V); }
+    },
     drive(V, dt) {
       const a = V.arr, dx = a.pad[0] - V.x, dy = a.pad[1] - V.y, d = Math.hypot(dx, dy), sp = Math.hypot(V.vx, V.vy); a.t += dt;
       const err = wrapPi(Math.atan2(dy, dx) - V.yaw), near = d < 24;
@@ -437,6 +458,90 @@
     }
   }
 
+  /* ---------- v3.0 WOLFPACK (A-10): pesawat sayap tetap ----------
+     DARAT: W/S = tuas gas (taksi pelan, ±13 m/dtk), SHIFT = tenaga lepas landas (dorongan penuh, makin cepat), A/D = kemudi roda depan,
+     SPASI = rem roda, S saat diam = didorong mundur pelan. Di Vr (±187 km/j) tarik bidikan ke atas → hidung terangkat → lepas landas.
+     UDARA: mouse = arah hidung (seperti mode jet ELANG), W/S gas, SHIFT tenaga penuh; terlalu lambat = STALL (hidung jatuh, pesawat tenggelam);
+     roda naik otomatis setelah lepas landas & turun otomatis saat mendekat pelan & rendah ([G] manual). Menyentuh tanah dengan roda turun,
+     turun pelan, sayap datar = MENDARAT; selain itu hancur. Landasan/apron mulus, rumput & tanah memperlambat. */
+  function onRwy(x, y) {
+    const B = Q.facB; if (B) { const R = B.run, A2 = B.apron; if (x > R.x0 - 6 && x < R.x1 + 6 && Math.abs(y - R.y) < R.hw + 3) return true; if (x > A2[0] - 3 && x < A2[2] + 3 && y > A2[1] - 3 && y < A2[3] + 45) return true; }
+    const R2 = Q.fac && Q.fac.run; return !!(R2 && Math.abs(x - R2.x) < R2.hw + 3 && y > R2.y0 && y < R2.y1);
+  }
+  function fwGround(V, dt, I) {
+    const D = V.D, gh = VX(V.id).gear;
+    if (I.f) V.thr = Math.min(1, V.thr + dt * .6); if (I.b && V.spd > .2) V.thr = Math.max(0, V.thr - dt * .9);
+    const toga = !!I.sprint && (V.thr > .05 || !!I.f), brake = !!I.jump || (I.b && V.thr <= 0 && V.spd > .3), rough = !onRwy(V.x, V.y), ws0 = Math.abs(V.spd);
+    let a;
+    if (toga) { V.thr = Math.max(V.thr, .9); a = D.tko * (1 - V.spd / (D.max * 1.1)); }   // tenaga lepas landas: dorongan besar yang makin melemah mendekati laju puncak
+    else a = clamp((D.taxi * V.thr - V.spd) * .7, -1.1, 2.2);                          // taksi: laju mengikuti tuas gas (gelinding & hambatan udara memperlambat)
+    if (rough) a -= Math.sign(V.spd) * .55 * Math.min(1, ws0 / 3);
+    if (brake) a = -Math.sign(V.spd) * Math.min(6.5, ws0 / Math.max(dt, 1e-3));
+    if (I.b && V.thr <= 0 && V.spd <= .3 && !toga) a = (-2.5 - V.spd) * 1.5;            // didorong mundur pelan (pushback)
+    V.spd += a * dt; V.toga = toga;
+    const str = (+I.r || 0) - (+I.l || 0), ws = Math.abs(V.spd); V.str = str;
+    V.yr = str * Math.min(.75, ws / 11) * (ws > 20 ? (20 / ws) * (20 / ws) : 1) * (V.spd < 0 ? -1 : 1);   // kemudi roda depan: tajam saat taksi, hanya kemudi arah di laju tinggi
+    V.yaw = wrapPi(V.yaw + V.yr * dt);
+    const c = Math.cos(V.yaw), s = Math.sin(V.yaw), nx = clamp(V.x + c * V.spd * dt, 20, W.WW - 20), ny = clamp(V.y + s * V.spd * dt, 20, W.WH - 20);
+    let blk = false; for (const [f2, l] of [[V.spd >= 0 ? 9.2 : -8.4, 0], [0, 8.7], [0, -8.7], [5, 3], [5, -3]]) { const px = nx + c * f2 - s * l, py = ny + s * f2 + c * l; if (F.solid(px, py) || F.depth(px, py) > .9) { blk = true; break; } }
+    if (blk) {   // menabrak gedung / dinding hanggar / air dalam
+      if (ws > 4) { hurtV(V, (ws - 4) * 35); F.sparks(V.x + c * 8, V.y + s * 8, V.z, 10); A() && A().at('thud', V.x, V.y, 1.4); if (P.veh === V) P.shake = Math.min(1.4, P.shake + ws * .04); }
+      V.spd = -V.spd * .15;
+    } else { V.x = nx; V.y = ny; }
+    V.z = floorZ(V.x, V.y) + gh;
+    const tp = Math.atan2(F.hAt(V.x + c * 6.6, V.y + s * 6.6) - F.hAt(V.x + c * .3, V.y + s * .3), 6.3), tr = Math.atan2(F.hAt(V.x - s * 2.25, V.y + c * 2.25) - F.hAt(V.x + s * 2.25, V.y - c * 2.25), 4.5);
+    const rot = V.spd > D.vr * .9 ? clamp(P.pitch, 0, .24) : 0;   // rotasi: bidikan ditarik ke atas mengangkat hidung
+    V.pit += (tp + rot - V.pit) * Math.min(1, dt * 3) + (rough ? Math.sin(P.time * 23) * .004 * Math.min(1, ws / 10) : 0); V.rol += (-tr * .5 - V.rol) * Math.min(1, dt * 4);
+    V.vx = c * V.spd; V.vy = s * V.spd; V.vz = 0;
+    V.rotHint = V.spd >= D.vr * .95 && rot <= .07;
+    if (V.spd >= D.vr && rot > .07) {   // LEPAS LANDAS
+      V.gnd = false; V.vz = V.spd * Math.sin(V.pit); V.z += .05; V.gearCmd = 1; V.gearMan = false;
+      if (P.veh === V) { F.msg(Tt('f_wf_air'), 'g'); A() && A().local('switch', .5); }
+    }
+    if (rough && ws > 6 && Math.random() < dt * 14) F.emit('dust', V.x - c * 2 + rand(-3, 3), V.y - s * 2 + rand(-3, 3), V.z - gh + .2, { vz: rand(.3, 1.2), life: rand(.6, 1.1), s0: 1, s1: 3, col: [160, 144, 112], a: .45, drag: 1.2 });
+  }
+  function fwFly(V, dt, I) {
+    if (V.gnd) { fwGround(V, dt, I); return; }
+    const D = V.D, gh = VX(V.id).gear, want = F.aimVec(P.yaw, P.pitch), edge = V.x < 160 || V.y < 160 || V.x > W.WW - 160 || V.y > W.WH - 160;
+    let wpch = Math.asin(clamp(want[2], -1, 1));
+    const agl = V.z - floorZ(V.x, V.y) - gh;
+    if (I.f) V.thr = Math.min(1, V.thr + dt * .6); if (I.b) V.thr = Math.max(0, V.thr - dt * .6);
+    const T = I.sprint ? 1.25 : V.thr, tgt = D.vs * .8 + (D.max - D.vs * .8) * T; V.toga = !!I.sprint;
+    V.spd = Math.max(8, V.spd + clamp((tgt - V.spd) * .3, -6, 3.2) * dt - Math.sin(V.pit) * 9.8 * dt);   // dorongan mesin terbatas (±0,4 g), bukan langsung melonjak   // menanjak memperlambat, menukik mempercepat
+    const stall = V.spd < D.vs; if (stall && !V.stall && P.veh === V) A() && A().local('lock', .9); V.stall = stall;
+    if (!V.gearMan) { if (V.gearCmd && agl > 25 && V.vz > 0 && V.spd > D.vr) V.gearCmd = 0; else if (!V.gearCmd && agl < 70 && V.vz < -.5 && V.spd < 95) V.gearCmd = 1; }
+    V.gear += ((V.gearCmd ? 1 : 0) - V.gear) * Math.min(1, dt * .7);
+    let low = 1e9; for (const k of [.5, 1, 1.6, 2.4]) { const ax = clamp(V.x + V.vx * k, 0, W.WW - 1), ay = clamp(V.y + V.vy * k, 0, W.WH - 1); low = Math.min(low, V.z + V.vz * k - floorZ(ax, ay) - gh); }
+    V.pull = V.gear < .5 && low < 22 && !stall; if (V.pull) wpch = Math.max(wpch, .3);   // roda terlipat & tanah di depan: tarik naik otomatis. Roda turun = boleh mendarat
+    else if (V.z > F.hAt(V.x, V.y) + D.ceil - 90) wpch = Math.min(wpch, -.04);
+    if (stall) wpch = Math.min(wpch, -.28);   // stall: hidung jatuh sendiri
+    const wy = edge ? Math.atan2(W.WH / 2 - V.y, W.WW / 2 - V.x) : Math.atan2(want[1], want[0]);
+    if (edge && !V.edge && P.veh === V) F.msg(Tt('f_vh_edge'), 'w'); V.edge = edge;
+    const rate = D.turn * clamp(V.spd / 110, .45, 1.1) * (stall ? .4 : 1), mx = (+I.r || 0) - (+I.l || 0);
+    V.yr += (clamp(wrapPi(wy - V.yaw) * 2, -rate, rate) + mx * .3 - V.yr) * Math.min(1, dt * 3.2); V.yaw = wrapPi(V.yaw + V.yr * dt);
+    V.pit = clamp(V.pit + clamp((wpch - V.pit) * 2, -rate, rate) * dt, -1.25, 1.25);
+    const cp = Math.cos(V.pit), sink = stall ? (1 - V.spd / D.vs) * 16 + 2 : 0;
+    V.vx = Math.cos(V.yaw) * cp * V.spd; V.vy = Math.sin(V.yaw) * cp * V.spd; V.vz = Math.sin(V.pit) * V.spd - sink;
+    V.rol += (clamp(-V.yr * 1.05 - mx * .2, -1.2, 1.2) - V.rol) * Math.min(1, dt * 2.6);
+    V.x = clamp(V.x + V.vx * dt, 20, W.WW - 20); V.y = clamp(V.y + V.vy * dt, 20, W.WH - 20);
+    V.z = Math.min(V.z + V.vz * dt, F.hAt(V.x, V.y) + D.ceil);
+    const fz = floorZ(V.x, V.y) + gh;
+    if (V.z <= fz) {   // menyentuh tanah: MENDARAT bila roda turun, turun pelan, sayap datar & hidung tidak menukik — selain itu hancur
+      const ok = V.gear > .85 && V.vz > -9 && Math.abs(V.rol) < .45 && V.pit > -.22 && V.pit < .45 && !F.water(V.x, V.y) && fz - V.z < 3;
+      if (!ok) { hurtV(V, 1e6); V.z = fz; return; }
+      if (V.vz < -4.5) hurtV(V, (-V.vz - 4.5) * 90);
+      V.z = fz; V.gnd = true; V.spd = Math.hypot(V.vx, V.vy); V.vz = 0; V.yr = 0; V.gearMan = false; V.stall = false;
+      F.puff(V.x, V.y, fz - gh + .3, 8, [170, 170, 166], 2.5); A() && A().at('thud', V.x, V.y, 1.2);
+      if (P.veh === V) { F.msg(Tt('f_wf_land'), 'g'); P.shake = Math.min(1, P.shake + .25); }
+    }
+  }
+  function fwIdle(V, dt) {   // tanpa pilot di darat: mengerem sampai berhenti
+    const gh = VX(V.id).gear; V.thr = 0; V.spd *= Math.max(0, 1 - dt * 1.4); if (Math.abs(V.spd) < .15) V.spd = 0;
+    const c = Math.cos(V.yaw), s = Math.sin(V.yaw), nx = V.x + c * V.spd * dt, ny = V.y + s * V.spd * dt;
+    if (!F.solid(nx + c * 9, ny + s * 9)) { V.x = nx; V.y = ny; } else V.spd = 0;
+    V.z = floorZ(V.x, V.y) + gh; V.vx = c * V.spd; V.vy = s * V.spd; V.vz = 0; V.pit *= .9; V.rol *= .9; V.gear = 1;
+  }
+
   /* ---------- kamera ---------- */
   function camPose(V) {
     const v = F.aimVec(P.yaw, P.pitch), C = VX(V.id), zm = F.in.ads && !V.air;
@@ -445,7 +550,7 @@
     return { x, y, z: Math.max(pz + 1.4 - v[2] * D, F.hAt(x, y) + 1.3), v };
   }
   F.vehCamera = function () {
-    const V = P.veh, c = camPose(V), sh = (Math.random() - .5) * P.shake * .02, zm = F.in.ads && !V.air;
+    const V = P.veh, c = camPose(V), sh = (Math.random() - .5) * P.shake * F.shakeK * .02, zm = F.in.ads && !V.air;
     F.camHide = c.fp ? V.u : null;
     return { x: c.x, y: c.y, z: c.z, yaw: P.yaw + sh, pitch: P.pitch + sh, fov: (zm ? 24 : c.fp ? 62 : 74) * D2R };
   };
@@ -458,7 +563,7 @@
     V.aim = { x: c.x + v[0] * hit.t, y: c.y + v[1] * hit.t, z: c.z + v[2] * hit.t, u: hit.u };
     V.aim.d = Math.hypot(V.aim.x - V.x, V.aim.y - V.y);
     if (V.air) {   // titik tumbuk kanon sebenarnya (lingkaran HUD): di luar jangkauan gimbal peluru lurus ke depan hidung
-      locks(V, c, v, dt); const w = V.D.w[0], { m, d } = muzzle(V, w), r = F.aimRay(m[0], m[1], m[2], d, w.rng);
+      if (V.D.fw) homLocks(V, c, v, dt); else locks(V, c, v, dt); const w = V.D.w[0], { m, d } = muzzle(V, w), r = F.aimRay(m[0], m[1], m[2], d, w.rng);
       V.bAim = r.t < w.rng ? [m[0] + d[0] * r.t, m[1] + d[1] * r.t, m[2] + d[2] * r.t] : null; return;
     }
     const C = VX(V.id), X = MX(), pv = X.ap(frame(V), [C.tur, 0, 0]), gp = X.ap(turFrame(V), C.gp), w = V.D.w[V.wi];
@@ -502,10 +607,40 @@
     if (!was && V.aaT >= S.lock) F.msg(Tt('f_vh_aamlock'), 'g');
   }
 
+  function homLocks(V, c, v, dt) {   // WOLFPACK: pencari rudal mengunci OTOMATIS sampai 6 sasaran dalam kerucut bidikan (kendaraan, bangunan & pesawat didahulukan dari infanteri)
+    const H = V.D.hom, L = V.hl, cand = [];
+    for (let i = L.length - 1; i >= 0; i--) { const q = L[i], u = q.u; if (u.dead || u.chute > 0) { L.splice(i, 1); continue; }   // kunci lama bertahan selama sasaran masih di depan
+      const hb = F.hitbox(u), ex = u.x - c.x, ey = u.y - c.y, ez = hb.z0 + hb.h * .5 - c.z, d = Math.hypot(ex, ey, ez), a = Math.acos(clamp((ex * v[0] + ey * v[1] + ez * v[2]) / Math.max(d, .1), -1, 1));
+      if (d > H.rng * 1.1 || a > H.cone * 1.35) L.splice(i, 1); }
+    if (V.hom > 0 && L.length < H.max) {
+      for (const u of Q.units) {
+        if (u.dead || u.team === 'B' || u.chute > 0 || L.some(q => q.u === u)) continue;
+        const hb = F.hitbox(u), ex = u.x - c.x, ey = u.y - c.y, ez = hb.z0 + hb.h * .5 - c.z, d = Math.hypot(ex, ey, ez); if (d > H.rng || d < 60) continue;
+        const a = Math.acos(clamp((ex * v[0] + ey * v[1] + ez * v[2]) / d, -1, 1)); if (a > H.cone) continue;
+        cand.push({ u, hb, k: a * (F.isHuman(u.type) ? 1.8 : 1) + d / H.rng * .15 });
+      }
+      cand.sort((p, q) => p.k - q.k);
+      for (const q of cand) { if (L.length >= H.max) break; if (seen(c, q.u, q.hb)) L.push({ u: q.u, t: 0 }); }
+    }
+    V.hB = (V.hB || 0) - dt;
+    for (const q of L) { const was = q.t >= H.lock; q.t += dt; if (!was && q.t >= H.lock && V.hB <= 0 && P.veh === V) { V.hB = .08; A() && A().local('lock', .55); } }
+    V.lock = L.length ? L[0].u : null;
+  }
+  function homSalvo(V) {   // [RMB] salvo: satu rudal per sasaran terkunci (maks 6, tiap pilon bergantian kiri-kanan); tanpa kunci = 2 rudal ke titik bidik
+    const H = V.D.hom; if (V.hcd > 0 || V.hq.length) return; if (V.hom <= 0) { A() && A().local('empty', .6); return; }
+    const tg = V.hl.filter(q => q.t >= H.lock).map(q => q.u), n = Math.min(V.hom, tg.length || 2);
+    for (let i = 0; i < n; i++) V.hq.push(tg.length ? tg[i] : null);
+    V.hom -= n; V.hcd = H.cd; V.hs = 0;
+  }
+  function homOne(V, tg) {
+    const C = VX(V.id), p = wp(V, C.hom[V.hpi % 6]), d = MX().ar(frame(V), [1, 0, 0]); V.hpi++;
+    launch(V, 'hom', p, nrm([d[0], d[1], d[2] - .06]), tg, 22); A() && A().local('hellfire', .85);
+  }
+
   /* ---------- senjata ---------- */
   function muzzle(V, w) {   // titik moncong + arah tembak
     const X = MX(), C = VX(V.id);
-    if (V.air) { const m = wp(V, C.gun), n = X.ar(frame(V), [1, 0, 0]), a = V.aim, t = nrm([a.x - m[0], a.y - m[1], a.z - m[2]]); return { m, d: n[0] * t[0] + n[1] * t[1] + n[2] * t[2] > (V.mode === 'jet' ? .985 : .9) ? t : n }; }   // kanon jet: bergimbal ke titik bidik (±10° mode jet, ±25° melayang)
+    if (V.air) { const m = wp(V, C.gun), n = X.ar(frame(V), [1, 0, 0]), a = V.aim, t = nrm([a.x - m[0], a.y - m[1], a.z - m[2]]); return { m, d: n[0] * t[0] + n[1] * t[1] + n[2] * t[2] > (V.mode === 'jet' || V.D.fw ? .985 : .9) ? t : n }; }   // kanon jet: bergimbal ke titik bidik (±10° mode jet, ±25° melayang)
     const G = gunFrame(V); return { m: X.ap(G, w.id === 'COAX' ? C.co : [C.gp[0] + C.mz, C.gp[1], C.gp[2]]), d: X.ar(G, [1, 0, 0]) };
   }
   function fire(V, i) {
@@ -514,13 +649,13 @@
       const sp = w.spread * D2R, v = nrm([d[0] + rand(-sp, sp), d[1] + rand(-sp, sp), d[2] + rand(-sp, sp)]), hit = F.aimRay(m[0], m[1], m[2], v, w.rng);
       const ix = m[0] + v[0] * hit.t, iy = m[1] + v[1] * hit.t, iz = m[2] + v[2] * hit.t, s = src();
       F.tracers.push({ x0: m[0], y0: m[1], z0: m[2], x1: ix, y1: iy, z1: iz, t: 0, life: .1, w: w.tw || .04 });
-      F.emit('flash', m[0], m[1], m[2], { life: .05, s0: .5, s1: 1, col: [255, 220, 140] });
+      if (!w.spin || V.mag[i] % 3 === 0) F.emit('flash', m[0], m[1], m[2], { life: .05, s0: w.spin ? .9 : .5, s1: w.spin ? 1.6 : 1, col: [255, 220, 140] });   // GAU-8: kilatan tiap 3 butir (kolam partikel tidak penuh)
       if (hit.u) { war.hurt(hit.u, F.isHuman(hit.u.type) ? w.dmgI : w.dmgV, F.isHuman(hit.u.type) ? 'small' : 'ap', s); hitMark(hit.u); }
       if (hit.t < w.rng) {
-        if (w.he) { war.explode(ix, iy, w.r, w.dmgI * .5, 'he', s); F.emit('flash', ix, iy, iz + .3, { life: .08, s0: 1, s1: 2.4, col: [255, 210, 140] }); F.puff(ix, iy, iz + .2, 2, [120, 108, 90], 1.6); }
+        if (w.he) { if (w.spin) splash(ix, iy, w.r, w.dmgI * .5, s); else war.explode(ix, iy, w.r, w.dmgI * .5, 'he', s); if (!w.spin || V.mag[i] % 4 === 0) { F.emit('flash', ix, iy, iz + .3, { life: .08, s0: 1, s1: 2.4, col: [255, 210, 140] }); F.puff(ix, iy, iz + .2, w.spin ? 1 : 2, [120, 108, 90], 1.6); } }
         else F.sparks(ix, iy, iz, 3);
       }
-      if (!V.air || V.mag[i] % 2) A() && A().local(w.snd || 'lmg', V.air ? .45 : .55); P.shake = Math.min(.4, P.shake + .02); V.rec = .03;
+      if (!w.spin && (!V.air || V.mag[i] % 2)) A() && A().local(w.snd || 'lmg', V.air ? .45 : .55); P.shake = Math.min(.4, P.shake + (w.spin ? .008 : .02)); V.rec = .03;
     } else if (w.k === 'gl') {   // granat 40 mm: lintasan melengkung, meledak saat menyentuh apa pun
       const sp = w.spread * D2R; F.vp.push({ k: 'gl', w, x: m[0], y: m[1], z: m[2], vx: (d[0] + rand(-sp, sp)) * w.spd + V.vx, vy: (d[1] + rand(-sp, sp)) * w.spd + V.vy, vz: d[2] * w.spd, t: 0 });
       F.emit('flash', m[0], m[1], m[2], { life: .06, s0: .7, s1: 1.3, col: [255, 210, 140] }); F.emit('smoke', m[0], m[1], m[2], { vz: 1, life: .7, s0: .4, s1: 1.4, col: [200, 200, 196], a: .4 });
@@ -533,6 +668,9 @@
       A() && A().at('cannon', V.x, V.y, 1.8); P.shake = Math.min(1.2, P.shake + .5); V.rec = .55; V.pit -= .035 * Math.cos(V.ty - V.yaw); V.rol += .035 * Math.sin(V.ty - V.yaw);
     }
   }
+  function splash(x, y, r, dmg, s) {   // GAU-8: cipratan peluru ledak tanpa efek ledakan war (65 butir/dtk akan memenuhi kolam partikel)
+    for (const t of Q.units) { if (t.dead || t.team === 'B' || Math.abs(t.x - x) > r + 2 || Math.abs(t.y - y) > r + 2) continue; const d = Math.hypot(t.x - x, t.y - y); if (d < r + 2) war.hurt(t, dmg * (1 - .6 * Math.min(1, d / (r + 2))), 'he', s); }
+  }
   function reload(V, i) {
     const w = V.D.w[i]; if (!w.rel || V.relT > 0 || V.res[i] <= 0 || V.mag[i] >= w.mag) return;
     V.relT = w.rel; V.relI = i; A() && A().local('magout', .7);
@@ -541,6 +679,15 @@
     const I = F.in, D = V.D;
     for (let i = 0; i < V.cd.length; i++) V.cd[i] -= dt;
     if (V.relT > 0) { V.relT -= dt; if (V.relT <= 0) { const i = V.relI, w = D.w[i], n = Math.min(w.mag - V.mag[i], V.res[i]); V.mag[i] += n; V.res[i] -= n; A() && A().local('magin', .8); } }
+    if (D.fw) {   // WOLFPACK: GAU-8 berputar dulu (spin dtk) lalu menembak terus-menerus; [RMB] = salvo rudal ke sasaran terkunci
+      const w = D.w[0], on = I.fire && V.mag[0] > 0;
+      V.spin = on ? Math.min(1, V.spin + dt / w.spin) : Math.max(0, V.spin - dt / w.spin * .5); V.sndT -= dt;
+      if (V.spin > 0 && V.sndT <= 0) { V.sndT = .07; A() && A().local(V.spin >= 1 && on ? 'minigun' : 'spin', .55 + .4 * V.spin); }
+      if (on && V.spin >= 1) { V.cd[0] = Math.max(V.cd[0], -dt); while (V.cd[0] <= 0 && V.mag[0] > 0) { fire(V, 0); V.cd[0] += 60 / w.rpm; } }
+      if (I.fire && V.mag[0] <= 0 && !V.dry) { V.dry = true; A() && A().local('empty', .6); } if (!I.fire) V.dry = false;
+      if (I.ads && !V.adsPrev) homSalvo(V);
+      return;
+    }
     const i = V.wi, w = D.w[i], busy = V.relT > 0 && V.relI === i;
     if (I.fire && V.cd[i] <= 0 && !busy) {
       if (V.mag[i] > 0) { fire(V, i); V.cd[i] = w.cd || 60 / w.rpm; }
@@ -571,18 +718,20 @@
     const V = P.veh; if (!V || !V.u || V.u.dead) return;
     const D = V.D;
     if (k === 'R') {
-      if (V.air) {   // rudal udara-udara
+      if (V.air && D.aam) {   // rudal udara-udara
         const S = D.aam; if (V.aaCd > 0) return; if (V.aam <= 0) { A() && A().local('empty', .6); return; }
         if (!V.aaU || V.aaU.dead || V.aaT < S.lock) { F.msg(Tt('f_vh_aamno'), 'c'); A() && A().local('empty', .6); return; }
         V.aam--; V.aaCd = S.cd; const C = VX('VTOL'), sd = V.aam % 2 ? 1 : -1, p = wp(V, [C.aam[0], sd * C.aam[1], C.aam[2] - .2]), d = MX().ar(frame(V), [1, 0, 0]);
         launch(V, 'aam', p, d, V.aaU, 20); A() && A().local('hydra', 1);
-      } else reload(V, V.wi);
+      } else if (!V.air) reload(V, V.wi);
     } else if (D.smoke && k === F.vehSmkKey(V)) {   // tabir asap: pelontar di kubah, awan menutupi kendaraan, rudal yang mengunci kehilangan sasaran
       const S = D.smoke; if (V.smCd > 0) return; if (V.smk <= 0) { A() && A().local('empty', .6); return; }
       V.smk--; V.smCd = S.cd; V.smT = S.dur;
       for (let i = 0; i < 18; i++) { const a = V.ty + rand(-1.4, 1.4), r = rand(5, 20); F.emit('smoke', V.x + Math.cos(a) * r, V.y + Math.sin(a) * r, V.z + 1.5, { vx: Math.cos(a) * rand(1, 4), vy: Math.sin(a) * rand(1, 4), vz: rand(.3, 1.5), life: S.dur * rand(.8, 1.1), s0: 3, s1: 12, col: [214, 214, 208], a: .85, drag: .6 }); }
       for (const p of Q.projs) if (p.kind === 'missile' && !p.done && p.tgt === V.u) { p.tgt = null; p.tx = V.x + rand(-90, 90); p.ty = V.y + rand(-90, 90); }
       F.msg(Tt('f_vh_smoke'), 'g'); A() && A().local('flare', .9);
+    } else if (k === 'G' && D.fw) {   // WOLFPACK: roda pendarat naik / turun (manual)
+      if (V.gnd) return; V.gearCmd = V.gearCmd ? 0 : 1; V.gearMan = true; F.msg(Tt('f_wf_gear', { s: Tt(V.gearCmd ? 'f_wf_gdn' : 'f_wf_gup') }), 'g'); A() && A().local('switch', .6);
     } else if (k === 'G') {
       if (D.atgm) { const T = D.atgm; if (V.acd > 0 || V.aq > 0) return; if (V.atg <= 0) { A() && A().local('empty', .6); return; } V.acd = T.cd; V.aq = Math.min(T.salvo, V.atg); V.as = 0; }
       else if (D.bomb) {   // bom jatuh bebas dari pilon dalam (CCIP di HUD)
@@ -595,7 +744,7 @@
       V.fl--; V.fcd = D.flare.cd; V.flT = D.flare.dur;
       for (let i = 0; i < 16; i++) { const sd = i % 2 ? 1 : -1, c = Math.cos(V.yaw), s = Math.sin(V.yaw); F.emit('fire', V.x, V.y, V.z - .5, { vx: -c * rand(6, 14) - s * sd * rand(8, 18) + V.vx * .6, vy: -s * rand(6, 14) + c * sd * rand(8, 18) + V.vy * .6, vz: rand(-2, 6), life: rand(1.6, 2.4), s0: .9, s1: .5, col: [255, 236, 190], a: .95, g: 5 }); }
       F.msg(Tt('f_ah_flare'), 'g'); A() && A().local('flare', 1);
-    } else if (k === 'X' && V.air) {   // ganti mode melayang ↔ jet
+    } else if (k === 'X' && V.air && D.arr === 'vtol') {   // ganti mode melayang ↔ jet
       if (V.mode === 'hov') {
         if (V.z - floorZ(V.x, V.y) < 15) { F.msg(Tt('f_vh_needalt'), 'c'); A() && A().local('empty', .6); return; }
         V.mode = 'jet'; V.spd = Math.max(V.spd, D.min * .95); V.thr = .35; V.pit = 0; P.pitch = Math.max(P.pitch, .06); F.msg(Tt('f_vh_jet'), 'g');
@@ -612,14 +761,14 @@
       const m = F.vp[i]; m.t += dt;
       if (m.k === 'gl' || m.k === 'sh' || m.k === 'bomb') m.vz -= 9.8 * dt;
       else {   // rudal berpemandu: luncur lurus sesaat lalu berbelok ke sasaran (unit) atau titik bidik
-        const P2 = m.k === 'aam' ? VD.VTOL.aam : m.k === 'agm' ? VD.VTOL.agm : VD.MBT.atgm, tg = m.tg && !m.tg.dead ? m.tg : null;
+        const P2 = m.k === 'hom' ? VD.WOLF.hom : m.k === 'aam' ? VD.VTOL.aam : m.k === 'agm' ? VD.VTOL.agm : VD.MBT.atgm, tg = m.tg && !m.tg.dead ? m.tg : null, hA = m.k === 'hom' && tg && (tg.fly || tg.jet);
         const hb = tg && F.hitbox(tg), tx = tg ? tg.x : m.tx, ty = tg ? tg.y : m.ty, tz = tg ? hb.z0 + hb.h * .5 : m.tz;
-        const lz = m.k === 'aam' ? 0 : Math.min(45, Math.max(0, Math.hypot(tx - m.x, ty - m.y) - 60) * .1);   // rudal darat: lintasan melengkung di atas bukit/gedung lalu menukik ke sasaran
+        const lz = m.k === 'aam' || hA ? 0 : Math.min(45, Math.max(0, Math.hypot(tx - m.x, ty - m.y) - 60) * .1);   // rudal darat: lintasan melengkung di atas bukit/gedung lalu menukik ke sasaran
         const dd = Math.hypot(tx - m.x, ty - m.y, tz - m.z);
-        const sp = Math.min(P2.spd, 50 + m.t * (m.k === 'aam' ? 600 : 260)), want = nrm([tx - m.x, ty - m.y, tz + lz - m.z]), cur = nrm([m.vx, m.vy, m.vz]), k = m.t < .2 ? 0 : Math.min(1, dt * (m.k === 'aam' ? 7 : dd < 160 ? 14 : 4));   // fase akhir: belok tajam ke sasaran
+        const sp = Math.min(P2.spd, 50 + m.t * (m.k === 'aam' ? 600 : m.k === 'hom' ? 420 : 260)), want = nrm([tx - m.x, ty - m.y, tz + lz - m.z]), cur = nrm([m.vx, m.vy, m.vz]), k = m.t < .2 ? 0 : Math.min(1, dt * (m.k === 'aam' || hA ? 7 : dd < 160 ? 14 : m.k === 'hom' ? 5 : 4));   // fase akhir: belok tajam ke sasaran
         if (m.k === 'aam' && !tg) { m.vx = cur[0] * sp; m.vy = cur[1] * sp; m.vz = cur[2] * sp; }
         else { const d = nrm([cur[0] + (want[0] - cur[0]) * k, cur[1] + (want[1] - cur[1]) * k, cur[2] + (want[2] - cur[2]) * k]); m.vx = d[0] * sp; m.vy = d[1] * sp; m.vz = d[2] * sp; }
-        if (m.t % .03 < dt) F.emit('smoke', m.x, m.y, m.z, { life: 1.4, s0: .4, s1: 1.6, col: [228, 228, 222], a: .5 });
+        if (m.t % (m.k === 'hom' ? .07 : .03) < dt) F.emit('smoke', m.x, m.y, m.z, { life: m.k === 'hom' ? .9 : 1.4, s0: .4, s1: 1.6, col: [228, 228, 222], a: .5 });   // salvo 6 rudal: jejak lebih jarang
       }
       let hit = null; const n = Math.max(1, Math.ceil(Math.hypot(m.vx, m.vy, m.vz) * dt / 2.5));
       for (let j = 0; j < n && !hit; j++) {
@@ -630,7 +779,7 @@
           if (u.dead || u.team === 'B' || u.chute > 0 || Math.abs(u.x - m.x) > 12 || Math.abs(u.y - m.y) > 12) continue;
           const hb = F.hitbox(u); if (Math.hypot(u.x - m.x, u.y - m.y) < hb.r + .5 && m.z > hb.z0 - .5 && m.z < hb.z0 + hb.h + .5) { hit = { u }; break; }
         }
-        if (!hit && m.k !== 'gl' && m.k !== 'sh' && m.tg && !m.tg.dead) { const hb = F.hitbox(m.tg); if (Math.hypot(m.tg.x - m.x, m.tg.y - m.y, hb.z0 + hb.h * .5 - m.z) < (m.k === 'aam' ? VD.VTOL.aam.fuze : 3.3) + hb.r * .5) hit = { u: m.tg }; }   // sumbu jarak dekat (rudal terkunci)
+        if (!hit && m.k !== 'gl' && m.k !== 'sh' && m.tg && !m.tg.dead) { const hb = F.hitbox(m.tg); if (Math.hypot(m.tg.x - m.x, m.tg.y - m.y, hb.z0 + hb.h * .5 - m.z) < (m.k === 'aam' ? VD.VTOL.aam.fuze : m.k === 'hom' ? VD.WOLF.hom.fuze : 3.3) + hb.r * .5) hit = { u: m.tg }; }   // sumbu jarak dekat (rudal terkunci)
       }
       if (!hit && m.t < (m.k === 'bomb' ? 40 : 9)) continue;
       F.vp.splice(i, 1); boom(m, hit && hit.u);
@@ -649,6 +798,9 @@
       F.boom3d(m.x, m.y, gz + 1, 22, true); A() && A().boom(m.x, m.y, 22); F.shock.push({ x: m.x, y: m.y, R: B.r * 2.4, t: 0, life: .7 });
       for (let i = 0; i < 3; i++) F.scorch.push({ x: m.x + rand(-4, 4), y: m.y + rand(-4, 4), r: rand(6, 9), t: 0, life: 20 });
       if (Math.hypot(m.x - P.x, m.y - P.y) < 300) P.shake = Math.min(1.5, P.shake + .6); return;
+    } else if (m.k === 'hom') {   // rudal homing WOLFPACK: hulu ledak tandem, juga menghancurkan pesawat
+      const R = VD.WOLF.hom; if (u) { war.hurt(u, R.dmg, u.fly || u.jet ? 'aa' : 'ap', s); hitMark(u); } war.explode(m.x, m.y, R.r, R.dmg * .35, 'he', s);
+      A() && A().boom(m.x, m.y, 8); if (!air) F.boom3d(m.x, m.y, m.z, 6);
     } else {   // rudal antitank / udara-darat: hulu ledak tandem
       const R = m.k === 'agm' ? VD.VTOL.agm : VD.MBT.atgm; if (u) { war.hurt(u, R.dmg, 'ap', s); hitMark(u); } war.explode(m.x, m.y, R.r, R.dmg * .35, 'he', s);
       A() && A().boom(m.x, m.y, 8);
@@ -685,15 +837,15 @@
   F.vehExit = function () {
     const V = P.veh; if (!V) return;
     P.veh = null; F.camHide = null; F.in.fire = F.in.ads = false;
-    const agl = V.air ? V.z - floorZ(V.x, V.y) - VX('VTOL').gear * V.gear : 0;
-    if (V.air && (agl > 12 || (agl > 1.5 && (V.mode === 'jet' || Math.hypot(V.vx, V.vy) > 25)))) {   // kursi lontar (tinggi, atau rendah tapi melaju kencang): terlempar ke atas lalu parasut
+    const agl = V.air ? V.z - floorZ(V.x, V.y) - VX(V.id).gear * V.gear : 0, fwAir = V.D.fw && !V.gnd;
+    if (V.air && (fwAir || (!V.D.fw && (agl > 12 || (agl > 1.5 && (V.mode === 'jet' || Math.hypot(V.vx, V.vy) > 25)))))) {   // kursi lontar (tinggi, atau rendah tapi melaju kencang): terlempar ke atas lalu parasut
       Object.assign(P, { x: V.x, y: V.y, z: V.z + 2, vx: V.vx * .3, vy: V.vy * .3, vz: 14, grounded: false, yaw: P.yaw, pitch: 0, swT: .4, spd: 0 });
       P.chute = 2; P.bail = true; A() && A().local('chute', .8); A() && A().boom(V.x, V.y, 2); F.msg(Tt('f_vh_eject'), 'w');
-      V.st = V.mode === 'jet' ? 'crash' : 'auto';
+      V.st = V.mode === 'jet' || V.D.fw ? 'crash' : 'auto';
     } else {
       const [x, y] = seatOut(V);
       Object.assign(P, { x, y, z: F.hAt(x, y), vx: V.vx * .3, vy: V.vy * .3, vz: 0, grounded: true, pitch: 0, swT: .4, spd: 0 });
-      if (V.air && agl > .5) V.st = 'auto';
+      if (V.air && !V.D.fw && agl > .5) V.st = 'auto';
     }
     P.unit.x = P.x; P.unit.y = P.y;
     if (V.u) { V.u.paxAir = V.air && agl > 6; F.paxOut(V.u); }   // pasukan penumpang ikut turun bersama operator
@@ -718,7 +870,7 @@
   F.vehPilot = function (dt) {   // dipanggil F.update saat P.veh
     const V = P.veh; if (!V || !V.u || V.u.dead) return;
     const I = F.in;
-    if (V.air) jetFly(V, dt, I);
+    if (V.air) (V.D.fw ? fwFly : jetFly)(V, dt, I);
     else { drive(V, dt, (+I.f || 0) - (+I.b || 0), (+I.r || 0) - (+I.l || 0), !!I.jump, !!I.sprint); contact(V, dt); }
     if (V.u.dead) return;
     Object.assign(P, { x: V.x, y: V.y, z: V.z + 1, vx: V.vx, vy: V.vy, vz: 0, spd: Math.hypot(V.vx, V.vy), grounded: true, sprint: false, ads: 0, crouch: false, swim: false });
@@ -727,6 +879,7 @@
   };
   function idle(V, dt) {   // tanpa pengemudi
     if (!V.air) { drive(V, dt, 0, 0, true, false); return; }
+    if (V.D.fw && V.st !== 'crash') { fwIdle(V, dt); return; }
     const C = VX('VTOL'), fl = floorZ(V.x, V.y);
     if (V.st === 'auto') {   // pilot melompat saat melayang: turun pelan lalu mendarat
       V.vx *= Math.max(0, 1 - dt); V.vy *= Math.max(0, 1 - dt); V.vz = -5; V.gear += (1 - V.gear) * Math.min(1, dt); V.noz += (Math.PI / 2 - V.noz) * Math.min(1, dt);
@@ -748,7 +901,8 @@
       const V = F.vehs[i];
       if (V.gen !== Q.g) { if (P.veh === V) { P.veh = null; F.camHide = null; } if (V.arr && V.arr.h) propDel(V.arr.h); F.vehs.splice(i, 1); continue; }
       if (V.u && V.u.dead) { if (V.arr && V.arr.h) propDel(V.arr.h); down(V); F.vehs.splice(i, 1); continue; }
-      V.smT -= dt; V.smCd -= dt; V.mcd -= dt; V.aaCd -= dt; V.bcd -= dt; V.fcd -= dt; V.flT -= dt; V.acd -= dt; V.hornT -= dt; V.rec *= Math.max(0, 1 - dt * 6);
+      V.smT -= dt; V.smCd -= dt; V.mcd -= dt; V.aaCd -= dt; V.bcd -= dt; V.fcd -= dt; V.flT -= dt; V.acd -= dt; V.hornT -= dt; V.hcd -= dt; V.rec *= Math.max(0, 1 - dt * 6);
+      if (V.hq.length) { V.hs -= dt; if (V.hs <= 0) { V.hs = V.D.hom.gap; const tg = V.hq.shift(); homOne(V, tg && !tg.dead ? tg : null); } }   // salvo rudal WOLFPACK beruntun
       if (V.aq > 0) { V.as -= dt; if (V.as <= 0) { V.as = V.D.atgm.gap; V.aq--; atgmOne(V); } }   // salvo rudal antitank
       if (V.st === 'in') ARR[V.arr.k](V, dt);
       else if (P.veh !== V) { idle(V, dt); if (!V.air) contact(V, dt); }

@@ -614,7 +614,10 @@
     HMV: { tur: -.35, gp: [-.2, 0, 2.48], mz: 1.36, eye: [-.95, 0, 2.98], L: 2.5, W: 1.15 },
     APC: { tur: -.6, gp: [-.45, 0, 2.66], mz: .9, eye: [-1, 0, 3.1], L: 3.15, W: 1.32 },
     MBT: { tur: -.45, gp: [1.55, 0, 2.45], mz: 6.2, co: [2.45, .41, 3.12], eye: [.2, -.85, 3.3], rk: [-.45, -1.25, 3.6], L: 3.95, W: 1.9 },
-    VTOL: { noz: [-7.9, 0, -.05], gz: -.6, gear: 2.33, gun: [5.3, .78, .32], eye: [4.5, 0, 1.2], agm: [-.4, 3.4, -.78], aam: [-1.8, 6.1, -.05], bomb: [-1, 2.2, -.82], L: 9.6, W: 6.4 }
+    VTOL: { noz: [-7.9, 0, -.05], gz: -.6, gear: 2.33, gun: [5.3, .78, .32], eye: [4.5, 0, 1.2], agm: [-.4, 3.4, -.78], aam: [-1.8, 6.1, -.05], bomb: [-1, 2.2, -.82], L: 9.6, W: 6.4 },
+    // v3.0 WOLFPACK (A-10): gun = moncong GAU-8, gear = tinggi roda (alas -> titik asal), gz = engsel roda, hom = 6 pilon rudal (3 per sayap, urutan luncur dalam->luar bergantian kiri-kanan)
+    WOLF: { gun: [9.05, 0, -.24], eye: [5.55, 0, 1.17], gear: 2.05, gz: -.75, L: 8.3, W: 8.8,
+      hom: [[1.45, 3.2, -1.03], [1.45, -3.2, -1.03], [1.45, 4.6, -.92], [1.45, -4.6, -.92], [1.45, 6.0, -.75], [1.45, -6.0, -.75]] }
   };
   MD.vehicle = function (type, palK) {
     const p = MD.VPAL[palK], m = new Mesh(), b = p.body, d = p.dark, cam = p.camo;
@@ -913,7 +916,7 @@
     }
     return m.done();
   };
-  MD.GEARZ = { FGT: -.6, CAS: -.6, BMB: -1.2, UCAV: -.2 };   // engsel roda pendarat (tulang 5, terlipat saat terbang); roda menapak pada z = −gh
+  MD.GEARZ = { FGT: -.6, CAS: -.6, BMB: -1.2, UCAV: -.2, WOLF: -.75 };   // engsel roda pendarat (tulang 5, terlipat saat terbang); roda menapak pada z = −gh
   function gearSet(m, g) {
     m.bone(5);
     for (const [x, y] of [g.n].concat(g.w)) {
@@ -927,6 +930,7 @@
     const paint = (c, s) => m.set(c, s || .25, K.PAINT, cam);
     m.bone(0);
     if (type === 'AH64') ghost(m);   // killstreak operator: AH-64X SHADOW HUNTER
+    else if (type === 'WOLF') wolf(m);   // v3.0 kendaraan operator: A-10 WOLFPACK hitam
     else if (type === 'ATK2') apache(m, red ? [92, 96, 100] : [70, 78, 60], d, paint);
     else if (type === 'VTOL') {   // jet tempur VTOL "ELANG" (foto pengguna): hidung panjang, kanard, sayap sapu, dua sirip tegak miring keluar, saluran udara di sisi kokpit,
       // nosel vektor dorong (tulang 2, berputar ke bawah saat melayang), roda pendarat (tulang 5, terlipat saat terbang), rudal & bom di sayap
@@ -1147,6 +1151,84 @@
       m.face([P(r1, a, -h), P(r1, b, -h), P(r1, b, h), P(r1, a, h)], out); m.face([P(r0, a, -h), P(r0, b, -h), P(r0, b, h), P(r0, a, h)], mul(out, -1));
       m.face([P(r0, a, h), P(r1, a, h), P(r1, b, h), P(r0, b, h)], [0, 1, 0]); m.face([P(r0, a, -h), P(r1, a, -h), P(r1, b, -h), P(r0, b, -h)], [0, -1, 0]);
     }
+  }
+  /* v3.0 WOLFPACK — A-10 Thunderbolt II bercat hitam (mengikuti foto rujukan pengguna), ukuran asli ±16,3 m × 17,5 m:
+     badan bersisi rata, kanopi gelembung tinggi di depan, meriam putar GAU-8 menonjol di bawah hidung, sayap lurus rendah dengan panel luar
+     ber-dihedral & ujung menukik, rumah roda utama besar di bawah sayap, 2 mesin turbofan di pilon pendek di atas badan belakang, stabilator
+     datar dengan sirip tegak kembar di ujungnya, 6 pilon rudal (3 per sayap), mulut hiu di hidung. Tanpa lambang angkatan udara mana pun. */
+  function wolf(m) {
+    const BK = [27, 28, 30], DK = [12, 12, 13], GM = [62, 64, 68], GL = [18, 24, 30];
+    const blk = (s) => m.set(BK, s || .38, K.PAINT, 0), gm = () => m.set(GM, .5, K.METAL), dk = () => m.set(DK, .1, K.PLAIN);
+    const fc = (pts, n) => { const c = crs(sub(pts[1], pts[0]), sub(pts[2], pts[0])); m.face(dot(c, n) < 0 ? pts.slice().reverse() : pts, n); };
+    // pelat bersayap: tepi depan & belakang di akar (y0) dan ujung (y1), tebal th0->th1, tinggi tengah z0->z1; sd = sisi
+    const slab = (sd, y0, le0, te0, z0, th0, y1, le1, te1, z1, th1) => {
+      const P = (x, y, z) => [x, sd * y, z], h0 = th0 / 2, h1 = th1 / 2, dz = z1 - z0, dy = y1 - y0, up = nrm([0, -sd * dz, dy]), dn = mul(up, -1);
+      const T = [P(le0, y0, z0 + h0), P(le1, y1, z1 + h1), P(te1, y1, z1 + h1 * .4), P(te0, y0, z0 + h0 * .4)], B = [P(le0, y0, z0 - h0), P(le1, y1, z1 - h1), P(te1, y1, z1 - h1 * .4), P(te0, y0, z0 - h0 * .4)];
+      fc(T, up); fc(B, dn);
+      fc([T[0], T[1], B[1], B[0]], [1, 0, 0]); fc([T[3], T[2], B[2], B[3]], [-1, 0, 0]); fc([T[1], T[2], B[2], B[1]], [0, sd, 0]);
+    };
+    // badan: penampang 8 titik dari hidung (x +8,35) ke ekor (x -8,45)
+    const S = [[8.35, sec8(.05, 0, .09, -.08, .1, -.18, .06, -.3)], [8.0, sec8(.2, .28, .36, .08, .42, -.2, .26, -.48)], [7.3, sec8(.3, .55, .58, .25, .64, -.22, .4, -.7)],
+      [6.4, sec8(.36, .78, .7, .42, .76, -.2, .48, -.8)], [5.0, sec8(.4, .9, .76, .48, .82, -.2, .52, -.86)], [3.0, sec8(.42, .95, .78, .5, .84, -.22, .54, -.88)],
+      [0, sec8(.42, .9, .76, .48, .82, -.25, .54, -.88)], [-2.8, sec8(.4, .88, .72, .45, .76, -.2, .5, -.78)], [-5.0, sec8(.32, .82, .56, .45, .6, -.05, .38, -.5)],
+      [-6.8, sec8(.22, .78, .36, .55, .38, .25, .24, .05)], [-8.0, sec8(.12, .74, .18, .62, .19, .45, .12, .3)], [-8.45, sec8(.04, .7, .06, .64, .07, .55, .04, .48)]];
+    m.bone(0); blk(); loft(m, S);
+    const wAt = x => { for (let i = 0; i < S.length - 1; i++) if (x <= S[i][0] && x >= S[i + 1][0]) { const k = (S[i][0] - x) / (S[i][0] - S[i + 1][0]); return S[i][1][2][0] + (S[i + 1][1][2][0] - S[i][1][2][0]) * k; } return .1; };
+    // punggung di belakang kanopi + kanopi gelembung (kaca gelap) + bingkai kaca depan
+    blk(); m.sph([3.9, 0, .9], [1.7, .42, .36], 12, 5, { hemi: true });
+    m.set(GL, .97, K.GLASS).sph([5.7, 0, .9], [1.3, .5, .6], 14, 6, { hemi: true });
+    gm(); m.cyl([6.82, -.45, .92], [6.82, .45, .92], .035, .035, 5); m.cyl([6.82, -.45, .92], [6.25, 0, 1.4], .03, .03, 4); m.cyl([6.82, .45, .92], [6.25, 0, 1.4], .03, .03, 4); m.cyl([4.6, -.48, .92], [4.6, .48, .92], .03, .03, 4);
+    // kokpit (terlihat dari kursi pilot): panel instrumen + layar hijau + kaca HUD
+    m.set([22, 23, 25], .1, K.PLAIN).box([6.42, 0, 1.0], [.14, .4, .1]); m.set([40, 150, 96], 0, K.EMIT).box([6.27, -.2, 1.03], [.005, .09, .05]).box([6.27, .2, 1.03], [.005, .09, .05]);
+    m.set([60, 90, 80], .95, K.GLASS).box([6.5, 0, 1.17], [.01, .14, .08]); m.set([30, 31, 33], .2, K.PLAIN).box([5.25, 0, 1.0], [.22, .26, .12]); m.set([120, 24, 20], .2, K.PLAIN).box([5.05, 0, 1.28], [.06, .15, .06]);
+    // meriam GAU-8: selongsong 7 laras di bawah hidung
+    gm(); m.cyl([8.1, 0, -.24], [9.05, 0, -.24], .18, .17, 10); dk(); m.cyl([9.04, 0, -.24], [9.07, 0, -.24], .13, .13, 8);
+    gm(); for (let i = 0; i < 7; i++) { const a = i / 7 * 6.283; m.cyl([8.9, Math.cos(a) * .1, -.24 + Math.sin(a) * .1], [9.12, Math.cos(a) * .1, -.24 + Math.sin(a) * .1], .025, .025, 4); }
+    // mulut hiu di kedua sisi hidung: bibir merah, gigi putih
+    for (const sd of [-1, 1]) {
+      const Y = x => sd * (wAt(x) + .012), mouth = [[7.95, -.17], [7.5, -.08], [6.9, -.06], [6.75, -.2], [6.95, -.36], [7.6, -.38], [7.95, -.3]];
+      m.set([150, 22, 18], .2, K.PLAIN); for (let i = 1; i < mouth.length - 1; i++) fc([[mouth[0][0], Y(mouth[0][0]), mouth[0][1]], [mouth[i][0], Y(mouth[i][0]), mouth[i][1]], [mouth[i + 1][0], Y(mouth[i + 1][0]), mouth[i + 1][1]]], [0, sd, 0]);
+      m.set([226, 226, 220], .2, K.PLAIN);
+      for (let i = 0; i < 6; i++) { const x0 = 7.75 - i * .16, x1 = x0 - .14, xm = (x0 + x1) / 2; fc([[x0, Y(x0) + sd * .004, -.09 - i * .005], [x1, Y(x1) + sd * .004, -.08 - i * .005], [xm, Y(xm) + sd * .004, -.17]], [0, sd, 0]); fc([[x0, Y(x0) + sd * .004, -.35], [x1, Y(x1) + sd * .004, -.35], [xm, Y(xm) + sd * .004, -.27]], [0, sd, 0]); }
+      m.set([210, 210, 204], .3, K.PLAIN).box([7.25, Y(7.25) + sd * .004, .12], [.07, .004, .05]);   // mata
+    }
+    // sayap: panel dalam rata, panel luar ber-dihedral, ujung menukik; rumah roda utama di bawah sayap
+    for (const sd of [-1, 1]) {
+      blk(); slab(sd, .78, 1.35, -1.75, -.55, .3, 3.7, 1.25, -1.65, -.55, .26);
+      slab(sd, 3.7, 1.25, -1.65, -.55, .26, 8.55, .95, -.85, .05, .14);
+      slab(sd, 8.55, .95, -.85, .05, .14, 8.8, .9, -.75, -.12, .06);
+      blk(.3); m.push(X.chain(X.T(0, sd * 2.25, -.8), X.ry(Math.PI / 2))); m.lathe([0, 0, 0], [[0, -2.45], [.28, -2.15], [.42, -1.55], [.45, 0], [.38, .9], [.22, 1.5], [.04, 1.78]], 12); m.pop();
+      dk(); m.box([.3, sd * 2.25, -1.17], [.55, .2, .1]);   // ruang roda (roda A-10 tetap menonjol separuh saat terlipat)
+      // 3 pilon + rudal berpemandu per sayap
+      for (const y of [3.2, 4.6, 6.0]) {
+        const z = y < 3.7 ? -.55 : -.55 + (y - 3.7) * .6 / 4.85;
+        blk(); m.box([.15, sd * y, z - .25], [.62, .05, .12]);
+        m.set([150, 152, 148], .3, K.PAINT, 0).cyl([1.15, sd * y, z - .48], [-1.15, sd * y, z - .48], .15, .15, 8).cyl([1.15, sd * y, z - .48], [1.5, sd * y, z - .48], .15, .02, 8);
+        m.set([40, 42, 44], .3, K.PLAIN); for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + .785; m.box([-1.0, sd * y + Math.cos(a) * .2, z - .48 + Math.sin(a) * .2], [.16, .02, .02]); }
+        m.set([200, 170, 40], .2, K.PLAIN).cyl([.75, sd * y, z - .48], [.68, sd * y, z - .48], .152, .152, 8);   // cincin kuning hulu ledak
+      }
+    }
+    m.set([255, 40, 30], 0, K.EMIT).box([-.1, -8.82, -.1], [.12, .03, .04]); m.set([60, 255, 90], 0, K.EMIT).box([-.1, 8.82, -.1], [.12, .03, .04]);   // lampu navigasi ujung sayap
+    // mesin turbofan kembar di pilon pendek di atas badan belakang
+    for (const sd of [-1, 1]) {
+      const xc = -3.3, yc = sd * 1.55, zc = 1.15;
+      blk(.4); m.push(X.chain(X.T(xc, yc, zc), X.ry(Math.PI / 2))); m.lathe([0, 0, 0], [[.56, -1.92], [.63, -1.78], [.65, -1.2], [.63, 0], [.58, .9], [.47, 1.6], [.41, 2.0]], 16); m.pop();
+      dk(); m.cyl([xc + 1.9, yc, zc], [xc + 1.6, yc, zc], .56, .56, 14, { cap0: false });
+      m.set([70, 72, 74], .6, K.METAL).cyl([xc + 1.6, yc, zc], [xc + 1.55, yc, zc], .52, .52, 14); m.set([30, 30, 32], .5, K.METAL).sph([xc + 1.62, yc, zc], [.2, .16, .16], 8, 4);
+      dk(); m.cyl([xc - 2.0, yc, zc], [xc - 1.7, yc, zc], .39, .39, 12, { cap0: false }); m.set([34, 34, 36], .4, K.METAL).cyl([xc - 1.72, yc, zc], [xc - 1.7, yc, zc], .28, .28, 10);
+      blk(); m.box([xc - .3, sd * .95, .95], [1.15, .42, .12]);
+    }
+    // stabilator datar + sirip tegak kembar di ujungnya
+    for (const sd of [-1, 1]) {
+      blk(); slab(sd, 0, -6.35, -8.0, .55, .12, 2.95, -6.55, -7.95, .55, .08);
+      m.push(X.T(0, sd * 2.95, 0)); m.ext([[-6.5, .05], [-8.2, .05], [-8.25, 2.3], [-8.0, 2.75], [-7.25, 2.8], [-6.9, 2.55]], -.07, .07); m.pop();
+      m.set([255, 255, 240], 0, K.EMIT).box([-8.27, sd * 2.95, 2.2], [.03, .03, .05]);
+    }
+    // roda pendarat (tulang 5): roda depan di kanan hidung, roda utama keluar dari rumah roda sayap
+    m.bone(5);
+    gm(); m.cyl([6.6, .32, -.7], [6.6, .32, -1.75], .07, .06, 6); m.set([16, 16, 16], .08, K.PLAIN).cyl([6.6, .2, -1.75], [6.6, .44, -1.75], .3, .3, 12);
+    for (const sd of [-1, 1]) { gm(); m.cyl([.3, sd * 2.25, -.9], [.3, sd * 2.25, -1.6], .11, .1, 6); m.set([16, 16, 16], .08, K.PLAIN).cyl([.3, sd * 2.25 - .17, -1.6], [.3, sd * 2.25 + .17, -1.6], .45, .45, 14); }
+    m.bone(0);
   }
   function ghost(m) {
     const A = MD.GHOST, BK = [22, 23, 25], GM = [50, 52, 56], DK = [12, 12, 13], RD = [178, 30, 24], GL = [12, 15, 18];

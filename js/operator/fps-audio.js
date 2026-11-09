@@ -192,6 +192,7 @@
 
   /* ---------- API lama, kini lewat bank ---------- */
   const A = TK.fpsaudio = {
+    _io: () => ctx && master ? { ctx, master } : null,   // musik dinamis (fps-beta) masuk ke master
     init,
     local(name, vol, delay) {
       if (name === 'rotor') { if (ctx) loopWant('own', 'lpRotor', clamp((vol === undefined ? 1 : vol) * 1.25, 0, 1), 0, 9000, .8 + .25 * clamp(vol * 2, 0, 1)); return; }
@@ -246,7 +247,7 @@
     tick(dt, hpRatio, alive) {
       if (ctx && ctx.state !== 'running' && ctx.state !== 'closed' && F.opts.sound && (resT -= dt) <= 0) { resT = 1.5; ctx.resume().catch(() => { }); }   // terputus (telepon/notifikasi/tab latar): coba lanjutkan
       if (!ctx || ctx.state !== 'running' || !F.opts.sound) { if (ctx && master) master.gain.value = F.opts.sound ? MV() : 0; return; }
-      master.gain.value = MV(); watchdog(dt);
+      master.gain.value = MV(); if (bus) bus.gain.value = F.opts.sfx === undefined ? 1 : F.opts.sfx; watchdog(dt);   // EFEK SUARA terpisah dari MUSIK (fps-beta)
       envT -= dt;
       if (envT <= 0) {   // kota: gema rapat · terbuka: gema lebar. Dievaluasi perlahan
         envT = .5; const cs = F.world && F.world.cities; let u = 0; if (cs) for (const c of cs) { const q = Math.hypot(c.x - P.x, c.y - P.y); if (q < 260) u = Math.max(u, clamp((260 - q) / 90, 0, 1)); }

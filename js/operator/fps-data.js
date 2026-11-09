@@ -140,7 +140,7 @@
      darat: spd/boost/rev m/dtk, acc/brk m/dtk², steer rad/dtk (pivot: tank bisa berputar di tempat), grip = cengkeraman ban, slope = tanjakan maks,
      ford = kedalaman air maks (m), amph = laju berenang (amfibi), cam = jarak kamera, trav = laju putar kubah rad/dtk, el = batas elevasi laras,
      pad = jari-jari lahan kosong, d0 = jarak tiba dari operator, crush = laju min menggilas infanteri. w = senjata (gun peluru, gl granat 40 mm, shell peluru meriam) */
-  F.VEH_ORDER = ['HMV', 'APC', 'MBT', 'VTOL'];
+  F.VEH_ORDER = ['HMV', 'APC', 'MBT', 'VTOL', 'WOLF'];
   F.VEH_REFIT = .3;   // beli lagi saat kendaraan masih ada = perbaikan + isi ulang (×harga)
   F.VEH = {
     HMV: { seats: 4, cost: 600, arr: 'drive', spd: 31, boost: 40, rev: 9, acc: 10, brk: 24, steer: 1.3, grip: 5, slope: .75, ford: .9, cam: 13, trav: 3.4, el: [-.3, .75], pad: 3.5, d0: 14, crush: 5,
@@ -157,7 +157,13 @@
       w: [{ id: '25MM', k: 'gun', rpm: 1400, dmgI: 70, dmgV: 45, r: 3.5, rng: 1700, spread: .45, mag: 600, n: 600, snd: 'chain', tw: .06, he: true }],
       agm: { n: 6, cd: .9, dmg: 1400, r: 12, spd: 280, rng: 3200, cone: .1 },   // [RMB] rudal udara-darat: kunci kendaraan/bangunan dalam ±cone rad
       aam: { n: 4, cd: .6, lock: .9, cone: .3, rng: 3000, dmg: 700, r: 10, spd: 560, fuze: 9 },   // [R] rudal udara-udara (kunci inframerah seperti Stinger)
-      bomb: { n: 4, cd: .7, dmg: 1100, r: 24 }, flare: { n: 10, cd: 6, dur: 4 } }
+      bomb: { n: 4, cd: .7, dmg: 1100, r: 24 }, flare: { n: 10, cd: 6, dur: 4 } },
+    /* v3.0 WOLFPACK (A-10 hitam): hanya muncul di hanggar markas (arr 'base'), pesawat sayap tetap (fw). hpK: nyawa dikali F.APACHE.hpK seperti Shadow Hunter.
+       taxi = laju taksi maks (m/dtk) · tko = dorongan tenaga lepas landas (m/dtk²) · vr = laju rotasi/lepas landas · vs = laju stall · max = laju gas penuh · SHIFT di udara = ±1,25× */
+    WOLF: { seats: 1, cost: 2800, arr: 'base', fw: true, hpK: true, taxi: 13, tko: 4.6, vr: 52, vs: 44, min: 60, max: 175, turn: 1.1, ceil: 1400, cam: 26, pad: 10, d0: 0,
+      w: [{ id: 'GAU-8', k: 'gun', rpm: 3900, dmgI: 55, dmgV: 40, r: 3, rng: 2000, spread: .5, mag: 5000, n: 5000, tw: .07, he: true, spin: .45 }],   // minigun 5.000 peluru
+      hom: { n: 500, max: 6, lock: .22, cone: .55, rng: 3200, cd: 1.4, gap: .08, dmg: 1250, r: 11, spd: 320, fuze: 6 },   // 500 rudal homing: kunci otomatis ≤6 sasaran, 1 rudal per sasaran (3 pilon tiap sayap)
+      flare: { n: 40, cd: 2.5, dur: 4 } }   // flare lebih banyak & lebih cepat siap dari ELANG (10 · 6 dtk)
   };
   /* laser orbital SATELIT HELIOS: titik dipilih di peta (<= range m dari operator) → sinematik satelit turun (cin) → POV satelit di ketinggian alt m → isi daya charge dtk → sinar dur dtk (radius r, dps, laju spd m/dtk); nova = ledakan penutup.
      hqK: markas musuh hanya tergores agar misi tidak selesai sekali sorot. cin: satelit jatuh dari h0 m selama fall dtk, panel terbuka mulai dep0 selama depT dtk, kamera memutar arc0..arc1 lalu masuk ke optik satelit pada t dtk */
@@ -173,6 +179,7 @@
     { id: 'SQUAD', cost: 220 }, { id: 'MEDIC', cost: 90 }, { id: 'AMMO', cost: 60 }, { id: 'MORTAR', cost: 260 },
     { id: 'TANK', cost: 300 }, { id: 'MEDEVAC', cost: 300 }, { id: 'GUNSHIP', cost: 650 }, { id: 'FUEL', cost: 250 }   // FUEL: pasokan BBM diterjunkan ke Shadow Hunter
   ];
+  F.lockR = () => 0;   // buka-kunci per pangkat (diisi fps-beta di edisi offline; 0 = terbuka)
   F.RANKS = [0, 600, 1800, 4000, 7500, 13000, 21000, 33000, 50000];
 
   /* ---------------- WAKTU HARI ----------------
@@ -271,11 +278,21 @@
       }
     }
     // pangkalan musuh (W.facOf): seluruh area rata setinggi markas, tepinya berbaur halus dengan medan sekitar
-    const FAC = W.facOf((g.HQR[0] + .5) * W.CELL, (g.HQR[1] + .5) * W.CELL), FB = W.FACB, PB = W.PADB.map(p => { const x = (g.HQB[0] + .5) * W.CELL + p[0], y = (g.HQB[1] + .5) * W.CELL + p[1]; return [x - 16, y - 16, x + 16, y + 16]; }), FR = FAC.rects.concat(PB);
+    const FAC = W.facOf((g.HQR[0] + .5) * W.CELL, (g.HQR[1] + .5) * W.CELL), FB = W.FACB, PB = W.PADB.map(p => { const x = (g.HQB[0] + .5) * W.CELL + p[0], y = (g.HQB[1] + .5) * W.CELL + p[1]; return [x - 16, y - 16, x + 16, y + 16]; }), FAB = W.facB((g.HQB[0] + .5) * W.CELL, (g.HQB[1] + .5) * W.CELL), FR = FAC.rects.concat(PB, FAB.rects);
     const inFac = (x, y, m) => { for (const r of FR) if (x > r[0] - m && x < r[2] + m && y > r[1] - m && y < r[3] + m) return true; return false; };
     {
       const cx = Math.floor(FAC.hx / TX), cy = Math.floor(FAC.hy / TX); let hp = 0, n = 0; for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { hp += H[(cy + dy) * NX + cx + dx]; n++; } hp = Math.max(.6, hp / n);
       const x0 = FAC.hx + FB[0], x1 = FAC.hx + FB[1], y0 = FAC.hy + FB[2], y1 = FAC.hy + FB[3], MG = 70;
+      for (let iy = Math.max(0, Math.floor((y0 - MG) / TX)); iy <= Math.min(NY - 1, Math.ceil((y1 + MG) / TX)); iy++) for (let ix = Math.max(0, Math.floor((x0 - MG) / TX)); ix <= Math.min(NX - 1, Math.ceil((x1 + MG) / TX)); ix++) {
+        const wx = (ix + .5) * TX, wy = (iy + .5) * TX, d = Math.hypot(Math.max(x0 - wx, 0, wx - x1), Math.max(y0 - wy, 0, wy - y1)), i = iy * NX + ix; if (d > MG) continue;
+        if (d <= 0) { T[i] = TER.URBAN; H[i] = hp; continue; }
+        if ((T[i] & 15) === TER.WATER) continue;
+        const k = 1 - d / MG; H[i] += (hp - H[i]) * k * k * (3 - 2 * k);
+      }
+    }
+    {   // v3.0 lapangan terbang markas kita (W.facB): rata setinggi markas, tepinya berbaur halus dengan medan sekitar
+      const cx = Math.floor(FAB.hx / TX), cy = Math.floor(FAB.hy / TX); let hp = 0, n = 0; for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { hp += H[(cy + dy) * NX + cx + dx]; n++; } hp = Math.max(.6, hp / n);
+      const [x0, y0, x1, y1] = FAB.rects[0], MG = 70;
       for (let iy = Math.max(0, Math.floor((y0 - MG) / TX)); iy <= Math.min(NY - 1, Math.ceil((y1 + MG) / TX)); iy++) for (let ix = Math.max(0, Math.floor((x0 - MG) / TX)); ix <= Math.min(NX - 1, Math.ceil((x1 + MG) / TX)); ix++) {
         const wx = (ix + .5) * TX, wy = (iy + .5) * TX, d = Math.hypot(Math.max(x0 - wx, 0, wx - x1), Math.max(y0 - wy, 0, wy - y1)), i = iy * NX + ix; if (d > MG) continue;
         if (d <= 0) { T[i] = TER.URBAN; H[i] = hp; continue; }
@@ -495,6 +512,21 @@
         for (let k = 0; k < 6; k++) put('crate', 22 + (k % 3) * 2.4, 32 + (k > 2 ? 2.6 : 0), (k * .37) % .4, 1.2, { stack: k % 2 ? 2 : 1 });
         put('truck', 14, -26, 0, 3.5); put('hmv', 20, -26, 0, 3); put('hmv', 26, -26, 0, 3);
         if (team === 'B') for (const [dx, dy] of W.PADB) prop('pad', cx + dx, cy + dy, 0);   // helipad garnisun heli
+        if (team === 'B') {   // v3.0 lapangan terbang markas kita: landasan, apron beton, 2 hanggar (WOLFPACK muncul di hanggar pertama), menara kontrol, lampu
+          const area = (x0, y0, x1, y1, c0, c1, m, nz) => { for (let iy = Math.max(0, Math.floor(y0 / TX)); iy <= Math.min(NY - 1, Math.floor((y1 - .01) / TX)); iy++) for (let ix = Math.max(0, Math.floor(x0 / TX)); ix <= Math.min(NX - 1, Math.floor((x1 - .01) / TX)); ix++) { const wx = (ix + .5) * TX, wy = (iy + .5) * TX, c = mix(c0, c1, vn(wx / nz, wy / nz, seed + 95)); setTex(iy * NX + ix, c, 0, m); } };
+          const CONC = [[132, 130, 122], [114, 113, 106], [0, 0, .75, 0]], ASP = [[62, 62, 62], [50, 50, 52], [0, 0, 1, 0]], B1 = FAB.rects[0], R1 = FAB.run, AP = FAB.apron;
+          area(B1[0], B1[1], B1[2], B1[3], [146, 138, 112], [122, 118, 100], [.12, .45, .35, 0], 9);
+          area(AP[0], AP[1], AP[2], AP[3] + 40, CONC[0], CONC[1], CONC[2], 7); area(FAB.atc[0] - 12, FAB.atc[1] - 12, FAB.atc[0] + 12, FAB.atc[1] + 12, CONC[0], CONC[1], CONC[2], 7);
+          area(R1.x0, R1.y - R1.hw, R1.x1, R1.y + R1.hw, ASP[0], ASP[1], ASP[2], 6);
+          if (DESK) rdSeg(R1.x0, R1.y, R1.x1, R1.y, R1.hw, 0, 0);
+          prop('rwy', (R1.x0 + R1.x1) / 2, R1.y, 0, { L: (R1.x1 - R1.x0) / 2, hw: R1.hw });
+          const wall = (b, lx, ly, hh) => { const c = Math.cos(b.yaw), s = Math.sin(b.yaw); add(b.x + c * lx - s * ly, b.y + s * lx + c * ly, 9, hh, 1.5); };
+          for (const b of FAB.han) { prop('tline', b.x, (b.y + R1.y + R1.hw) / 2, Math.PI / 2, { L: (b.y - R1.y - R1.hw) / 2 }); prop('hgar', b.x, b.y, b.yaw); for (let i = 0; i <= 20; i++) { wall(b, -i * 2, 22.2, 9); wall(b, -i * 2, -22.2, 9); } for (let i = -11; i <= 11; i++) wall(b, -40, i * 2, 9); }
+          prop('atc', FAB.atc[0], FAB.atc[1], 0); for (const r of [[-5, 0], [5, 0], [0, -5], [0, 5]]) add(FAB.atc[0] + r[0], FAB.atc[1] + r[1], 9, 24, 2.4);
+          for (let x = R1.x0 + 20; x < R1.x1; x += 60) { prop('lamp', x, R1.y - R1.hw - 5, Math.PI / 2); if (x < AP[0] - 10 || x > AP[2] + 10) prop('lamp', x, R1.y + R1.hw + 5, -Math.PI / 2); }
+          for (let i = 0; i < 3; i++) { prop('fuel', FAB.han[1].x + 34, FAB.han[1].y + 8 + i * 7, 0); }
+          prop('gen', FAB.han[1].x + 34, FAB.han[1].y + 30, .3); prop('truck', FAB.han[0].x - 32, FAB.han[0].y + 10, Math.PI / 2);
+        }
         if (team === 'R') {   // pangkalan musuh: landasan, taksiway, apron, 3 hanggar, garasi, helipad, menara kontrol
           const area = (x0, y0, x1, y1, c0, c1, m, nz) => { for (let iy = Math.max(0, Math.floor(y0 / TX)); iy <= Math.min(NY - 1, Math.floor((y1 - .01) / TX)); iy++) for (let ix = Math.max(0, Math.floor(x0 / TX)); ix <= Math.min(NX - 1, Math.floor((x1 - .01) / TX)); ix++) { const wx = (ix + .5) * TX, wy = (iy + .5) * TX, c = mix(c0, c1, vn(wx / nz, wy / nz, seed + 94)); setTex(iy * NX + ix, c, 0, m); C[iy * NX + ix] = pack(c[0], c[1], c[2]); } };
           const CONC = [[132, 130, 122], [114, 113, 106], [0, 0, .75, 0]], ASP = [[62, 62, 62], [50, 50, 52], [0, 0, 1, 0]], B0 = FB;

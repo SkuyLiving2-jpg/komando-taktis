@@ -85,7 +85,7 @@
     const back = '<button class="pm-back" data-go="home">‹ ' + Tt('pl_back') + '</button>';
     if (TS.scr === 'play') {
       const d = [0, 1, 2, 3].map(i => '<button data-k="diff" data-v="' + i + '" class="pd' + (SET.diff === i ? ' on' : '') + '"><em>' + 'I II III IV'.split(' ')[i] + '</em><b>' + Tt('w_d' + i) + '</b><small>' + Tt('pl_diff_d' + i) + '</small></button>').join('');
-      return '<div class="pm-p" data-s="play"><div class="pm-h"><h3>' + Tt('pl_op') + '</h3>' + back + '</div>' +
+      return '<div class="pm-p" data-s="play"><div class="pm-h"><h3>' + Tt('pl_op') + '</h3>' + back + '</div>' + betaHTML() +
         '<div class="pm-cap">' + Tt('pl_diff') + '</div><div class="pt-diff">' + d + '</div>' +
         '<div class="pm-cap">' + Tt('pl_doc') + '</div><div class="pt-row">' + opt('doc', 'tni', 'TNI · INDONESIA', SET.doc === 'tni') + opt('doc', 'us', 'US · ENGLISH', SET.doc === 'us') + '</div>' +
         '<div class="pm-act"><button class="pt-go" data-a="play">' + Tt('pl_go') + ' ▶</button><button class="pm-sec" data-a="reroll">⟳ ' + Tt('pl_new') + '</button></div></div>';
@@ -95,7 +95,7 @@
         '<div class="pm-cap">' + Tt('pl_ctl') + '</div><div class="pt-row">' + opt('ctl', 'auto', Tt('pl_auto'), SET.ctl === 'auto') + opt('ctl', 'touch', Tt('pl_touch'), SET.ctl === 'touch') + opt('ctl', 'kb', Tt('pl_kb'), SET.ctl === 'kb') + '</div>' +
         '<div class="pm-cap">' + Tt('pl_gfx') + '</div><div class="pt-row">' + opt('q', 'auto', Tt('pl_auto'), SET.q === 'auto') + [0, 1, 2].map(i => opt('q', i, Tt('f_q' + i), SET.q === i)).join('') + '</div>' +
         '<div class="pm-cap">' + Tt('pl_cap') + '</div><div class="pt-row">' + opt('cap', 30, '30 FPS', SET.cap === 30) + opt('cap', 60, '60 FPS', SET.cap === 60) + (touchDev ? '' : opt('cap', 0, 'MAKS', SET.cap === 0)) + '</div>' +
-        '<div class="pm-cap">' + Tt('pl_doc') + '</div><div class="pt-row">' + opt('doc', 'tni', 'TNI · INDONESIA', SET.doc === 'tni') + opt('doc', 'us', 'US · ENGLISH', SET.doc === 'us') + '</div>' +
+        '<div class="pm-cap">' + Tt('pl_doc') + '</div><div class="pt-row">' + opt('doc', 'tni', 'TNI · INDONESIA', SET.doc === 'tni') + opt('doc', 'us', 'US · ENGLISH', SET.doc === 'us') + '</div>' + accHTML() +
         '<div class="pt-row pm-more">' + (document.fullscreenEnabled || document.webkitFullscreenEnabled ? '<button data-a="fs">⛶ ' + Tt('pl_fs') + '</button>' : '') +
         (installEv ? '<button data-a="install">⤓ ' + Tt('pl_install') + '</button>' : '') + '</div>' +
         (touchDev ? '<small class="pm-note">' + Tt('pl_mobile') + '</small>' : '') +
@@ -114,6 +114,23 @@
     return '<div class="pm-p pm-home" data-s="home"><div class="pm-h"><h3>' + Tt('pl_map') + '</h3><span class="pm-dif">' + Tt('w_d' + SET.diff) + '</span></div>' +
       '<div class="pm-map" data-go="play"><canvas></canvas><div class="pm-sweep"></div><div class="pm-leg"><span class="b">■ ' + Tt('pl_map_hq') + '</span><span class="r">■ ' + Tt('pl_map_hqr') + '</span><span class="r">● ' + Tt('pl_map_foe') + '</span><span class="n">● ' + Tt('pl_map_free') + '</span></div></div>' +
       '<div class="pm-brief">' + Tt('pl_map_s', { n: String(Q.g.seed).padStart(5, '0').slice(-5), p: held }) + '</div></div>';
+  }
+  /* v3.0: LATIHAN DASAR & LANJUTKAN PERTEMPURAN (panel MAIN), aksesibilitas & audio (panel PENGATURAN) — fps-beta */
+  function betaHTML() {
+    const Bt = TK.fpsbeta; if (!Bt) return '';
+    const s = Bt.loadSave(), ago = s ? Math.max(1, Math.round((Date.now() - s.ts) / 60000)) : 0, mm = s ? Math.floor(s.t / 60) + ':' + String(Math.floor(s.t % 60)).padStart(2, '0') : '';
+    return '<div class="pt-row pm-more" style="flex-wrap:wrap;gap:6px;margin:2px 0 6px">' +
+      (s ? '<button data-a="cont" title="' + esc(Tt('b_cont_s', { t: (ago < 60 ? ago + ' mnt' : Math.round(ago / 60) + ' jam') + ' lalu', p: s.posts, d: Tt('w_d' + s.diff) })) + '">⟲ ' + Tt('b_cont') + ' <small style="opacity:.7">' + mm + ' · ' + s.posts + '/5 · ' + Tt('w_d' + s.diff) + '</small></button>' : '') +
+      '<button data-a="tut">◎ ' + Tt('b_tut') + ' <small style="opacity:.7">' + Tt('b_tut_s') + '</small></button></div>';
+  }
+  function accHTML() {
+    const Bt = TK.fpsbeta; if (!Bt) return '';
+    const g = k => Bt.get(k), o2 = (k, v, l) => opt('acc:' + k, v, l, Math.abs(g(k) - v) < .01);
+    return '<div class="pm-cap">' + Tt('b_mus') + '</div><div class="pt-row">' + o2('mus', 0, Tt('b_off')) + o2('mus', .25, '25%') + o2('mus', .45, '45%') + o2('mus', .7, '70%') + o2('mus', 1, '100%') + '</div>' +
+      '<div class="pm-cap">' + Tt('b_shk') + '</div><div class="pt-row">' + o2('shk', 1, Tt('b_full')) + o2('shk', .5, Tt('b_half')) + o2('shk', 0, Tt('b_off')) + '</div>' +
+      '<div class="pm-cap">' + Tt('b_hud') + '</div><div class="pt-row">' + o2('hud', .85, Tt('b_small')) + o2('hud', 1, Tt('b_norm')) + o2('hud', 1.2, Tt('b_big')) + '</div>' +
+      '<div class="pm-cap">' + Tt('b_calm') + '</div><div class="pt-row">' + o2('calm', 0, Tt('b_norm')) + o2('calm', 1, Tt('b_less')) + '</div>' +
+      '<div class="pm-cap">' + Tt('b_cb') + '</div><div class="pt-row">' + o2('cb', 0, Tt('b_norm')) + o2('cb', 1, Tt('b_cb_s')) + '</div>';
   }
   function titleHTML() {
     return '<div class="pm-bg">' + TOPO + '</div>' +
@@ -175,9 +192,12 @@
     if (b.dataset.a === 'play') { start(); return; }
     if (b.dataset.a === 'fs') { fullscreen(); return; }
     if (b.dataset.a === 'reroll') { newMission(); renderTitle(); return; }
+    if (b.dataset.a === 'tut' && TK.fpsbeta) { newMission(); TK.fpsbeta.tutStart(); start(); return; }
+    if (b.dataset.a === 'cont' && TK.fpsbeta) { const s = TK.fpsbeta.loadSave(); if (!s) { renderTitle(); return; } SET.diff = s.diff; save(); war.popK = touchDev ? (s.diff === 0 ? .3 : .6) : 1; TK.fpsbeta.resume(s); TS.fresh = true; start(); return; }
     if (b.dataset.a === 'quit') { quit(); return; }
     if (b.dataset.a === 'install' && installEv) { installEv.prompt(); installEv.userChoice.finally(() => { installEv = null; renderTitle(); }); return; }
     const k = b.dataset.k; if (!k) return;
+    if (k.indexOf('acc:') === 0 && TK.fpsbeta) { TK.fpsbeta.set(k.slice(4), +b.dataset.v); if (A()) { A().init(); A().local('ui', .4); } renderTitle(); return; }
     const v = b.dataset.v, old = SET.diff; SET[k] = k === 'diff' || k === 'cap' ? +v : k === 'q' && v !== 'auto' ? +v : v;
     save(); apply(); if (k === 'diff' && SET.diff !== old) newMission(); renderTitle();
   });
@@ -254,6 +274,7 @@
     if (!U.active) return;
     U.frame(dt);
     if (TK.fpstouch) TK.fpstouch.tick(dt);
+    if (TK.fpsbeta) TK.fpsbeta.tick(dt);
     if (Q.over && overEl.classList.contains('off')) { overEl.innerHTML = overHTML(); overEl.classList.remove('off'); overAnim(); }
   }
 

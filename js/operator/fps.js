@@ -147,6 +147,7 @@
   F.msg = (text, kind) => { P.msgs.push({ text, kind: kind || 'i', t: P.time }); if (P.msgs.length > 4) P.msgs.shift(); };
   const pop = (text, pts, cr) => { P.pops.push({ text, pts, cr, t: P.time }); if (P.pops.length > 6) P.pops.shift(); if (pts) { P.score += pts; F.xp += pts; saveXp(); } };
   const feed = (a, b, col) => { P.feed.push({ a, b, col, t: P.time }); if (P.feed.length > 6) P.feed.shift(); };
+  F.shakeK = 1;   // pengali guncangan kamera (pengaturan aksesibilitas, fps-beta)
   F.emit = function (k, x, y, z, o) {
     if (F.fx3.length >= 700) return;
     F.fx3.push(Object.assign({ k, x, y, z, vx: 0, vy: 0, vz: 0, t: 0, life: 1, s0: 1, s1: 1, col: [255, 255, 255], a: 1, g: 0, drag: 0 }, o));
@@ -1576,7 +1577,7 @@
       const sw = F.wdefSafe().scope && !F.wdefSafe().acc && P.ads > .5 && P.alive ? (F.in.sprint ? .15 : 1) * (perk('STEADY') ? F.PERK.steady.sway : 1) : 0, t = P.time;   // teleropong goyang; SHIFT = tahan napas
       const vc = P.alive && (P.relT > 0 || P.melT > 0) && TK.fpsvm && TK.fpsvm.cam || [0, 0];   // hentakan reload / ayunan pisau ikut menggoyang kamera
       const zs = 1 - P.ads * (1 - F.wdefSafe().zoom);   // getaran kamera dikecilkan sebanding perbesaran: di layar tetap sama kuat saat membidik teropong
-      const dh = P.alive ? null : dieHead(), jit = () => (Math.random() - .5) * P.shake * .02 * zs;
+      const dh = P.alive ? null : dieHead(), jit = () => (Math.random() - .5) * P.shake * F.shakeK * .02 * zs;
       P.cam = dh ? { x: dh.x, y: dh.y, z: dh.z, yaw: dh.yaw + jit(), pitch: dh.pitch + jit(), roll: dh.roll, fov: P.fov * D2R } : {
         x: P.x, y: P.y, z: P.z + P.eye + Math.sin(P.bob * 2) * .035 * clamp(P.spd / 8, 0, 1.4),
         yaw: P.yaw + P.rkY + vc[1] + jit() + Math.sin(t * 1.3) * .0014 * sw, pitch: P.pitch + P.rkP + vc[0] + jit() + Math.sin(t * 1.9) * .0011 * sw,

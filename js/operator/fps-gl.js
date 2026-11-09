@@ -282,6 +282,7 @@ vec3 n=normalize(vec3(-dx*uK,-dy*uK,1.));o=vec4(n.xy*.5+.5,clamp(.92+(c-av)*2.6,
       G.aa = !G.sw && F.opts.quality >= 2;   // MSAA hanya di TINGGI (mahal di GPU terintegrasi)
       gl = cv.getContext('webgl2', { antialias: G.aa, alpha: false, depth: true, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
       if (!gl) { G.err = 'no webgl2'; return; }
+      G.gl = gl;   // laporan masalah: nama GPU
       // GPU/driver di-reset oleh sistem → tandai, render berikutnya membuat konteks baru (tidak membekukan halaman)
       if (cv.addEventListener) cv.addEventListener('webglcontextlost', e => { e.preventDefault(); G.lost = (G.lost || 0) + 1; G.ok = false; G.tried = G.lost > 3; });
       PR.ter = prog(TER_VS, TER_FS); PR.ters = prog(TER_VS, TERS_FS); PR.wat = prog(WAT_VS, WAT_FS); PR.sky = prog(SKY_VS, SKY_FS);
@@ -1187,7 +1188,7 @@ vec3 n=normalize(vec3(-dx*uK,-dy*uK,1.));o=vec4(n.xy*.5+.5,clamp(.92+(c-av)*2.6,
     for (const r of F.hm) { const hf = r.k === 'hf', st = r.k === 'st'; const gl2 = r.k === 'gl'; drawBox(op, r.x, r.y, r.z, gl2 ? .06 : hf ? .82 : .7, gl2 ? .022 : hf ? .09 : st ? .05 : .06, gl2 ? .022 : hf ? .09 : st ? .05 : .06, Math.atan2(r.vy, r.vx), Math.atan2(r.vz, Math.hypot(r.vx, r.vy)), hf ? [58, 62, 50] : st ? [196, 198, 188] : r.k === 'gl' ? [96, 104, 70] : r.w === 'FL' ? [150, 60, 50] : r.w === 'WP' ? [210, 210, 200] : r.gd ? [70, 90, 60] : [150, 150, 140]); }
     for (const r of F.vp || []) { const big = r.k === 'sh' || r.k === 'bomb', ms = r.k === 'tm' || r.k === 'agm' || r.k === 'aam'; drawBox(op, r.x, r.y, r.z, big ? (r.k === 'bomb' ? 1.3 : .5) : ms ? .8 : .12, big ? (r.k === 'bomb' ? .2 : .1) : ms ? .08 : .06, big ? (r.k === 'bomb' ? .2 : .1) : ms ? .08 : .06, Math.atan2(r.vy, r.vx), Math.atan2(r.vz, Math.hypot(r.vx, r.vy)), r.k === 'bomb' ? [64, 68, 58] : r.k === 'aam' ? [196, 198, 188] : ms ? [86, 94, 74] : [120, 110, 80]); }
     for (const p of Q.projs) if (p.kind === 'bomb' && p.t >= 0) { const k = clamp(p.t / p.dur, 0, 1); drawBox(op, p.x, p.y, F.hAt(p.x, p.y) + 150 * (1 - k * k), .9, .25, .25, Math.atan2(p.ty - p.y, p.tx - p.x), -.5 * k, [70, 70, 66]); }
-    if (Q.fac) for (const b of Q.fac.bays) {   // pintu garasi (gulung ke atas) & hanggar (2 daun bergeser ke samping)
+    for (const b of (Q.fac ? Q.fac.bays : []).concat(Q.facB ? Q.facB.bays : [])) {   // pintu garasi (gulung ke atas) & hanggar (2 daun bergeser ke samping); juga hanggar markas kita (v3.0)
       if (Math.abs(b.x - CAM.x) > DV.veh || Math.abs(b.y - CAM.y) > DV.veh) continue;
       const gz = F.gAt(b.x, b.y), k = b.door, c = Math.cos(b.yaw), s = Math.sin(b.yaw);
       if (!visS(b.x, b.y, gz + b.h / 2, b.w)) continue;

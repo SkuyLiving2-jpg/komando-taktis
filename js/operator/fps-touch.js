@@ -66,6 +66,7 @@
     cancel: '<path d="M11 11l18 18M29 11L11 29"/>',
     w_gun: '<path d="M9 30V16l2.5-5 2.5 5v14zM17.5 30V16l2.5-5 2.5 5v14zM26 30V16l2.5-5 2.5 5v14z"/><path d="M7 33h26"/>',
     w_hy: '<rect x="7" y="13" width="26" height="14" rx="3"/><circle cx="13" cy="20" r="2.3"/><circle cx="20" cy="20" r="2.3"/><circle cx="27" cy="20" r="2.3"/><path d="M33 20h3"/>',
+    gear: '<circle cx="20" cy="27" r="7"/><circle cx="20" cy="27" r="2"/><path d="M20 20V7M13 9h14"/>',
     w_hf: '<path d="M6 20h22l6-3.5v7L28 20M10 20l-3-6M10 20l-3 6M22 20l-2-4M22 20l-2 4"/>',
     w_st: '<path d="M5 27L23 13M23 13l4-1-1 4M9 24l-1-5M9 24l5 1"/><circle cx="30" cy="10" r="5" stroke-width="1.8"/>',
     bomb: '<path d="M14 15a9 9 0 1 0 12 0z"/><path d="M15 15l-3-8M25 15l3-8M20 15V6"/>',
@@ -125,6 +126,12 @@
         B('wsel', w.s + ' ▾', { ic: 'w_' + hw, down: () => hwShow(hwP.classList.contains('off')), cls: 'hot', n: () => w.n(H) }),
         B('fl', Tt('tc_flare'), { tap: 'KeyF', n: () => sec(H.fcd) || H.fl }), B('zoom', Tt('tc_zoom'), { down: zoom }),
         B('exit', Tt('tc_exit'), { tap: 'KeyE' })].concat(UPDN());
+    }
+    if (P.veh && P.veh.D && P.veh.D.fw) {   // WOLFPACK: tembak GAU-8 · RUDAL (salvo ke sasaran terkunci) · flare · roda · rem · kamera · keluar; joystick maju/mundur = gas, dorong penuh = tenaga penuh
+      const V = P.veh;
+      return [fire(null, () => V.mag[0]), B('ads', Tt('tc_msl'), { ic: 'w_hf', down: () => { I.ads = true; }, up: () => { I.ads = false; }, cls: 'hot', n: () => V.hom }),
+        B('fl', Tt('tc_flare'), { tap: 'KeyF', n: () => sec(V.fcd) || V.fl }), B('g', Tt('tc_gear'), { ic: 'gear', tap: 'KeyG', on: () => V.gear > .5, dim: () => V.gnd }),
+        B('brk', Tt('tc_brake'), { h: 'Space' }), B('cam', Tt('tc_cam'), { tap: 'KeyV' }), B('exit', Tt('tc_exit'), { tap: 'KeyE' })];
     }
     if (P.veh) {
       const V = P.veh, D = V.D || {}, sk = F.vehSmkKey(V), out = [fire(null, () => V.mag[V.air ? 0 : V.wi]), V.air ? B('ads', 'AGM', { ic: 'w_hf', down: () => { I.ads = true; }, up: () => { I.ads = false; }, cls: 'hot', n: () => V.agm })   // jet: klik kanan = rudal AGM
@@ -333,7 +340,7 @@
   };
   const rIco = k => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + (RI[k] || RI.SQUAD) + '"/></svg>';
   function radioHTML() {
-    const ci = F.CALLINS.map((c, i) => '<button data-ci="' + c.id + '" class="' + (Q.cr < c.cost ? 'dis' : '') + '" style="--d:' + i + ';--p:' + Math.min(100, Math.round(Q.cr / c.cost * 100)) + '%">' + rIco(c.id) + '<b>' + Tt('f_ci_' + c.id) + '</b><small>' + c.cost + ' KR</small><u></u></button>').join('');
+    const ci = F.CALLINS.map((c, i) => '<button data-ci="' + c.id + '" class="' + (Q.cr < c.cost || F.lockR('ci', c.id) ? 'dis' : '') + '" style="--d:' + i + ';--p:' + Math.min(100, Math.round(Q.cr / c.cost * 100)) + '%">' + rIco(c.id) + '<b>' + Tt('f_ci_' + c.id) + '</b><small>' + c.cost + ' KR</small><u></u></button>').join('');
     const grp = F.ARMY_GRP.map(g => '<button data-g="' + g + '"' + (M.grp === g ? ' class="on"' : '') + '>' + Tt('f_grp_' + g) + ' <small>' + F.myArmy(g).length + '</small></button>').join('');
     const ord = U.CMD_O.map(o => '<button data-o="' + o + '">' + Tt('f_cmd_' + o) + '</button>').join('');
     const q = [['army', 'tc_army'], ['cls', 'tc_cls'], ['map', 'tc_map'], ['sb', 'tc_score'], ['nvg', 'NVG']].map(([k, l]) => '<button data-x="' + k + '"' + ((k === 'sb' && M.sb) || (k === 'nvg' && R.nvg) ? ' class="on"' : '') + '>' + rIco(k) + '<span>' + (l === 'NVG' ? l : Tt(l)) + '</span></button>').join('');
@@ -342,7 +349,7 @@
   }
   function radioUpdate() {   // kredit, tombol terjangkau & jumlah pasukan per grup
     const h = radio.querySelector('.trc b'); if (h) h.textContent = Math.floor(Q.cr);
-    radio.querySelectorAll('[data-ci]').forEach(b => { const c = F.CALLINS.find(q => q.id === b.dataset.ci); if (!c) return; b.classList.toggle('dis', Q.cr < c.cost); b.style.setProperty('--p', Math.min(100, Math.round(Q.cr / c.cost * 100)) + '%'); });
+    radio.querySelectorAll('[data-ci]').forEach(b => { const c = F.CALLINS.find(q => q.id === b.dataset.ci); if (!c) return; b.classList.toggle('dis', Q.cr < c.cost || !!F.lockR('ci', c.id)); b.style.setProperty('--p', Math.min(100, Math.round(Q.cr / c.cost * 100)) + '%'); });
     radio.querySelectorAll('[data-g]').forEach(b => { const n = b.querySelector('small'); if (n) n.textContent = F.myArmy(b.dataset.g).length; });
   }
   function radioShow(on) {

@@ -63,8 +63,8 @@
   const hqOf = team => team === 'B' ? Q.hqB : Q.hqR;
 
   /* ---------------- RESET ---------------- */
-  war.reset = function (diff) {
-    const g = W.gen(1 + Math.floor(Math.random() * 99999)), c = (a) => [(a[0] + .5) * W.CELL, (a[1] + .5) * W.CELL];
+  war.reset = function (diff, seed) {   // seed: peta yang sama (LANJUTKAN PERTEMPURAN dari simpanan)
+    const g = W.gen(seed || 1 + Math.floor(Math.random() * 99999)), c = (a) => [(a[0] + .5) * W.CELL, (a[1] + .5) * W.CELL];
     if (diff === undefined) diff = Q.diff === undefined ? 1 : Q.diff;
     const D = DIFF[diff], held = shuffle([0, 1, 2, 3, 4]).slice(0, D.posts);   // pos musuh berbeda tiap misi
     Object.assign(Q, {
@@ -75,7 +75,7 @@
     });
     const pb = c(g.HQB), pr = c(g.HQR);
     Q.hqB = mk('B', 'HQ', pb[0], pb[1]); Q.hqR = mk('R', 'HQ', pr[0], pr[1]);
-    Q.fac = W.facOf(pr[0], pr[1]); Q.sortT = D.sortie ? D.sortie[0] : 0; Q.sortN = 0;
+    Q.fac = W.facOf(pr[0], pr[1]); Q.facB = W.facB(pb[0], pb[1]); Q.sortT = D.sortie ? D.sortie[0] : 0; Q.sortN = 0;
     baseDefense(pb[0], pb[1]);
     Q.sat = { goal: null, def: false, t: 4, refT: SAT_REF, holdT: 0, skip: [] }; satFill(true);   // satgas serbu otomatis
     mk('R', 'BNK', pr[0] - 130, pr[1] - 90, { stance: 'HOLD', garr: true }); mk('R', 'BNK', pr[0] - 130, pr[1] + 100, { stance: 'HOLD', garr: true });
@@ -233,7 +233,8 @@
   }
 
   function hurt(t, dmg, dt, src) {
-    if (t.dead || t.chute > 0 || t.inV) return;   // penumpang terlindung di dalam kendaraan (ikut celaka saat kendaraannya hancur)
+    if (t.dead || t.chute > 0 || t.inV) return;
+    if (t.only && !(src && src.player)) return;   // v3.0 sasaran LATIHAN DASAR: hanya operator yang bisa melukainya   // penumpang terlindung di dalam kendaraan (ikut celaka saat kendaraannya hancur)
     if (src && src.player && t.team === 'B' && !t.player) return;   // operator tidak melukai kawan
     if (t === Q.hqR && Q.fb && !Q.fb.dead) { if (Q.t - (Q.shT || -9) > 8) { Q.shT = Q.t; bossEv('w_final_shield', Q.fb); } return; }   // markas kebal selama bos akhir hidup
     const m = (MU[dt] || MU.small)[t.armor]; if (!m) return;
