@@ -521,7 +521,7 @@
     const d = F.wdefSafe(), mv = clamp(P.spd / 8, 0, 1.6);
     if (d.acc) return 0;   // .44 Magnum berteropong: akurasi 100%
     let s =d.spread[0] + (d.spread[1] - d.spread[0]) * P.ads;
-    s *= 1 + mv * (1 - P.ads * .7) * .9; if (P.crouch) s *= .72; if (!P.grounded) s *= 2.4;
+    s *= 1 + mv * (1 - P.ads * .7) * .9; if (P.crouch) s *= .72 * (d.bip ? .55 + d.bip * .5 : 1); if (!P.grounded) s *= 2.4;   // bipod: jongkok = jauh lebih stabil
     s += P.bloom * 1.3 * (1 - P.ads * .55);
     return perk('STEADY') ? s * F.PERK.steady.spread : s;   // STEADY AIM: sebaran jauh lebih rapat di semua jarak
   }
@@ -540,7 +540,7 @@
     const w = P.w[P.cur], d = F.WEAPONS[w.id];
     w.ammo--; P.fireCd = 60 / d.rpm; P.vk = 1; P.unit.revealT = Q.t + 1.1; P.shotT = P.time;
     if (d.mode === 'bolt' || d.mode === 'pump') P.cycT = 60 / d.rpm * .95;
-    const kk = d.kick * (P.ads > .5 ? (d.opt === 'acog' ? .5 : .68) : 1) * (P.crouch ? .85 : 1) * (P.ab.adr > 0 ? .6 : 1);   // ACOG 3,5×: hentakan diperbesar lensa → diredam agar bidikan tidak terasa bergetar
+    const kk = d.kick * (P.ads > .5 ? (d.opt === 'acog' || d.opt === 'prism' ? .5 : .68) : 1) * (P.crouch ? .85 * (d.bip || 1) : 1) * (P.ab.adr > 0 ? .6 : 1);   // ACOG 3,5×: hentakan diperbesar lensa → diredam agar bidikan tidak terasa bergetar
     P.rkP += kk * (.9 + Math.random() * .3) * D2R; P.rkY += (Math.random() - .5) * kk * .7 * D2R; P.bloom = Math.min(1, P.bloom + .11 * (perk('STEADY') ? F.PERK.steady.bloom : 1)); P.shake = Math.min(1.5, P.shake + d.kick * .06);
     A() && A().local(d.snd, 1); if (d.mode !== 'rocket' && d.mode !== 'bolt' && Math.random() < .45) A() && A().local('casing', .5 + Math.random() * .4, .32 + Math.random() * .22); if (w.ammo <= 0) P.autoRel = .35;   // selongsong jatuh ke tanah sesaat kemudian
     const sp = spreadDeg() * D2R, ox = P.x, oy = P.y, oz = eyeZ();
@@ -582,7 +582,8 @@
   }
   function fireRocket() {
     const v = F.aimVec(P.yaw + P.rkY * .3, P.pitch + P.rkP * .3);
-    F.rock.push({ x: P.x + v[0] * 1.5, y: P.y + v[1] * 1.5, z: eyeZ() - .25, vx: v[0] * 135 + P.vx * .3, vy: v[1] * 135 + P.vy * .3, vz: v[2] * 135, t: 0 });
+    const d = F.WEAPONS[P.w[P.cur].id], sp = d.rspd || 135;   // lampiran peluncur: laju motor, radius & damage hulu ledak
+    F.rock.push({ x: P.x + v[0] * 1.5, y: P.y + v[1] * 1.5, z: eyeZ() - .25, vx: v[0] * sp + P.vx * .3, vy: v[1] * sp + P.vy * .3, vz: v[2] * sp, t: 0, sp, dmg: d.dmg, bl: d.blast || 12, dt: d.dt || 'ap' });
     for (let i = 0; i < 8; i++) F.emit('smoke', P.x - v[0] * 1.5, P.y - v[1] * 1.5, eyeZ() - .4, { vx: -v[0] * rand(2, 8) + rand(-2, 2), vy: -v[1] * rand(2, 8) + rand(-2, 2), vz: rand(-.5, 1), life: rand(.6, 1.2), s0: .5, s1: 2.2, col: [210, 210, 205], a: .6 });
     P.vx -= v[0] * 2; P.vy -= v[1] * 2;
   }
@@ -632,7 +633,7 @@
     // roket
     for (let i = F.rock.length - 1; i >= 0; i--) {
       const r = F.rock[i]; r.t += dt; let hit = false;
-      const steps = Math.ceil(135 * dt / 2.5);
+      const steps = Math.ceil((r.sp || 135) * dt / 2.5);
       for (let k = 0; k < steps && !hit; k++) {
         r.x += r.vx * dt / steps; r.y += r.vy * dt / steps; r.z += r.vz * dt / steps;
         if (r.z < F.hAt(r.x, r.y) || !F.inb(r.x, r.y)) hit = true;
@@ -642,7 +643,7 @@
         }
       }
       if (r.t % .03 < dt) F.emit('smoke', r.x, r.y, r.z, { life: 1.4, s0: .35, s1: 1.4, col: [225, 225, 220], a: .55 });
-      if (hit || r.t > 8) { F.rock.splice(i, 1); explodeAt(r.x, r.y, r.z, 12, 330, 'ap'); }
+      if (hit || r.t > 8) { F.rock.splice(i, 1); explodeAt(r.x, r.y, r.z, r.bl || 12, r.dmg || 330, r.dt || 'ap'); }
     }
     // jejak peluru
     for (let i = F.tracers.length - 1; i >= 0; i--) { F.tracers[i].t += dt; if (F.tracers[i].t > F.tracers[i].life) F.tracers.splice(i, 1); }
@@ -1574,7 +1575,7 @@
     if (P.alive && P.mnt && P.heli) { P.cam = F.heliCamera(); if (P.entA) P.cam = F.entCam(P.cam); return; }   // kamera Apache (orang-ketiga / kokpit penembak)
     if (P.alive && P.veh) { P.cam = F.vehCamera(); if (P.entA) P.cam = F.entCam(P.cam); return; }   // kamera kendaraan operator (orang-ketiga / kursi penembak)
     if (P.alive || (P.started && !P.menu)) {
-      const sw = F.wdefSafe().scope && !F.wdefSafe().acc && P.ads > .5 && P.alive ? (F.in.sprint ? .15 : 1) * (perk('STEADY') ? F.PERK.steady.sway : 1) : 0, t = P.time;   // teleropong goyang; SHIFT = tahan napas
+      const sw = F.wdefSafe().scope && !F.wdefSafe().acc && P.ads > .5 && P.alive ? (F.in.sprint ? .15 : 1) * (perk('STEADY') ? F.PERK.steady.sway : 1) * (F.wdefSafe().sway || 1) * (P.crouch && F.wdefSafe().bip ? .5 : 1) : 0, t = P.time;   // teleropong goyang; SHIFT = tahan napas
       const vc = P.alive && (P.relT > 0 || P.melT > 0) && TK.fpsvm && TK.fpsvm.cam || [0, 0];   // hentakan reload / ayunan pisau ikut menggoyang kamera
       const zs = 1 - P.ads * (1 - F.wdefSafe().zoom);   // getaran kamera dikecilkan sebanding perbesaran: di layar tetap sama kuat saat membidik teropong
       const dh = P.alive ? null : dieHead(), jit = () => (Math.random() - .5) * P.shake * F.shakeK * .02 * zs;

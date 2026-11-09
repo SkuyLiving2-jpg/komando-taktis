@@ -271,6 +271,9 @@ body.play.touch .ar-grid { grid-template-columns: repeat(auto-fill, minmax(132px
   body.play.touch #fpskit .kt-st b { font-size: 10.5px; }
   body.play.touch #fpskit .kt-note { font-size: 10.5px; padding: 4px 6px; margin: 4px 0; }
   body.play.touch #fpskit .fm-btns { margin-top: 5px; } body.play.touch #fpskit .fm-btns button { padding: 6px 12px; font-size: 10px; }
+  body.play.touch #fpskit .kt2 .fm-cols { grid-template-columns: 1fr 1.1fr; } body.play.touch #fpskit .kt-stage { height: 112px; } body.play.touch #fpskit .kt-wn { font-size: 10px; top: 5px; } body.play.touch #fpskit .kt-hint { display: none; }
+  body.play.touch #fpskit .kt-tabs { margin: 0 0 2px; padding: 6px 6px 4px 1px; gap: 4px; } body.play.touch #fpskit .kt-tab { min-width: 70px; padding: 3px 7px 4px; } body.play.touch #fpskit .kt-tab b { font-size: 9.5px; } body.play.touch #fpskit .kt-tab i { font-size: 7.5px; }
+  body.play.touch #fpskit .kt2 .kt-right { max-height: none; } body.play.touch #fpskit .kt-sec h4 { margin: 3px 0 3px; font-size: 9px; } body.play.touch #fpskit .kt2 .kt-card { min-height: 0; padding: 5px 7px 5px 10px; }
 }
 
 /* ---------- menu kelas HP (v1.9.1): gaya loadout — daftar kelas bergambar senjata + panel detail, tombol TERJUN di pojok ---------- */

@@ -40,7 +40,7 @@
     M93R:    { slot: 1, mode: 'burst', burst: 3, bcd: .3, rpm: 1100, dmg: 19, dt: 'small', rng0: 25, rng1: 160, mag: 20, res: 100, rel: 1.6, spread: [1.5, .55], kick: .6, mv: 1.04, zoom: .9, ads: 12, snd: 'pistol', ico: 'PST' },
     DEAGLE:  { slot: 1, mode: 'semi', rpm: 210, dmg: 50, dt: 'small', rng0: 35, rng1: 210, mag: 7, res: 42, rel: 1.8, spread: [1.9, .6], kick: 2.7, mv: 1.02, zoom: .88, ads: 10, snd: 'deagle', ico: 'PST' },
     MAG44:   { slot: 1, mode: 'semi', rpm: 150, dmg: 64, dt: 'small', rng0: 60, rng1: 320, mag: 6, res: 36, rel: 2.5, spread: [0, 0], acc: true, kick: 3, mv: 1.02, zoom: .42, ads: 8, snd: 'magnum', ico: 'PST', scope: true },
-    AT:      { slot: 1, mode: 'rocket', rpm: 30, dmg: 330, dt: 'ap', mag: 1, res: 3, rel: 3.6, spread: [1.2, .25], kick: 3, mv: .88, zoom: .75, ads: 5, snd: 'rocket', ico: 'AT' }
+    AT:      { slot: 1, mode: 'rocket', rpm: 30, dmg: 330, dt: 'ap', mag: 1, res: 3, rel: 3.6, spread: [1.2, .25], kick: 3, mv: .88, zoom: .75, ads: 5, snd: 'rocket', ico: 'AT', blast: 12, rspd: 135 }   // blast = radius ledakan (m), rspd = laju roket (m/dtk)
   };
   /* lampiran senjata (dipasang di MEJA SENJATA markas, fps-kit.js). g = kelompok yang saling meniadakan (satu optik, satu jenis magasin),
      m = pengubah statistik dari F.WEAPONS dasar: angka = pengali, objek {set} = nilai pengganti. Sementara hanya M4A1 (AR) */
@@ -55,6 +55,66 @@
     SUP:   { g: 'muz', m: { sup: { set: true }, rng1: .85, snd: { set: 'rifleS' } } }                                   // peredam: tak terdengar jauh, kilatan kecil, tak muncul di radar musuh
   };
   F.ATT_FOR = { AR: ['ACOG', 'MED', 'HIGH', 'DUAL', 'EXT', 'LASER', 'GRIP', 'SUP'] };
+  /* v3.1 — lampiran SEMUA senjata lain (meja senjata, fps-kit). Per senjata: id → { g kelompok, m pengubah (angka = pengali; {set} = ganti;
+     larik = pengali per unsur), opt = jenis bidikan (HUD/ADS), v = model 3D (fps-vm attX) }. Kunci yang belum ada di senjata dasar dianggap 1
+     (mis. sway = goyang teropong, bip = pengali hentakan+sebaran saat jongkok dengan bipod). Nama: f_att_<id>, keterangan: f_attd_<senjata>_<id> */
+  const SUPm = { sup: { set: true }, rng1: .85, snd: { set: 'rifleS' } }, LAS = { g: 'rail', m: { spread: [.55, 1] }, v: 'laser' }, PLAS = { g: 'rail', m: { spread: [.55, 1] }, v: 'plaser' };
+  const HP = { g: 'ammo', m: { dmg: 1.15, rng1: .85 } }, TAPE = { g: 'grip', m: { kick: .8, ads: 1.1 } }, RMR = { g: 'opt', m: { zoom: { set: .82 }, ads: .95, spread: [1, .75] }, opt: 'rds', v: 'rmr' };
+  F.ATTW = {
+    AK: { RDS: { g: 'opt', m: { zoom: { set: .7 }, ads: .95 }, opt: 'rds', v: 'rds' },
+      KASH: { g: 'opt', m: { zoom: { set: .36 }, ads: .8, mv: .98 }, opt: 'prism', v: 'prism' },
+      PSO: { g: 'opt', m: { zoom: { set: .25 }, ads: .7, mv: .97, scope: { set: true }, spread: [1.15, .5], rng1: 1.15 }, opt: 'pso', v: 'pso' },
+      SUP: { g: 'muz', m: SUPm, v: 'sup' }, COMP: { g: 'muz', m: { kick: .7, spread: [1.05, .8] }, v: 'comp' },
+      GRIP: { g: 'under', m: { kick: .65, spread: [.9, .85], ads: .95 }, v: 'vgrip' }, LASER: LAS,
+      EXT: { g: 'mag', m: { mag: 1.5, res: 1.2, rel: 1.12, mv: .98 }, v: 'ext' }, DRUM: { g: 'mag', m: { mag: 2.5, res: 1.5, rel: 1.45, mv: .93, ads: .85 }, v: 'drum' } },
+    SMG: { HOLO: { g: 'opt', m: { zoom: { set: .72 }, ads: .95 }, opt: 'holo', v: 'holo' },
+      PRISM: { g: 'opt', m: { zoom: { set: .5 }, ads: .85, mv: .99 }, opt: 'prism', v: 'prism' },
+      SUP: { g: 'muz', m: SUPm, v: 'sup' }, COMP: { g: 'muz', m: { kick: .72, spread: [1.08, .85] }, v: 'comp' },
+      AGRIP: { g: 'under', m: { kick: .8, ads: 1.15 }, v: 'agrip' }, LASER: LAS,
+      EXT: { g: 'mag', m: { mag: 1.28, res: 1.2, rel: 1.1, mv: .99 }, v: 'ext' },
+      LSTOCK: { g: 'stock', m: { mv: 1.05, ads: 1.2, kick: 1.2, spread: [.92, 1.15] }, v: 'lstock' },
+      RAPID: { g: 'trig', m: { rpm: 1.15, kick: 1.08 } } },
+    LMG: { HOLO: { g: 'opt', m: { zoom: { set: .72 }, ads: .95 }, opt: 'holo', v: 'holo' },
+      ELCAN: { g: 'opt', m: { zoom: { set: .3 }, ads: .8, mv: .98 }, opt: 'prism', v: 'prism' },
+      SUP: { g: 'muz', m: SUPm, v: 'sup' }, COMP: { g: 'muz', m: { kick: .72, spread: [1.05, .85] }, v: 'comp' },
+      GRIP: { g: 'under', m: { kick: .65, spread: [.88, .85] }, v: 'vgrip' }, BIPOD: { g: 'under', m: { bip: { set: .45 }, mv: .98 }, v: 'bipod' },
+      BOX: { g: 'mag', m: { mag: 2, res: 1.5, rel: 1.2, mv: .92, ads: .9 }, v: 'box' }, LASER: LAS,
+      SHORT: { g: 'barrel', m: { mv: 1.07, ads: 1.3, rng0: .8, rng1: .82, spread: [.9, 1.2] }, v: 'short' } },
+    SNIPER: { S4X: { g: 'opt', m: { zoom: { set: .3 }, ads: 1.4, spread: [.85, 1], sway: .7 }, opt: 'scope', v: 'scopeS' },
+      S12X: { g: 'opt', m: { zoom: { set: .085 }, ads: .8, rng1: 1.25, sway: 1.25 }, opt: 'scope', v: 'scopeL' },
+      BRAKE: { g: 'muz', m: { sup: { set: false }, kick: .55, snd: { set: 'sniper' } }, v: 'brake' },
+      BIPOD: { g: 'under', m: { bip: { set: .4 }, sway: .75 }, v: 'bipod' },
+      EXT: { g: 'mag', m: { mag: 2, res: 1.5, rel: 1.1, mv: .98 }, v: 'ext' }, FBOLT: { g: 'trig', m: { rpm: 1.35 } },
+      CHEEK: { g: 'stock', m: { sway: .55, ads: 1.1 }, v: 'cheek' }, LASER: { g: 'rail', m: { spread: [.5, 1] }, v: 'laser' },
+      HVY: { g: 'ammo', m: { dmg: 1.15, rng1: 1.1, kick: 1.15 } } },
+    SHOTGUN: { RDS: { g: 'opt', m: { zoom: { set: .78 }, ads: .95 }, opt: 'rds', v: 'rds' }, HOLO: { g: 'opt', m: { zoom: { set: .74 }, ads: .93 }, opt: 'holo', v: 'holo' },
+      CHOKE: { g: 'muz', m: { spread: [.7, .6], rng0: 1.3, rng1: 1.25 }, v: 'choke' }, SUP: { g: 'muz', m: SUPm, v: 'sup' },
+      SLUG: { g: 'ammo', m: { pellets: { set: 1 }, dmg: { set: 95 }, rng0: { set: 45 }, rng1: { set: 220 }, spread: { set: [2.2, .35] }, kick: 1.15 } },
+      EXT: { g: 'mag', m: { mag: 1.3, res: 1.1, mv: .97 }, v: 'tube' }, SADDLE: { g: 'side', m: { res: 1.5, shl: [.8, .8, .8, .85] }, v: 'saddle' },
+      LASER: LAS, STOCK: { g: 'stock', m: { mv: 1.05, ads: 1.25, kick: 1.15 }, v: 'lstock' } },
+    M1911: { SUP: { g: 'muz', m: SUPm, v: 'psup' }, COMP: { g: 'muz', m: { kick: .7 }, v: 'pcomp' }, LASER: PLAS,
+      EXT: { g: 'mag', m: { mag: 1.25, res: 1.1, rel: 1.05 }, v: 'pext' }, HP, TAPE, TRIG: { g: 'trig', m: { rpm: 1.25 } },
+      BULL: { g: 'barrel', m: { spread: [.85, .8], mv: .98, kick: .9 } } },
+    GLOCK: { RMR, SUP: { g: 'muz', m: SUPm, v: 'psup' }, COMP: { g: 'muz', m: { kick: .7 }, v: 'pcomp' }, LASER: PLAS,
+      EXT: { g: 'mag', m: { mag: 1.94, res: 1.3, rel: 1.12, mv: .99 }, v: 'pextL' },
+      AUTO: { g: 'trig', m: { mode: { set: 'auto' }, rpm: 2.3, kick: 1.15, spread: [1.2, 1.4] } }, HP, TAPE },
+    M93R: { RMR, SUP: { g: 'muz', m: SUPm, v: 'psup' }, LASER: PLAS, EXT: { g: 'mag', m: { mag: 1.6, res: 1.3, rel: 1.1 }, v: 'pext' },
+      STOCK: { g: 'stock', m: { kick: .6, spread: [.85, .55], mv: .97, ads: .95 }, v: 'pstock' }, HP, TAPE, TRIG: { g: 'trig', m: { bcd: .6 } } },
+    DEAGLE: { RMR, PSCOPE: { g: 'opt', m: { zoom: { set: .42 }, scope: { set: true }, ads: .75, spread: [1.2, .3], rng1: 1.2 }, opt: 'scope', v: 'pscope' },
+      COMP: { g: 'muz', m: { kick: .7, spread: [1, .85] }, v: 'pcomp' }, LONG: { g: 'barrel', m: { rng0: 1.3, rng1: 1.3, mv: .97, ads: .9, spread: [.95, .8] }, v: 'long' },
+      LASER: PLAS, EXT: { g: 'mag', m: { mag: 1.43, res: 1.2, rel: 1.08 }, v: 'pext' }, HP, TAPE },
+    MAG44: { IRON: { g: 'opt', m: { scope: { set: false }, acc: { set: false }, zoom: { set: .88 }, ads: 1.5, spread: { set: [1.7, .45] }, mv: 1.02 }, opt: 'iron', v: 'iron' },
+      RMR: { g: 'opt', m: { scope: { set: false }, acc: { set: false }, zoom: { set: .78 }, ads: 1.35, spread: { set: [1.5, .3] } }, opt: 'rds', v: 'rmr' },
+      LONG: { g: 'barrel', m: { rng0: 1.3, rng1: 1.25, mv: .97, ads: .9 }, v: 'long' }, SNUB: { g: 'barrel', m: { rng0: .7, rng1: .7, mv: 1.03, ads: 1.35, kick: 1.2 } },
+      SPEED: { g: 'mag', m: { rel: .7 } }, HP, COMP: { g: 'muz', m: { kick: .72 }, v: 'pcomp' }, RUBBER: { g: 'grip', m: { kick: .78, ads: .95 } }, LASER: PLAS },
+    AT: { ATSCOPE: { g: 'opt', m: { zoom: { set: .36 }, scope: { set: true }, ads: .8, spread: [1.1, .4] }, opt: 'scope', v: 'atscope' },
+      TANDEM: { g: 'wh', m: { dmg: 1.45, blast: .6 } }, HEF: { g: 'wh', m: { dt: { set: 'he' }, blast: 1.8, dmg: .8 } },
+      FAST: { g: 'motor', m: { rspd: 1.7 } }, BAG: { g: 'mag', m: { res: 2, mv: .95 } }, LIGHT: { g: 'barrel', m: { mv: 1.08, ads: 1.3, kick: 1.15 } },
+      GRIP: { g: 'under', m: { kick: .7, spread: [.8, .85], ads: 1.1 }, v: 'vgrip' }, QUICK: { g: 'load', m: { rel: .75 } }, LASER: { g: 'rail', m: { spread: [.5, 1] }, v: 'laser' } }
+  };
+  for (const w in F.ATTW) F.ATT_FOR[w] = Object.keys(F.ATTW[w]);
+  /* definisi lampiran a untuk senjata w (AR memakai F.ATT lama) */
+  F.attDef = (w, a) => (F.ATTW[w] && F.ATTW[w][a]) || (w === 'AR' || !F.ATTW[w] ? F.ATT[a] : null);
   /* perk (keahlian pasif) + batas per tingkat kesulitan (MUDAH/NORMAL/SULIT/PROFESIONAL): att = lampiran, perk = jumlah perk */
   F.PERKS = ['HARDLINE', 'SHADOW', 'FLAK', 'VULTURE', 'SLEIGHT', 'MARATHON', 'STEADY', 'LASTSTAND', 'EAGLE'];
   F.KITLIM = [{ att: 1, perk: 0 }, { att: 2, perk: 0 }, { att: 2, perk: 1 }, { att: 3, perk: 2 }];   // PROFESIONAL: 3 lampiran (v2.2.2)
@@ -163,7 +223,8 @@
     WOLF: { seats: 1, cost: 2800, arr: 'base', fw: true, hpK: true, taxi: 13, tko: 4.6, vr: 52, vs: 44, min: 60, max: 175, turn: 1.1, ceil: 1400, cam: 26, pad: 10, d0: 0,
       w: [{ id: 'GAU-8', k: 'gun', rpm: 3900, dmgI: 55, dmgV: 40, r: 3, rng: 2000, spread: .5, mag: 5000, n: 5000, tw: .07, he: true, spin: .45 }],   // minigun 5.000 peluru
       hom: { n: 500, max: 6, lock: .22, cone: .55, rng: 3200, cd: 1.4, gap: .08, dmg: 1250, r: 11, spd: 320, fuze: 6 },   // 500 rudal homing: kunci otomatis ≤6 sasaran, 1 rudal per sasaran (3 pilon tiap sayap)
-      flare: { n: 40, cd: 2.5, dur: 4 } }   // flare lebih banyak & lebih cepat siap dari ELANG (10 · 6 dtk)
+      flare: { n: 40, cd: 2.5, dur: 4 },
+      roll: { t: 1.15, side: 24, cd: 3.5, dodge: .65 } }   // A/D guling menghindar: lama dtk, dorongan samping maks m/dtk, jeda, peluang rudal pengejar kehilangan kunci   // flare lebih banyak & lebih cepat siap dari ELANG (10 · 6 dtk)
   };
   /* laser orbital SATELIT HELIOS: titik dipilih di peta (<= range m dari operator) → sinematik satelit turun (cin) → POV satelit di ketinggian alt m → isi daya charge dtk → sinar dur dtk (radius r, dps, laju spd m/dtk); nova = ledakan penutup.
      hqK: markas musuh hanya tergores agar misi tidak selesai sekali sorot. cin: satelit jatuh dari h0 m selama fall dtk, panel terbuka mulai dep0 selama depT dtk, kamera memutar arc0..arc1 lalu masuk ke optik satelit pada t dtk */

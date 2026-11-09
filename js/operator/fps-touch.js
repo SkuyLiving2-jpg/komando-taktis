@@ -131,7 +131,8 @@
       const V = P.veh;
       return [fire(null, () => V.mag[0]), B('ads', Tt('tc_msl'), { ic: 'w_hf', down: () => { I.ads = true; }, up: () => { I.ads = false; }, cls: 'hot', n: () => V.hom }),
         B('fl', Tt('tc_flare'), { tap: 'KeyF', n: () => sec(V.fcd) || V.fl }), B('g', Tt('tc_gear'), { ic: 'gear', tap: 'KeyG', on: () => V.gear > .5, dim: () => V.gnd }),
-        B('brk', Tt('tc_brake'), { h: 'Space' }), B('cam', Tt('tc_cam'), { tap: 'KeyV' }), B('exit', Tt('tc_exit'), { tap: 'KeyE' })];
+        V.gnd ? B('brk', Tt('tc_tko') + '/' + Tt('tc_brake'), { h: 'Space' }) : B('roll', Tt('tc_roll'), { ic: 'swap', down: () => { I.r = 1; }, up: () => { I.r = 0; } }),
+        B('cam', Tt('tc_cam'), { tap: 'KeyV' }), B('exit', Tt('tc_exit'), { tap: 'KeyE' })];
     }
     if (P.veh) {
       const V = P.veh, D = V.D || {}, sk = F.vehSmkKey(V), out = [fire(null, () => V.mag[V.air ? 0 : V.wi]), V.air ? B('ads', 'AGM', { ic: 'w_hf', down: () => { I.ads = true; }, up: () => { I.ads = false; }, cls: 'hot', n: () => V.agm })   // jet: klik kanan = rudal AGM
@@ -415,7 +416,7 @@
     else if (!hwP.classList.contains('off')) { const h = hwHTML(); if (h !== hwP.dataset.sig) { hwP.innerHTML = h; hwP.dataset.sig = h; } }
     U.hw = P.mnt ? hw : null;
     if (hyT > 0 && (hyT -= dt) <= 0) { tap('KeyG'); hyT = .45; }   // Hydra: tombol ditahan = salvo beruntun
-    const c = ctxOf(), s2 = c + '|' + (c === 'foot' ? near() + (P.eq || '') : '') + '|' + Tt('tc_rel') + '|' + u + '|' + layoutVer + '|' + (P.mnt ? hw + HW.gun.s : '');
+    const c = ctxOf(), s2 = c + '|' + (c === 'foot' ? near() + (P.eq || '') : '') + '|' + Tt('tc_rel') + '|' + u + '|' + layoutVer + '|' + (P.mnt ? hw + HW.gun.s : '') + (P.veh && P.veh.D && P.veh.D.fw ? (P.veh.gnd ? 'g' : 'a') : '');
     if (c !== ctxSig) { if (ctxSig) { I.ads = false; I.fire = false; } ctxSig = c; }
     if ((P.eq || '') !== eqSig) { eqSig = P.eq || ''; I.ads = false; }   // pisau / granat / kait dikeluarkan: bidik ADS dimatikan (tombol bidik berganti fungsi)
     if (s2 !== sig) { sig = s2; for (const [, p] of ptr) if (p.role === 'btn') { if (p.b.h) key(p.b.h, true); else if (p.b.up) p.b.up(); p.role = 'look'; p.x = p.x || 0; } build(); }

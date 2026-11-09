@@ -1641,7 +1641,8 @@
     } else if (D.fw) {
       const nl = V.hl.filter(q => q.t >= D.hom.lock).length;
       rows.push(['GAU-8 [LMB]', V.mag[0], V.mag[0] > 0], [Tt('f_wf_msl') + ' [RMB]', (nl ? '◆' + nl + ' · ' : '') + V.hom + (V.hcd > 0 ? ' · ' + V.hcd.toFixed(1) + 's' : ''), V.hom > 0 && V.hcd <= 0],
-        ['FLARE [F]', V.fl + (V.fcd > 0 ? ' · ' + Math.ceil(V.fcd) + 's' : ''), V.fl > 0 && V.fcd <= 0], [Tt('f_wf_gear', { s: '' }).trim() + ' [G]', Tt(V.gear > .5 ? 'f_wf_gdn' : 'f_wf_gup'), !V.gnd]);
+        ['FLARE [F]', V.fl + (V.fcd > 0 ? ' · ' + Math.ceil(V.fcd) + 's' : ''), V.fl > 0 && V.fcd <= 0], [Tt('f_wf_gear', { s: '' }).trim() + ' [G]', Tt(V.gear > .5 ? 'f_wf_gdn' : 'f_wf_gup'), !V.gnd],
+        [Tt('f_wf_rl') + ' [A/D]', V.gnd ? '—' : V.rcd > 0 ? V.rcd.toFixed(1) + 's' : 'OK', !V.gnd && !(V.rcd > 0)]);
     } else if (V.air) {
       rows.push(['KANON 25MM [LMB]', V.mag[0], V.mag[0] > 0], ['AGM [RMB]', (V.lock ? '◆ ' : '') + V.agm, V.agm > 0 && V.mcd <= 0], ['AIM-9 [R]', (V.aaU && V.aaT >= D.aam.lock ? '◉ ' : '') + V.aam, V.aam > 0 && V.aaCd <= 0],
         ['BOM [G]', V.bomb, V.bomb > 0 && V.bcd <= 0], ['FLARE [F]', V.fl + (V.fcd > 0 ? ' · ' + Math.ceil(V.fcd) + 's' : ''), V.fl > 0 && V.fcd <= 0], ['MODE [X]', V.mode === 'jet' ? 'JET' : 'VTOL', true]);
@@ -1663,6 +1664,7 @@
     if (V.air && (V.mode === 'jet' || D.fw) && V.pull) text(Tt('f_vh_pull'), cx, cy + 60 * s, 18 * s, bl ? '#ff3b3b' : '#ffdd33', 'center');
     if (D.fw) {   // WOLFPACK: petunjuk rotasi, stall, roda belum turun saat mendekat tanah
       if (V.gnd && V.rotHint) text(Tt('f_wf_rot'), cx, cy + 72 * s, 15 * s, bl ? '#ffffff' : AMB, 'center');
+      else if (V.gnd && V.tko) text(Tt('f_wf_arm'), cx, cy + 72 * s, 13 * s, G, 'center');
       else if (!V.gnd && V.stall) { text(Tt('f_wf_stall'), cx, cy + 72 * s, 18 * s, bl ? '#ff3b3b' : '#ffdd33', 'center'); }
       else if (!V.gnd && V.gear < .5 && V.vz < -1 && V.z - F.hAt(V.x, V.y) < 45) text(Tt('f_wf_nogear'), cx, cy + 72 * s, 15 * s, bl ? '#ff3b3b' : '#ffdd33', 'center');
     }
@@ -1693,7 +1695,7 @@
   /* perk & lampiran aktif (kanan bawah, di atas amunisi), bilah stamina, layar LAST STAND */
   function kitHud(s) {
     if (!F.perksOn) return;
-    const pk = F.perksOn(), at = P.w[P.cur] && P.w[P.cur].id === 'AR' ? F.attOn('AR') : [], y = CH - 104 * s;
+    const pk = F.perksOn(), at = P.w[P.cur] && F.ATT_FOR[P.w[P.cur].id] ? F.attOn(P.w[P.cur].id) : [], y = CH - 104 * s;
     if (pk.length) text(pk.map(k => Tt('f_pk_' + k)).join(' · '), CW - 30 * s + TX(), y, 10 * s, '#ffc428', 'right', false);
     if (at.length) text(at.map(k => Tt('f_att_' + k)).join(' · '), CW - 30 * s + TX(), y + (pk.length ? 13 * s : 0), 10 * s, 'rgba(200,230,255,.8)', 'right', false);
     if (P.stam < .995 && !P.down && !P.tgt) {   // stamina lari: bilah tipis di bawah crosshair
