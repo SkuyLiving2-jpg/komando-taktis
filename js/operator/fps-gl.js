@@ -210,12 +210,11 @@ col+=vec3(.55)*uFx.x;if(uNvg>1.5)col=mix(col*.5,vec3(2.8*(.85+.15*N.z)),uHot*.88
   const OBJS_FS = HEAD + 'in vec4 vM;uniform sampler2D uLeaf;out vec4 o;void main(){if(int(vM.x+.5)==3&&texture(uLeaf,vM.zw).a<.45)discard;if(int(vM.x+.5)==13)discard;o=vec4(1.);}';
   const OBJS_VS = OBJ_VS;
   /* partikel billboard & garis */
-  const PAR_VS = HEAD + `layout(location=0) in vec2 aQ;layout(location=1) in vec4 iP;layout(location=2) in vec4 iC;layout(location=3) in float iK;uniform mat4 uVP;uniform vec3 uR,uU;out vec2 vQ;out vec4 vC;out float vK;out vec3 vP;out vec3 vO;
-void main(){vec3 p=iP.xyz+(uR*aQ.x+uU*aQ.y)*iP.w;vP=p;vO=iP.xyz;vQ=aQ;vC=iC;vK=iK;gl_Position=uVP*vec4(p,1.);}`;
-  const PAR_FS = HEAD + COMMON + `in vec2 vQ;in vec4 vC;in float vK;in vec3 vP;in vec3 vO;uniform vec3 uR,uU;out vec4 o;
+  const PAR_VS = HEAD + `layout(location=0) in vec2 aQ;layout(location=1) in vec4 iP;layout(location=2) in vec4 iC;layout(location=3) in float iK;uniform mat4 uVP;uniform vec3 uR,uU;out vec2 vQ;out vec4 vC;out float vK;out vec3 vP;
+void main(){vec3 p=iP.xyz+(uR*aQ.x+uU*aQ.y)*iP.w;vP=p;vQ=aQ;vC=iC;vK=iK;gl_Position=uVP*vec4(p,1.);}`;
+  const PAR_FS = HEAD + COMMON + `in vec2 vQ;in vec4 vC;in float vK;in vec3 vP;out vec4 o;
 void main(){float r=length(vQ);if(r>1.)discard;
-if(vK>1.5){vec2 sd=fract(vO.xy*.0123+vO.z*.031)*40.;float n1=noise(vQ*1.9+sd),n2=noise(vQ*3.9+sd.yx),n3=noise(vQ*8.3+sd*1.3);float h=0.,h2=0.;vec3 nb=vec3(0.,0.,1.);int NL=uLo>.5?3:6;vec2 wq=vQ+(vec2(n1,n2)-.5)*.32;for(int i=0;i<6;i++){if(i>=NL)break;float fi=float(i);vec2 c=i==0?vec2(0.,-.08):vec2(hash(sd+fi*7.13),hash(sd.yx+fi*3.71))*1.3-.65;float rl=i==0?.64:.28+.26*hash(sd*1.37+fi*5.3);vec2 q=wq-c*(1.-rl*.8);float hh=rl*rl-dot(q,q);if(hh>0.){hh=sqrt(hh);if(hh>h){h2=h;h=hh;nb=vec3(q,hh*1.6)/rl;}else h2=max(h2,hh);}}float a=smoothstep(0.,.2,h+(n3-.5)*.12)*(1.-smoothstep(.78,1.,r))*vC.a;if(a<.004)discard;float ao=.72+.28*smoothstep(0.,.14,h-h2);vec3 V=normalize(uCam-vP);vec3 N=normalize(uR*(nb.x+(n2-.5)*.6)+uU*(nb.y+(n3-.5)*.6)+V*nb.z);float ndl=dot(N,uSun),wr=clamp(ndl*.6+.4,0.,1.);wr*=wr;float th=1.-smoothstep(0.,.3,h),sc=pow(max(dot(-V,uSun),0.),5.)*th;vec3 amb=mix(uGnd,uSky,N.z*.5+.5);float tv=hash(sd*.71);vec3 alb=vC.rgb*(.86+.28*tv)*mix(vec3(1.05,1.,.94),vec3(.95,.98,1.03),hash(sd*1.9));vec3 c=alb*(amb*1.05*ao+uSunC*wr*1.55*mix(.7,1.,ao))*(.84+.3*n3)+uSunC*sc*.3;float d=length(vP-uCam)/uFogD;c=mix(c,uFogC,clamp(1.-exp(-d*d),0.,1.)*.45);o=vec4(post(c)*a,a);}
-else if(vK<.5){float n=noise(vQ*2.2+vC.a*31.+vP.xy*.05);float a=(1.-r*r)*(.45+.75*n)*vC.a;vec3 c=vC.rgb*(uSky*1.1+uSunC*.5)*(.75+.35*n);c=fogit(c,vP);o=vec4(post(c)*a,a);}
+if(vK<.5){float n=noise(vQ*2.2+vC.a*31.+vP.xy*.05);float a=(1.-r*r)*(.45+.75*n)*vC.a;vec3 c=vC.rgb*(uSky*1.1+uSunC*.5)*(.75+.35*n);c=fogit(c,vP);o=vec4(post(c)*a,a);}
 else{float a=(1.-r)*(1.-r*.4)*vC.a;o=vec4(post(vC.rgb)*a,0.);}}`;
   /* ---- tekstur material PC: dipanggang sekali oleh GPU (bukan noise per piksel tiap frame): albedo+tinggi & normal+rongga+kilap, 8 lapis, bisa berulang tanpa sambungan ---- */
   const BAK_VS = HEAD + 'layout(location=0) in vec2 aQ;out vec2 vQ;void main(){vQ=aQ;gl_Position=vec4(aQ,0.,1.);}';
@@ -853,7 +852,7 @@ vec3 n=normalize(vec3(-dx*uK,-dy*uK,1.));o=vec4(n.xy*.5+.5,clamp(.92+(c-av)*2.6,
   /* ---------------- PARTIKEL & GARIS ---------------- */
   const PB = new Float32Array(9 * 6000), LB = new Float32Array(7 * 6 * 3000);
   let pn = 0, ln = 0;
-  const part = (x, y, z, s, c, a, glow) => { if (pn >= 6000) return; const j = pn * 9; PB[j] = x; PB[j + 1] = y; PB[j + 2] = z; PB[j + 3] = s; PB[j + 4] = c[0] / 255; PB[j + 5] = c[1] / 255; PB[j + 6] = c[2] / 255; PB[j + 7] = clamp(a, 0, 1); PB[j + 8] = glow === 2 ? 2 : glow ? 1 : 0; pn++; };
+  const part = (x, y, z, s, c, a, glow) => { if (pn >= 6000) return; const j = pn * 9; PB[j] = x; PB[j + 1] = y; PB[j + 2] = z; PB[j + 3] = s; PB[j + 4] = c[0] / 255; PB[j + 5] = c[1] / 255; PB[j + 6] = c[2] / 255; PB[j + 7] = clamp(a, 0, 1); PB[j + 8] = glow ? 1 : 0; pn++; };
   function line(x0, y0, z0, x1, y1, z1, w, c, a) {
     if (ln >= 3000) return;
     const dx = x1 - x0, dy = y1 - y0, dz = z1 - z0, ex = x0 - CAM.x, ey = y0 - CAM.y, ez = z0 - CAM.z;
@@ -920,7 +919,6 @@ vec3 n=normalize(vec3(-dx*uK,-dy*uK,1.));o=vec4(n.xy*.5+.5,clamp(.92+(c-av)*2.6,
       else if (p.k === 'fire') part(p.x, p.y, p.z, s, p.col.map((v, i) => v * (1 - k * (i ? .6 : .2))), (1 - k * .8) * p.a, true);
       else if (p.k === 'spark') part(p.x, p.y, p.z, Math.max(.05, s), p.col, 1, true);
       else if (p.k === 'casing' || p.k === 'debris') part(p.x, p.y, p.z, Math.max(.06, s), p.col, 1, false);
-      else if (p.k === 'ash') part(p.x, p.y, p.z, s, p.col, p.a * Math.min(1, (1 - k) * 2.5) * Math.min(1, k * 10 + .35), 2);   // abu vulkanik: pekat lama, memudar di akhir
       else part(p.x, p.y, p.z, s, p.col, p.a * (1 - k) * Math.min(1, k * 8 + .3), false);
     };
     for (const p of list) { if (hot && (p.k === 'flash' || p.k === 'fire' || p.k === 'spark')) hot.push(p); else one(p); }

@@ -651,12 +651,7 @@
     for (let i = F.fx3.length - 1; i >= 0; i--) {
       const p = F.fx3[i]; p.t += dt;
       if (p.t >= p.life) { F.fx3.splice(i, 1); continue; }
-      if (p.drag) { const k = Math.max(0, 1 - p.drag * dt); p.vx *= k; p.vy *= k; if (p.k === 'smoke' || p.k === 'fire' || p.k === 'ash') p.vz *= k; }
-      if (p.k === 'ash') {   // v2.15 abu vulkanik: cap = ketinggian awan payung (berhenti naik, melebar ke ux/uy), wx/wy = angin yang makin kuat di atas zb, hug = awan panas menyusuri lereng
-        if (p.cap !== undefined && p.z > p.cap) { const q = Math.min(1, dt * 1.4); p.vz -= p.vz * q; p.vx += (p.ux - p.vx) * q * .6; p.vy += (p.uy - p.vy) * q * .6; p.drag = 0; }
-        if (p.wx) { const h = clamp((p.z - p.zb) / 450, 0, 1); p.x += p.wx * h * dt; p.y += p.wy * h * dt; }
-        if (p.hug !== undefined) { p.x += p.vx * dt; p.y += p.vy * dt; p.zr = (p.zr || 0) + p.vz * dt; p.z = F.hAt(p.x, p.y) + p.hug + p.zr; continue; }
-      }
+      if (p.drag) { const k = Math.max(0, 1 - p.drag * dt); p.vx *= k; p.vy *= k; if (p.k === 'smoke' || p.k === 'fire') p.vz *= k; }
       p.vz -= p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
       if (p.g && p.z < F.hAt(p.x, p.y) + .03) { p.z = F.hAt(p.x, p.y) + .03; p.vz = 0; p.vx *= .3; p.vy *= .3; }
     }
