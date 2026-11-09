@@ -635,7 +635,8 @@
     for (const o of Q.objs) {
       let nb = 0, nr = 0;
       for (const u of Q.units) {
-        if (u.dead || u.struct || u.tc !== 'G' || u.chute > 0 || Math.hypot(u.x - o.x, u.y - o.y) > o.r) continue;
+        const hc = u.team === 'B' && u.fly && GEARH[u.type] && !u.ctl;   // v3.2: heli kawan (serang/angkut/medis) ikut merebut pos secepat unit darat
+        if (u.dead || u.struct || (u.tc !== 'G' && !hc) || u.chute > 0 || Math.hypot(u.x - o.x, u.y - o.y) > o.r) continue;
         if (u.team === 'B') nb++; else nr++;
       }
       const lock = o.boss && !o.boss.dead;   // pos PROFESIONAL: kalahkan mini bosnya dulu
