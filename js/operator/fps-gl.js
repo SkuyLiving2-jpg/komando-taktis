@@ -933,6 +933,7 @@ vec3 n=normalize(vec3(-dx*uK,-dy*uK,1.));o=vec4(n.xy*.5+.5,clamp(.92+(c-av)*2.6,
       for (let i = 1; i <= N; i++) { const t = i / N, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t, z = z0 + (z1 - z0) * t - Math.sin(t * Math.PI) * sag; line(px, py, pz, x, y, z, .018, [34, 32, 28], 1); px = x; py = y; pz = z; }
       part(x1, y1, z1, .22, [70, 72, 74], 1, false);
     });
+    for (const T of F.tethers || []) { const u = T.u, z = F.zOf(u) + (u.armor === 'inf' ? 1.1 : 1.4), k = (T.t1 - F.P.time) < 1 ? .5 : 1; line(u.x, u.y, z, T.ax, T.ay, T.az, .03, [40, 38, 34], k); part(T.ax, T.ay, T.az, .25, [70, 72, 74], 1, false); }   // v3.2 musuh terjerat tali kait
     if (hot) hot.forEach(one);
     for (const p of Q.projs) {
       if (p.t < 0) continue;
@@ -999,7 +1000,7 @@ vec3 n=normalize(vec3(-dx*uK,-dy*uK,1.));o=vec4(n.xy*.5+.5,clamp(.92+(c-av)*2.6,
       }
     }
     if (F.vcs) F.vcs.length = 0;
-    for (const c of F.cuts || []) { if (c.t < 0) continue; const k = c.t / c.life, a = (c.full && !c.fade ? 1 : 1 - k * k) * (c.al || 1), g = c.full ? 1 : Math.min(1, c.t / .045), x1 = c.x0 + (c.x1 - c.x0) * g, y1 = c.y0 + (c.y1 - c.y0) * g, z1 = c.z0 + (c.z1 - c.z0) * g; line(c.x0, c.y0, c.z0, x1, y1, z1, c.w * 1.6, [255, 40, 26], .45 * a); line(c.x0, c.y0, c.z0, x1, y1, z1, c.w * .22, [255, 246, 240], a); }   // tebasan katana Cray (JCE / tebasan darat): inti putih + pendar merah
+    for (const c of F.cuts || []) { if (c.t < 0) continue; const k = c.t / c.life, a = (c.full && !c.fade ? 1 : 1 - k * k) * (c.al || 1), g = c.full ? 1 : Math.min(1, c.t / .045), x1 = c.x0 + (c.x1 - c.x0) * g, y1 = c.y0 + (c.y1 - c.y0) * g, z1 = c.z0 + (c.z1 - c.z0) * g; line(c.x0, c.y0, c.z0, x1, y1, z1, c.w * 1.6, c.col || [255, 40, 26], .45 * a); line(c.x0, c.y0, c.z0, x1, y1, z1, c.w * .22, [255, 246, 240], a); }   // tebasan katana Cray (JCE / tebasan darat): inti putih + pendar merah
     if (P.laser) laserFx(P.laser);
     if (Q.nuke) { const n = Q.nuke, gz = F.hAt(n.x, n.y); for (let i = 0; i < 24; i++) { const a0 = i / 24 * 6.283, a1 = (i + 1) / 24 * 6.283; line(n.x + Math.cos(a0) * n.r, n.y + Math.sin(a0) * n.r, F.hAt(n.x + Math.cos(a0) * n.r, n.y + Math.sin(a0) * n.r) + 2, n.x + Math.cos(a1) * n.r, n.y + Math.sin(a1) * n.r, F.hAt(n.x + Math.cos(a1) * n.r, n.y + Math.sin(a1) * n.r) + 2, 1.5, [255, 50, 30], .6); } line(n.x, n.y, gz, n.x, n.y, gz + 400, 3, [255, 220, 60], .4); }
     for (const n of Q.strk || []) { const gz = F.hAt(n.x, n.y), bl = (TIME * 4 | 0) % 2; for (let i = 0; i < 20; i++) { const a0 = i / 20 * 6.283, a1 = (i + 1) / 20 * 6.283; line(n.x + Math.cos(a0) * n.r, n.y + Math.sin(a0) * n.r, F.hAt(n.x + Math.cos(a0) * n.r, n.y + Math.sin(a0) * n.r) + 1.5, n.x + Math.cos(a1) * n.r, n.y + Math.sin(a1) * n.r, F.hAt(n.x + Math.cos(a1) * n.r, n.y + Math.sin(a1) * n.r) + 1.5, 1.2, [255, 40, 30], bl ? .8 : .45); } line(n.x, n.y, gz, n.x, n.y, gz + 250, 2.5, [255, 60, 40], .45); }   // zona jatuh rudal TITAN

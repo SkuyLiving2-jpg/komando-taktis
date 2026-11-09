@@ -158,7 +158,10 @@
     const rt = btn(7), lt = btn(6);   // pelatuk hanya mengubah tembak/bidik saat berubah (mouse tetap bisa dipakai)
     if (rt !== GP.trig[0]) { GP.trig[0] = rt; F.in.fire = rt; } if (lt !== GP.trig[1]) { GP.trig[1] = lt; F.in.ads = lt; }
     if (btn(9) && !GP.prev[9] && U.setPause && !P.menu) U.setPause(!(U.state && U.state.pause));   // START = jeda / lanjut
-    for (const i in KEYMAP) { const on = btn(+i); if (on && !GP.prev[i]) kev('keydown', KEYMAP[i]); else if (!on && GP.prev[i]) kev('keyup', KEYMAP[i]); }
+    const kat = P.eq === 'knife' && !P.veh && !P.mnt;   // v3.2 combo katana di gamepad: △/Y = ● ringan, ○/B = ◆ berat (tahan = IRISAN HAMPA); RT / LT juga
+    if (kat) { if (btn(3) && !GP.prev[3]) F.in.press = .2; const bh = btn(1); if (bh !== !!GP.kB) { GP.kB = bh; F.in.ads = bh || lt; } }
+    else if (GP.kB) { GP.kB = false; F.in.ads = lt; }
+    for (const i in KEYMAP) { if (kat && (i === '1' || i === '3')) continue; const on = btn(+i); if (on && !GP.prev[i]) kev('keydown', KEYMAP[i]); else if (!on && GP.prev[i]) kev('keyup', KEYMAP[i]); }
     for (let i = 0; i < g.buttons.length; i++) GP.prev[i] = btn(i);
   }
 
@@ -205,7 +208,7 @@
   B.tutStart = () => { B.tut = { i: -1, t: 0, d: {}, saved: null }; };
   B.tutStop = function (done) {
     const T = B.tut; if (!T) return; B.tut = null; if (tutEl) tutEl.classList.add('off');
-    if (T.saved) Object.assign(Q, T.saved); if (Q.sat) Q.sat.t = 4;
+    if (T.saved) Object.assign(Q, T.saved); for (const S of [Q.sat, Q.sat2]) if (S) S.t = 4;
     for (const u of T.dummies || []) if (!u.dead) u.dead = true;
     if (done) ls.set('tk_tut_done', '1');
   };
@@ -233,7 +236,7 @@
     if (!U.active || Q.over) { B.tutStop(false); return; }
     if (!P.alive || P.menu || !P.unit) { if (tutEl) tutEl.classList.add('off'); return; }
     if (!T.saved) T.saved = { aiT: Q.aiT, waveT: Q.waveT, raidT: Q.raidT, bossT: Q.bossT, sortT: Q.sortT };
-    Object.assign(Q, { aiT: 1e9, waveT: 1e9, raidT: 1e9, bossT: 1e9, sortT: 1e9 }); if (Q.sat) Q.sat.t = 1e9;   // latihan: tidak ada serbuan / gelombang musuh
+    Object.assign(Q, { aiT: 1e9, waveT: 1e9, raidT: 1e9, bossT: 1e9, sortT: 1e9, awT: 1e9 }); for (const S of [Q.sat, Q.sat2]) if (S) S.t = 1e9;   // latihan: tidak ada serbuan / gelombang musuh
     if (P.unit.hp < P.unit.hpMax) P.unit.hp = P.unit.hpMax;   // operator tidak bisa gugur selama latihan
     if (T.i < 0) { T.i = 0; tutSetup(T, TUT[0]); }
     T.t += dt; const s = TUT[T.i], d = T.d; let ok = false;

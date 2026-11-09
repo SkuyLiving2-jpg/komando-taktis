@@ -181,6 +181,7 @@
     const cls = F.CLASSES.find(c => c.id === opt.cls) || F.CLASSES[0], hq = Q.hqB;
     if (P.unit && !P.unit.dead) P.unit.dead = true;
     if (P.cls && P.cls.id !== cls.id && P.gen === Q.g && F.kitReset) F.kitReset();   // pindah kelas → lampiran meja senjata tidak ikut terbawa
+    Object.assign(P, { sty: { p: 0, r: 0, t: -9, last: [], hits: 0, hT: -9, up: -9 }, kcN: 0, kcLast: null, kcBuf: null, kcH: -1, kcPop: null, kcAct: false, melAn: null });   // v3.2 meter gaya & combo katana
     let x, y, drop = false;
     if (opt.at === 'drop' || opt.at === 'obj') { const o = Q.objs[opt.i] || Q.objs[0]; x = o.x + rand(-30, 30); y = o.y + rand(-30, 30); drop = opt.at === 'drop'; }
     else { x = hq.x + 110; y = hq.y + rand(-40, 40); }
@@ -269,7 +270,7 @@
       const hb = F.hitbox(u), dx = u.x - ox, dy = u.y - oy, d = Math.hypot(dx, dy); if (d > r + (hb.human ? (u.cr ? 2.4 : 0) : 2.5) || (dx * v[0] + dy * v[1]) / (d || 1) < cone) continue;
       if (hb.human) L.push([d, u, hb]); else if (cut && !P._clang) { P._clang = true; war.hurt(u, dmg * .2, 'small', P.unit); A() && A().at('kclang', u.x, u.y, 1.1); sparks(u.x, u.y, hb.z0 + 1.2, 12); P.melHS = .07; P.shake = Math.min(1.5, P.shake + .16); }
     }
-    L.sort((a, b) => a[0] - b[0]); const hits = L.slice(0, n || 1);
+    L.sort((a, b) => a[0] - b[0]); const hits = L.slice(0, n || 1); P._mh = hits.map(h => h[1]);
     for (const [, u, hb] of hits) {
       P.lastHead = false; war.blade = !!cut; war.hurt(u, dmg, 'small', P.unit); war.blade = false; P.hit = { t: P.time, kill: u.dead, head: false };   // war.blade: bilah katana (Cray hanya bisa dilukai bilah / ledakan, bukan peluru)
       if (cut) { const z = hb.z0 + 1.2; for (let i = 0; i < 9; i++) F.emit('dust', u.x, u.y, z + rand(-.3, .3), { vx: v[0] * rand(2, 7) + rand(-2, 2), vy: v[1] * rand(2, 7) + rand(-2, 2), vz: rand(-.5, 3.5), life: rand(.25, .5), s0: .07, s1: .24, col: [120, 18, 14], a: .85, g: 7 }); }
@@ -299,8 +300,8 @@
     const E = F.EQ, k = P.eq, rmb = I.ads && !P._rmb; P._rmb = I.ads;
     P.eqA += dt; const ready = P.eqA >= E.draw[k];
     if (k === 'hook') {   // alat kait: tembak = luncurkan ke titik bidik, klik kanan / bidik = simpan
-      if (P.hook) return;
-      if (rmb) { eqSet(null); return; }
+      if (P.hook && P.hook.ph !== 'tag') return;   // v3.2: kait terpasang di musuh → tembak lagi = jerat
+      if (rmb) { if (P.hook && F.hookTool) F.hookTool(); else eqSet(null); return; }
       if (!ready) { I.press = 0; return; }
       if (I.press > 0) { I.press = 0; F.hookUse && F.hookUse(); }
       return;
@@ -324,6 +325,7 @@
     }
     // pisau / bayonet
     const c = P.melC;
+    if (k === 'knife') { katTick(dt, I, ready); return; }   // v3.2: katana = mesin combo
     if (P.melT > 0) {
       if (P.melH && c && c.lunge && !P._lunged && P.melQ <= .12) { P._lunged = true; const v = F.aimVec(P.yaw, 0); P.vx += v[0] * c.lunge; P.vy += v[1] * c.lunge; }   // menerjang
       if (k === 'knife' && !P.melH && I.press > 0 && P.melQ <= 0 && P.melT < P.melD * .34) { I.press = 0; meleeAtk(false); }   // jurus berantai: klik saat bilah kembali memotong sisa gerak
@@ -331,6 +333,71 @@
     }
     if (!ready) return;   // klik saat bilah baru dicabut tidak hilang: tersimpan sesaat (I.press), langsung menebas begitu siap
     if (I.press > 0) { I.press = 0; meleeAtk(false); } else if (rmb) meleeAtk(true);
+  }
+  /* ---------------- v3.2 COMBO KATANA ----------------
+     input disangga (ditekan saat gerakan masih berjalan → dijalankan begitu jendela sambung terbuka), ◆ dijalankan saat DILEPAS
+     (tahan ≥ charge = IRISAN HAMPA). Tiap kena menambah poin GAYA (gerak yang beragam ×1,5); poin turun bila diam / terluka */
+  const KREF = id => id[0] === 'A' && id.length === 2 ? F.KC.A[+id[1] - 1] : F.KC[id];
+  function katTick(dt, I, ready) {
+    const K = F.KC, c = P.melC;
+    let rel = false, held = 0;
+    if (I.ads) { if (!(P.kcH >= 0)) { P.kcH = 0; P.kcCh = false; } else P.kcH += dt; if (P.kcH >= K.void.charge && !P.kcCh) { P.kcCh = true; A() && A().local('kdraw', .7); } }
+    else if (P.kcH >= 0) { rel = true; held = P.kcH; P.kcH = -1; P.kcCh = false; }
+    if (P.melT > 0 && c) {
+      if (c.lunge && !P._lunged && c.t - P.melT >= (c.lungeAt || 0)) { P._lunged = true; const v = F.aimVec(P.yaw, 0); P.vx += v[0] * c.lunge; P.vy += v[1] * c.lunge; }   // menerjang
+      if (c.land) {   // BELAH BUMI: menukik sampai menyentuh tanah, lalu gelombang kejut
+        if (!P.grounded) { P.melT = Math.max(P.melT, .3); P.vz = Math.min(P.vz, -c.dive); }
+        else if (!P._landed) { P._landed = true; P.melT = Math.min(P.melT, .32); katHit(c); }
+      }
+      if (I.press > 0) { I.press = 0; P.kcBuf = 'A'; }
+      if (rel) P.kcBuf = held >= K.void.charge ? 'V' : 'B';
+      if (P.kcBuf && !c.land && P.melT < P.melD * K.chain && P.melHi >= (c.h ? c.h.length : 0)) { const b = P.kcBuf; P.kcBuf = null; katGo(b); }
+      return;
+    }
+    if (P.melC && P.kcAct) { P.kcAct = false; P.kcEnd = P.time; }
+    if (!ready) { if (I.press > 0) { I.press = 0; P.kcBuf = 'A'; } return; }
+    if (P.kcBuf) { const b = P.kcBuf; P.kcBuf = null; katGo(b); return; }
+    if (I.press > 0) { I.press = 0; katGo('A'); }
+    else if (rel) katGo(held >= K.void.charge ? 'V' : 'B');
+  }
+  function katGo(b) {
+    const K = F.KC, gap = P.time - (P.kcEnd || -9), fw = (+F.in.f || 0) > .5, bk = (+F.in.b || 0) > .5, air = !P.grounded && P.z - F.hAt(P.x, P.y) > .6, busy = P.melT > 0;
+    let id;
+    if (b === 'V') id = 'void';
+    else if (b === 'B') id = air ? 'plunge' : fw ? 'stinger' : bk ? 'launch' : 'heavy';
+    else if (!busy && P.kcN === 2 && P.kcLast === 'A2' && gap >= K.gap[0] && gap < K.gap[1]) id = 'flurry';   // ● ● … jeda … ●
+    else { const on = /^A[1-3]$/.test(P.kcLast || '') && (busy || gap < K.gap[0]); P.kcN = on ? P.kcN + 1 : 1; id = 'A' + P.kcN; }
+    if (!/^A[1-3]$/.test(id)) P.kcN = id === 'A4' ? 0 : id === 'flurry' ? 0 : P.kcN;
+    if (id[0] !== 'A' && id !== 'flurry') P.kcN = 0;
+    const c = KREF(id); P.kcLast = id; P.kcAct = true;
+    Object.assign(P, { melB: false, melH: !!c.heavy, melD: c.t, melT: c.t, melQ: 0, melC: c, melAt: P.time, melAn: c.an, melHi: 0, _lunged: false, _landed: false, _clang: false, melHS: 0, sprint: false, kcId: id });
+    A() && A().local(c.heavy ? 'slashH' : 'slash', c.heavy ? .95 : .8, Math.max(0, (c.h ? c.h[0] : .3) - (c.heavy ? .17 : .09)));
+    if (id === 'launch' && P.grounded) { P.vz = c.hop; P.grounded = false; }
+    if (id === 'plunge') P.vz = Math.min(P.vz, -6);
+    if (id === 'void') { const e = eyeZ(), v = F.aimVec(P.yaw, P.pitch), r = F.aimRay(P.x, P.y, e, v, c.rng); P.kcVP = [P.x + v[0] * r.t, P.y + v[1] * r.t, e + v[2] * r.t]; if (F.shock) F.shock.push({ x: P.kcVP[0], y: P.kcVP[1], R: c.r, t: 0, life: .7, col: [90, 170, 255], w: .9, zo: .3 }); }
+    if (c.nm) { P.kcPop = { k: c.nm, inp: c.inp, t: P.time }; styleAdd(c.sp * .5, id); }
+  }
+  function styleAdd(pts, id) {
+    const S = P.sty, K = F.KC.style; if (!S) return;
+    if (id && !S.last.includes(id)) pts *= 1.5; if (id) { S.last.push(id); if (S.last.length > 4) S.last.shift(); }
+    S.p = Math.min(K.lv[K.lv.length - 1] + 400, S.p + pts); S.t = P.time; let r = 0; K.lv.forEach((v, i) => { if (S.p >= v) r = i; });
+    if (r > S.r) { S.up = P.time; A() && A().local('switch', .5); } S.r = r;
+  }
+  F.styleK = () => 1 + (P.sty ? P.sty.r : 0) * F.KC.style.dmgK;
+  function katHit(c) {
+    const K = F.KC, sk = F.styleK();
+    let hit = false;
+    if (c.an === 'iai') {   // IRISAN HAMPA: tebasan dimensi di titik bidik
+      const p = P.kcVP; if (!p) return; let n = 0;
+      for (let i = 0; i < 3; i++) { const a = Math.random() * 6.283, el = (Math.random() - .5) * 1.4, L = c.r * 1.25, dx = Math.cos(a) * Math.cos(el) * L, dy = Math.sin(a) * Math.cos(el) * L, dz = Math.sin(el) * L; if (F.cuts) F.cuts.push({ x0: p[0] - dx, y0: p[1] - dy, z0: p[2] + .8 - dz, x1: p[0] + dx, y1: p[1] + dy, z1: p[2] + .8 + dz, t: -i * .03, life: .26, w: .45, col: [90, 170, 255] }); }
+      for (const u of Q.units) { if (n >= c.n || u.dead || u.team === 'B' || u.chute > 0 || u.vanish) continue; if (Math.hypot(u.x - p[0], u.y - p[1]) > c.r + (u.tc === 'A' ? 0 : 1.5) || Math.abs(F.zOf(u) + 1 - p[2]) > c.r + 3) continue; war.blade = true; war.hurt(u, c.dmg * sk, 'small', P.unit); war.blade = false; n++; P.hit = { t: P.time, kill: u.dead, head: false }; }
+      A() && A().at('kcut', p[0], p[1], 1.2); hit = n > 0;
+    } else {
+      hit = meleeHit(c.r, c.dmg * sk, c.land ? -1 : c.cone, c.n, true);
+      if (c.stun && P._mh && hit) for (const u of P._mh) if (!u.dead) { if (u.cr) { if (war.crStagger) war.crStagger(u, c.stun * .5); } else u.stunT = Q.t + c.stun * (Q.speed || 1); }
+      if (c.ring || c.land) { if (F.shock) F.shock.push({ x: P.x, y: P.y, R: c.r + 1, t: 0, life: c.land ? .6 : .38, col: [90, 170, 255], w: c.land ? 1.4 : .8 }); if (c.land) { P.shake = Math.min(1.6, P.shake + .7); F.puff && F.puff(P.x, P.y, F.hAt(P.x, P.y) + .2, 14, [150, 140, 120], 4); A() && A().local('thud', 1); } }
+    }
+    if (hit) { styleAdd(c.sp || 25, P.kcId); P.sty.hits = P.time - (P.sty.hT || -9) < F.KC.style.hitT ? (P.sty.hits || 0) + 1 : 1; P.sty.hT = P.time; }
   }
   F.cycleWeapon = () => F.switchTo(1 - P.cur);
 
@@ -429,6 +496,7 @@
   }
   war.hooks.hit = function (t, a, src, blast, dt) {
     if (!P.alive || P.mnt || P.veh || t.chute > 0 || P.chute) return;   // di dalam Apache / kendaraan: kerusakan masuk ke kendaraannya
+    if (P.sty && a > 0 && !(src && src.player)) { P.sty.p = Math.max(0, P.sty.p - F.KC.style.hurt * Math.min(1, a / 40)); let r = 0; F.KC.style.lv.forEach((v, i) => { if (P.sty.p >= v) r = i; }); P.sty.r = r; }   // terluka: gaya turun
     if (src && src.player) a *= .45;
     if (P.ab.arm > 0) a *= .5;
     if (src && INDIRECT[src.type]) a *= .65;   // artileri/mortir musuh menembak ke area, bukan ke satu orang
@@ -491,7 +559,7 @@
     if (src && src.player && u.team === 'R') { creditKill(u); if (perk('VULTURE') && !T.struct && F.vultureDrop) F.vultureDrop(u); }   // VULTURE: musuh menjatuhkan amunisi & obat
     else if (src && src.mine && u.team === 'R' && P.on) Q.cr += Math.round(Math.max(F.KILLCR.min, T.cost || 0) * F.KILLCR.squad * crK());   // kill oleh pasukanmu: kredit kecil
   };
-  war.hooks.sat = function (key, v) { if (P.on && key !== 'w_sat_fill') F.msg(Tt(key, v), key === 'w_sat_fall' ? 'c' : 'g'); };   // pengumuman satgas serbu otomatis (war.js); bala bantuan cukup di log perang
+  war.hooks.sat = function (key, v) { if (P.on && key !== 'w_sat_fill') F.msg((v && v.g ? v.g + ' · ' : '') + Tt(key, v), key === 'w_sat_fall' ? 'c' : 'g'); };   // pengumuman satgas serbu otomatis (war.js); bala bantuan cukup di log perang
   war.hooks.boss = function (key, u, v) {   // pengumuman bos dari sim → pesan + spanduk besar di HUD operator
     if (key.endsWith('_dead')) { if (!Q._bk || Q._bk.g !== Q.g) Q._bk = { g: Q.g, n: 0 }; Q._bk.n++; }   // bos dikalahkan (layar akhir misi)
     if (!P.on) return;
@@ -1131,6 +1199,24 @@
     });
   }
 
+  /* v3.2 LEDAKAN ARTILERI (pengguna: "mortar 81 dan meriam CAESAR kurang bombastis"): kilatan tanah, bola api, semburan tanah & bongkahan,
+     tiang asap menjamur, cincin debu menyapu tanah, dua gelombang kejut, kawah hangus, guncangan kamera sampai ±S×24 m.
+     S = ukuran (mortir 81 mm lebih kecil dari peluru 155 mm). Jumlah partikel dibatasi agar salvo beruntun tidak menghabiskan kolam partikel */
+  const ARTYB = { MORT: 9, CAESAR: 15, ARTY: 13 };
+  function artyBoom(x, y, gz, S) {
+    const d = F.viewD(x, y), far = d > 900, q = far ? .45 : 1;
+    boom3d(x, y, gz, S, true); A() && A().boom(x, y, S * 1.5);
+    F.emit('flash', x, y, gz + S * .4, { life: .45, s0: S * 1.6, s1: S * 3.2, col: [255, 236, 196] });
+    F.emit('flash', x, y, gz + 1, { life: .9, s0: S * 2.4, s1: S * 1.2, col: [255, 140, 60], a: .55 });
+    for (let i = 0; i < 9 * q; i++) F.emit('fire', x + rand(-1, 1) * S * .3, y + rand(-1, 1) * S * .3, gz + rand(.3, 1) * S * .6, { vx: rand(-1, 1) * S * .5, vy: rand(-1, 1) * S * .5, vz: rand(6, 14), life: rand(.9, 1.6), s0: S * .85, s1: S * .3, col: [255, rand(130, 200) | 0, 70], a: .95, drag: 1.3 });
+    for (let i = 0; i < 18 * q; i++) { const a = rand(0, 6.283), v = rand(.15, .55) * S; F.emit('dust', x + Math.cos(a) * S * .2, y + Math.sin(a) * S * .2, gz + .5, { vx: Math.cos(a) * v, vy: Math.sin(a) * v, vz: rand(14, 32), life: rand(1.2, 2.2), s0: S * .22, s1: S * .55, col: [92, 78, 60], a: .85, g: 16, drag: .5 }); }   // semburan tanah
+    for (let i = 0; i < 14 * q; i++) { const a = rand(0, 6.283), v = rand(.6, 1.6) * S * 1.6; F.emit('spark', x, y, gz + 1, { vx: Math.cos(a) * v, vy: Math.sin(a) * v, vz: rand(10, 26), life: rand(.8, 1.6), s0: rand(.35, .7), s1: .3, col: i % 3 ? [52, 44, 36] : [255, 190, 100], g: 20 }); }   // bongkahan & percikan
+    for (let i = 0; i < 16 * q; i++) { const a = i / 16 * 6.283, v = rand(.9, 1.3) * S * 1.4; F.emit('dust', x + Math.cos(a) * S * .4, y + Math.sin(a) * S * .4, gz + .6, { vx: Math.cos(a) * v, vy: Math.sin(a) * v, vz: rand(.5, 2), life: rand(1.6, 2.6), s0: S * .35, s1: S * 1.3, col: [150, 136, 112], a: .6, drag: 1.6 }); }   // cincin debu menyapu tanah
+    for (let i = 0; i < 6 * q; i++) F.emit('smoke', x + rand(-1, 1) * S * .25, y + rand(-1, 1) * S * .25, gz + S * (.4 + i * .28), { vx: rand(-1, 1), vy: rand(-1, 1), vz: rand(3, 7) * (1 - i * .08), life: rand(5, 8), s0: S * .6, s1: S * (1.8 + i * .18), col: [44, 40, 37], a: .8, drag: .7 });   // tiang asap menjamur
+    if (F.shock) F.shock.push({ x, y, R: S * 3.2, t: 0, life: .5, col: [255, 226, 180], w: 1.4 }); if (F.shock) F.shock.push({ x, y, R: S * 4.6, t: 0, life: 1.2, col: [170, 150, 120], w: 2.2 });
+    if (F.scorch) F.scorch.push({ x, y, r: S * rand(.5, .65), t: 0, life: 22 });
+    const dp = Math.hypot(x - P.x, y - P.y); if (dp < S * 24) P.shake = Math.min(1.8, P.shake + (1 - dp / (S * 24)) * (S > 12 ? 1.5 : 1.1));
+  }
   /* ---------------- SINKRON KEJADIAN SIM → 3D (suara, kilatan, ledakan) ---------------- */
   let scanT = 0;
   F.viewD = (x, y) => { const d = Math.hypot(x - P.x, y - P.y); return P.gs && P.cam ? Math.min(d, Math.hypot(x - P.cam.x, y - P.cam.y)) : d; };   // jarak ke tubuh atau kamera udara, mana yang lebih dekat
@@ -1144,7 +1230,8 @@
         const T = UT[f.dead]; if ((T.boss && F.bossDie) || (F.dieMark && F.dieMark.delete(f.x + '|' + f.y))) continue;   // bos & kendaraan/pesawat/kapal dekat: efek dimainkan fps-bossdie
         if (HUMAN[f.dead]) { sparks(f.x, f.y, gz + 1, 3); puff(f.x, f.y, gz + .3, 3, [140, 126, 100], 1.2); A() && A().at('thud', f.x, f.y, .5); }
         else boom3d(f.x, f.y, gz + (f.alt !== undefined ? f.alt : T.jet ? 150 : T.fly ? 38 : 0), clamp(f.r * .42, 4, 20));
-      } else boom3d(f.x, f.y, gz, clamp(f.r * .42, 3, 20));
+      } else if (ARTYB[f.st]) artyBoom(f.x, f.y, gz, ARTYB[f.st]);
+      else boom3d(f.x, f.y, gz, clamp(f.r * .42, 3, 20));
     }
     for (const p of Q.projs) {
       if (p._s || p.t < 0) continue; p._s = 1; const s = p.src; if (!s || s.player) continue;
@@ -1267,7 +1354,9 @@
     const I = F.in, w = P.w[P.cur], d = F.WEAPONS[w.id];
     P.fireCd -= dt; P.swT -= dt; if (P.melHS > 0) P.melHS -= dt; else P.melT -= dt; P.cycT -= dt;
     if (P.landA) P.swT = Math.max(P.swT, P.landA.t < F.LANDP.draw ? .42 : 0);   // berlutut: senjata masih tersandang, diangkat setelah berdiri
-    if (P.melQ > 0 && (P.melQ -= dt) <= 0 && P.alive && P.melC) meleeHit(P.melC.r, P.melC.dmg, P.melC.cone, P.melC.n, !P.melB);   // bilah pisau / ujung bayonet sampai
+    if (P.melC && P.melC.h && P.melT > 0 && P.alive) { const c = P.melC, el = c.t - P.melT; while (P.melHi < c.h.length && el >= c.h[P.melHi]) { P.melHi++; katHit(c); } }   // v3.2 combo katana: beberapa titik kena per gerak
+    else if (P.melQ > 0 && (P.melQ -= dt) <= 0 && P.alive && P.melC) meleeHit(P.melC.r, P.melC.dmg, P.melC.cone, P.melC.n, !P.melB);   // bilah pisau / ujung bayonet sampai
+    if (P.sty) { const S = P.sty, K = F.KC.style; if (P.time - S.t > K.idle && S.p > 0) { S.p = Math.max(0, S.p - K.decay * (1 + S.r * .3) * dt); let r = 0; K.lv.forEach((v, i) => { if (S.p >= v) r = i; }); S.r = r; } }
     if (P.eq) { if (P.swim || P.chute || (P.eq === 'bay' && !d.bay)) eqSet(null); else eqTick(dt, I); }
     P.bloom = Math.max(0, P.bloom - dt * (P.ads > .5 ? 1.1 : .8)); P.vk = Math.max(0, P.vk - dt * 7);
     if (P.relT > 0) {
@@ -1551,7 +1640,7 @@
     F.airTick(dt); F.ccTick && F.ccTick(dt); F.crayTick && F.crayTick(dt); F.acLeftTick(dt); updateObjects(dt); scanSim(dt); abSim(dt); F.dieTick && F.dieTick(dt); chuteTick(dt); arrTick(dt); rktTick(dt);
     if (P.alive && !P.menu) {
       const I = F.in; P.yaw = wrapPi(P.yaw + ((I.kr || 0) - (I.kl || 0)) * 1.9 * dt); P.pitch = clamp(P.pitch + ((I.ku || 0) - (I.kd || 0)) * 1.4 * dt, F.PMIN, 1.35);
-      if (P.gs) { gsTick(dt); P.vx = P.vy = 0; } else if (P.entA && F.entTick(dt)) { P.vx = P.vy = 0; } else if (P.hook && F.hookTick(dt)) { /* ditarik tali kait */ } else if (P.mnt) F.heliPilot(dt); else if (P.veh) F.vehPilot(dt); else { move(dt); weapons(dt); abilityTick(dt); }
+      if (P.gs) { gsTick(dt); P.vx = P.vy = 0; } else if (P.entA && F.entTick(dt)) { P.vx = P.vy = 0; } else if (P.hook && F.hookTick(dt)) { if (F.hookRides()) weapons(dt); /* ditarik tali kait · bergelayut di heli: tetap menembak */ } else if (P.mnt) F.heliPilot(dt); else if (P.veh) F.vehPilot(dt); else { move(dt); weapons(dt); abilityTick(dt); }
       laserTick(dt);
       F.updateExpo();
       for (const [id, c] of F.contacts) if (P.time - c.t > 3.5 || c.u.dead) F.contacts.delete(id);

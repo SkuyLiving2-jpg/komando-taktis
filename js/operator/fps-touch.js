@@ -94,7 +94,7 @@
   const POS = {
     foot: { fire: RING.fire, ads: RING.a1, rel: RING.a2, jump: RING.a3, crouch: RING.a4, gren: RING.a5, knife: RING.a6, ab: RING.a7, swap: RING.top1, hook: RING.top2, use: RING.ctx },
     heli: { fire: RING.fire, wsel: [2.95, .95, 1.05], fl: RING.a2, zoom: RING.a3, exit: RING.ctx, up: LUP, dn: LDN },
-    veh: { fire: RING.fire, ads: RING.a1, r: RING.a2, wpn: RING.a3, smk: RING.a4, g: RING.a5, fl: RING.a6, mode: RING.a7, cam: RING.top1, pax: RING.top2, exit: RING.ctx, brk: [.9, 2.2, .95, 1], up: LUP, dn: LDN },
+    veh: { fire: RING.fire, ads: RING.a1, r: RING.a2, wpn: RING.a3, smk: RING.a4, g: RING.a5, fl: RING.a6, mode: RING.a7, cam: RING.top1, pax: RING.top2, exit: RING.ctx, brk: [.9, 2.2, .95, 1], roll: [.9, 2.2, .95, 1], up: LUP, dn: LDN },
     gs: { fire: RING.fire, alt: RING.a1, zoom: RING.a5, exit: RING.a3, g1: [2.85, .8, .85], g2: RING.a2, g3: RING.a4, up: LUP, dn: LDN }
   };
   const kindOf = () => P.gs ? 'gs' : P.mnt ? 'heli' : P.veh ? 'veh' : 'foot';
@@ -131,7 +131,7 @@
       const V = P.veh;
       return [fire(null, () => V.mag[0]), B('ads', Tt('tc_msl'), { ic: 'w_hf', down: () => { I.ads = true; }, up: () => { I.ads = false; }, cls: 'hot', n: () => V.hom }),
         B('fl', Tt('tc_flare'), { tap: 'KeyF', n: () => sec(V.fcd) || V.fl }), B('g', Tt('tc_gear'), { ic: 'gear', tap: 'KeyG', on: () => V.gear > .5, dim: () => V.gnd }),
-        V.gnd ? B('brk', Tt('tc_tko') + '/' + Tt('tc_brake'), { h: 'Space' }) : B('roll', Tt('tc_roll'), { ic: 'swap', down: () => { I.r = 1; }, up: () => { I.r = 0; } }),
+        V.gnd ? B('brk', Tt('tc_brake'), { h: 'Space' }) : B('roll', Tt('tc_roll'), { ic: 'swap', down: () => { I.r = 1; }, up: () => { I.r = 0; } }),
         B('cam', Tt('tc_cam'), { tap: 'KeyV' }), B('exit', Tt('tc_exit'), { tap: 'KeyE' })];
     }
     if (P.veh) {

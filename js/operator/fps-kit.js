@@ -212,7 +212,7 @@
         if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
         const dt = SP.t0 ? Math.min(.05, (t - SP.t0) / 1000) : 0; SP.t0 = t; if (!SP.drag) SP.a += dt * .35;
         const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
-        try { TK.fpsvm.preview(ctx, W, H, KM.w, F.attOn(KM.w), -Math.PI / 2 + Math.sin(SP.a) * .55 + SP.off, .06 + Math.sin(SP.a * .7) * .05); } catch (e) { /* pratinjau opsional */ }
+        try { TK.fpsvm.preview(ctx, W, H, KM.w, F.attOn(KM.w), -Math.PI / 2 + SP.a * 1.5 + SP.off, .08 + Math.sin(SP.a * .9) * .07); } catch (e) { /* pratinjau opsional */ }
       }
       SP.raf = requestAnimationFrame(loop);
     };

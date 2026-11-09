@@ -19,11 +19,11 @@
      3 pos kita kuasai — mendesak ke pos-pos kita lalu markas kita; kembali bertahan bila markasnya sendiri terancam
      raid: [mulai, jeda] (SULIT) — bos penyerbu dari RAIDERS berangkat bergiliran dari markas musuh, merebut pos lalu menggempur markas kita;
      posisinya selalu dilaporkan intel (u.intel: tampak di peta walau tertutup kabut, tanpa membuka sasaran tembak) */
-  const DIFF = [{ inc: 20, pop: 650, dmgR: .1, accP: .26, waveT: 35, wave: [150, 250], weak: [.5, 1.4], inf: true, posts: 2, garr: { INF: 3 } },
-    { inc: 34, pop: 90, dmgR: 1, nuke: [720, 900], ufoT: 300, posts: 3, garr: { INF: 5 }, sortie: [24, 80], airMax: 4 },
-    { inc: 55, pop: 120, dmgR: 1.15, nuke: [420, 420], ufoT: 180, posts: 4, garr: { INF: 5, JEEP: 1 }, raid: [30, 60], sortie: [20, 50], airMax: 7 },
+  const DIFF = [{ inc: 20, pop: 650, dmgR: .1, accP: .26, waveT: 35, wave: [150, 250], weak: [.5, 1.4], inf: true, posts: 2, garr: { INF: 3 }, aw: [60, 120, 1] },
+    { inc: 34, pop: 90, dmgR: 1, nuke: [720, 900], ufoT: 300, posts: 3, garr: { INF: 5 }, sortie: [24, 80], airMax: 4, aw: [40, 85, 2] },
+    { inc: 55, pop: 120, dmgR: 1.15, nuke: [420, 420], ufoT: 180, posts: 4, garr: { INF: 5, JEEP: 1 }, raid: [30, 60], sortie: [20, 50], airMax: 7, aw: [30, 70, 3] },
     { inc: 85, pop: 190, dmgR: 1.45, nuke: [480, 480], ufoT: 200, posts: 4, garr: { INF: 12, SF: 4, AT: 2, MORT: 1, MEDIC: 2, JEEP: 2 }, extra: ['IFV', 'ZSU', 'LTANK', 'AA', 'TANK'], extraN: 2, pro: true, raid: [60, 75], fbHunt: 200, fbHp: 1.5,
-      hpR: 1.35, hpB: 1.35, dmgB: 1.25, sortie: [16, 34], airMax: 10 }];   // v2.12 PRO: musuh lebih banyak (pop 190) & tebal (HP ×1,35, damage ×1,45); pasukan kita juga HP ×1,35, damage ×1,25   // waktu sim (mode operator = ½ kecepatan: penyerbu pertama ±2 mnt, bos akhir berburu ±6,5 mnt)
+      hpR: 1.35, hpB: 1.35, dmgB: 1.25, sortie: [16, 34], airMax: 10, aw: [20, 50, 4] }];   // v2.12 PRO: musuh lebih banyak (pop 190) & tebal (HP ×1,35, damage ×1,45); pasukan kita juga HP ×1,35, damage ×1,25   // waktu sim (mode operator = ½ kecepatan: penyerbu pertama ±2 mnt, bos akhir berburu ±6,5 mnt)
   const BOSSES = ['BLIMP', 'GUNSHIP', 'ULTIMA', 'CMDR'];
   const FINALS = ['LEVI', 'NEMESIS', 'KRAKEN', 'TITAN', 'ZEUS', 'WARLORD'];   // bos akhir: satu diacak tiap misi
   const RAIDERS = ['BEHEMOTH', 'TEMPEST', 'WYVERN', 'CLAY'];   // bos penyerbu SULIT/PRO: keempatnya datang, urutan diacak (CLAY MARTIN sejak v2.2)
@@ -77,7 +77,9 @@
     Q.hqB = mk('B', 'HQ', pb[0], pb[1]); Q.hqR = mk('R', 'HQ', pr[0], pr[1]);
     Q.fac = W.facOf(pr[0], pr[1]); Q.facB = W.facB(pb[0], pb[1]); Q.sortT = D.sortie ? D.sortie[0] : 0; Q.sortN = 0;
     baseDefense(pb[0], pb[1]);
-    Q.sat = { goal: null, def: false, t: 4, refT: SAT_REF, holdT: 0, skip: [] }; satFill(true);   // satgas serbu otomatis
+    Q.sat = mkSat(1); satFill(Q.sat, true);   // satgas serbu otomatis
+    Q.sat2 = D.pro ? mkSat(2) : null; if (Q.sat2) satFill(Q.sat2, true);   // v3.2 PRO: satgas kedua menyerbu pos LAIN
+    Q.awT = D.aw ? D.aw[0] : 0; Q.awN = 0;   // v3.2 sayap udara kita (jet lepas landas dari hanggar 2 lapangan terbang markas)
     mk('R', 'BNK', pr[0] - 130, pr[1] - 90, { stance: 'HOLD', garr: true }); mk('R', 'BNK', pr[0] - 130, pr[1] + 100, { stance: 'HOLD', garr: true });
     mk('R', 'SAM', pr[0] - 90, pr[1], { garr: true });
     for (let i = 0; i < 4; i++) mk('R', 'INF', pr[0] - 200 + rand(-40, 40), pr[1] + rand(-160, 160), { stance: 'HOLD', garr: true });
@@ -118,6 +120,18 @@
     for (let i = 0; i < 5; i++) { const t = gd('TANK', x + 178, y - 96 + i * 48, 540, { elite: true }); t.hp = t.hpMax = t.hpMax * 1.6; }
     for (const dy of [-150, 150]) gd('IFV', x + 140, y + dy, 520);
     for (const [dx, dy] of W.PADB) { const h = gd('HELI', x + dx, y + dy, 950); park(h, 'cold'); h.pad0 = true; }   // heli garnisun parkir di helipad, mesin mati sampai ada tugas
+    {   // v3.2 LAPANGAN TERBANG & HANGGAR (selatan HQ, landasan y = ry): SAM di kedua ujung landasan, 2 sarang SMB berawak di depan hanggar,
+      // bunker, hanud bergerak, garnisun jaga di apron, 2 tank veteran di ujung timur landasan — semua di luar jalur landasan/taksi
+      const ry = y + 215;
+      for (const [dx, dy] of [[-275, 82], [395, 72]]) put('SAM', x + dx, ry + dy, H);
+      for (const [dx, dy] of [[-218, 80], [-48, 94]]) { const m = put('MGN', x + dx, ry + dy, H), c = gd('INF', m.x - 1.7, m.y, 40, { stance: 'HOLD', kit: 'RIF' }); m.crew = c; c.crewOf = m; c.manning = true; }
+      put('BNK', x + 140, ry + 64, H);
+      gd('AA', x - 126, ry + 96, 320, H); gd('ZSU', x + 60, ry + 70, 340, H);
+      for (let i = 0; i < 6; i++) gd('INF', x - 205 + i * 30 + rand(-5, 5), ry + 104 + rand(-6, 6), 380);
+      for (let i = 0; i < 4; i++) gd('SF', x - 180 + i * 42, ry + 122, 420);
+      for (const dx of [262, 332]) { const t = gd('TANK', x + dx, ry + 60, 520, { elite: true }); t.hp = t.hpMax = t.hpMax * 1.6; }
+      if (DIFF[Q.diff].pro) { for (const dx of [-250, 300]) gd('AA', x + dx, ry - 52, 320, H); for (let i = 0; i < 4; i++) gd('SF', x - 30 + i * 40, ry + 128, 420); }
+    }
     if (DIFF[Q.diff].pro) {   // v2.12 PRO: garnisun tambahan — 2 tank veteran & 6 Kopassus
       for (let i = 0; i < 2; i++) { const t = gd('TANK', x + 200, y - 30 + i * 60, 560, { elite: true }); t.hp = t.hpMax = t.hpMax * 1.6; }
       for (let i = 0; i < 6; i++) gd('SF', x + 70 + rand(-10, 10), y - 75 + i * 30, 460);
@@ -242,7 +256,7 @@
     if (t.cr) {   // CRAY: kebal peluru biasa; katana operator diproses khusus (duel / tangkis)
       if (t.vanish) return;
       if (war.blade && src && src.player) { a = crayBlade(t, dmg, src); if (a <= 0) return; }
-      else { if (src && src.player) { crayProvoke(t, src); if ((dt === 'he' || dt === 'ap') && t.duel && !t.jf && dist(t, src) < 80 && (!t.act || t.act.k !== 'stun') && Math.random() < crK(CRAY.parE)) { crEv('deflB', t, { src, dt }); return; } } if (dt === 'small') { t.defl = Q.t; crEv('defl', t, { src }); const bk = CRAY.bullet[Q.diff]; if (!bk) return; a *= bk; } }   // duel: roket / ledakan operator kadang ditebas di udara (parE)
+      else { if (src && src.player) { crayProvoke(t, src); if ((dt === 'he' || dt === 'ap') && t.duel && !t.jf && dist(t, src) < 80 && (!t.act || t.act.k !== 'stun') && Math.random() < crK(CRAY.parE)) { crEv('deflB', t, { src, dt }); return; } } if (dt === 'small') { t.defl = Q.t; crEv('defl', t, { src }); const bk = CRAY.bullet[Q.diff]; if (!bk) return; a *= bk; } else a *= CRAY.heavy; }   // duel: roket / ledakan operator kadang ditebas di udara (parE)
     }
     if (src && src.dmgK) a *= src.dmgK;
     if (src && t.tc === 'A' && src.team === 'B' && src.armor === 'inf' && !src.player && (dt === 'small' || dt === 'ap')) a = dmg * (dt === 'small' ? AAI.small : m) * aaK(t);   // tembakan prajurit ke heli / bos udara
@@ -257,7 +271,7 @@
     if (src && src.player && war.hooks.struck) war.hooks.struck(t);   // operator: korban & rekan di dekatnya jadi waspada (belum tentu tahu posisinya)
   }
   function explode(x, y, r, dmg, dt, src, safe, hqK) {   // safe: tim yang tidak ikut terluka (peluru berpemandu); hqK: pengali damage ke markas
-    fx('boom', x, y, .7, r * .6 + 10); Q.blast = true;
+    fx('boom', x, y, .7, r * .6 + 10, src ? { st: src.type } : null); Q.blast = true;   // st: jenis penembak (3D: mortir & CAESAR punya ledakan besar sendiri)
     for (const t of Q.units) {
       if (t.dead || (safe && t.team === safe)) continue; const d = Math.hypot(t.x - x, t.y - y); if (d > r + 10) continue;
       hurt(t, dmg * (1 - .6 * Math.min(1, d / (r + 10))) * (hqK && t.type === 'HQ' ? hqK : 1), dt, src);
@@ -636,7 +650,7 @@
   }
 
   /* ---------------- PENGIRIMAN (DEPLOY) ---------------- */
-  const popB = () => Q.units.filter(u => u.team === 'B' && !u.struct && !u.dead && !u.sat).length + Q.pend.length;   // satgas serbu otomatis tidak memakan jatah pemain
+  const popB = () => Q.units.filter(u => u.team === 'B' && !u.struct && !u.dead && !u.sat && !u.aw).length + Q.pend.length;   // satgas serbu otomatis tidak memakan jatah pemain
   function inZone(x, y) {
     if (Math.hypot(x - Q.hqB.x, y - Q.hqB.y) < 560) return true;
     return Q.objs.some(o => o.owner === 'B' && Math.hypot(x - o.x, y - o.y) < 340);
@@ -686,7 +700,7 @@
   /* ---------------- PERINTAH ---------------- */
   function spiral(i) { if (!i) return [0, 0]; const r = 26 * Math.ceil(Math.sqrt(i)), a = i * 2.4; return [Math.cos(a) * r, Math.sin(a) * r]; }
   // diberi perintah pemain: lepas dari tali jaga markas / tugas awak sarang SMB (diganti prajurit lain)
-  const mine = us => us.filter(u => u && !u.dead && u.team === 'B' && !u.struct && !u.sat).map(u => { u.guard = null; if (u.crewOf) { u.crewOf = null; u.manning = false; } return u; });
+  const mine = us => us.filter(u => u && !u.dead && u.team === 'B' && !u.struct && !u.sat && !u.aw).map(u => { u.guard = null; if (u.crewOf) { u.crewOf = null; u.manning = false; } return u; });
   war.cmdMove = function (us, x, y, amove) {
     mine(us).forEach((u, i) => {
       const o = spiral(i), ox = x + o[0], oy = y + o[1];
@@ -845,7 +859,8 @@
     return false;
   }
   function fwTick(u, dt, T) {   // pesawat di pangkalan
-    const S = u.ts, F0 = Q.fac, ACC = u.type === 'BMB' ? 16 : u.type === 'CAS' ? 22 : u.type === 'UCAV' ? 14 : 30, rw = -Math.PI / 2;
+    const FB = u.team === 'B', S = u.ts, F0 = FB ? Q.facB : Q.fac, ACC = u.type === 'BMB' ? 16 : u.type === 'CAS' ? 22 : u.type === 'UCAV' ? 14 : 30, rw = FB ? 0 : -Math.PI / 2;
+    if (!F0) { u.ts = null; return false; }
     const fwd = v => { u.x += Math.cos(u.hdg) * v * dt; u.y += Math.sin(u.hdg) * v * dt; };
     if (S.ph === 'park') return true;   // parkir di apron (revetment): menunggu jadwal sorti
     if (S.ph === 'bay') { S.t -= dt; if (S.t <= 0) S.ph = 'taxi'; return true; }
@@ -858,10 +873,10 @@
     }
     if (S.ph === 'hold') {
       const e = wrapPi(rw - u.hdg); u.hdg = wrapPi(u.hdg + Math.max(-dt, Math.min(dt, e)));
-      S.t -= dt; if (S.t <= 0 && Q.t >= F0.rwT && Math.abs(e) < .03) { S.ph = 'roll'; S.v = 0; F0.rwT = Q.t + 6; }
+      S.t -= dt; if (S.t <= 0 && Q.t >= (F0.rwT || 0) && Math.abs(e) < .03) { S.ph = 'roll'; S.v = 0; F0.rwT = Q.t + 6; }
       return true;
     }
-    u.x += (F0.run.x - u.x) * Math.min(1, dt * 1.5);
+    if (FB) u.y += (F0.run.y - u.y) * Math.min(1, dt * 1.5); else u.x += (F0.run.x - u.x) * Math.min(1, dt * 1.5);
     if (S.ph === 'roll') {
       S.v += ACC * dt; fwd(S.v);
       if (S.v >= T.spd * .62) { S.ph = 'lift'; air(u); }
@@ -1150,7 +1165,8 @@
      Angka per tingkat kesulitan [MUDAH, NORMAL, SULIT, PRO]; waktu = detik sim (mode operator ½ kecepatan → ×2 waktu nyata) */
   const CRAY = {
     hpK: [1, 1, 1, 3], dmgK: [1, 1, 1, 1.35], rage: [1, 1, 1, .8],
-    bullet: [1, 1, .2, 0],   // peluru biasa yang tembus: SULIT 20% (sisanya terpental), PRO kebal total
+    bullet: [0, 0, 0, 0],   // v3.2: KEBAL peluru biasa di semua tingkat kesulitan
+    heavy: .05,   // v3.2: roket, mortir, meriam tank, heli, bom pesawat, ledakan & senjata berat lain hanya 5% — kelemahan aslinya = KATANA operator
     blade: [.7, .7, .7, .8], stunK: 2.2, guard: [0, 0, .4, .6],   // katana operator: pengali damage (lewati zirah), saat limbung ×stunK; peluang menahan tebasan biasa
     evade: [0, 0, .2, .32], flee: [0, 0, .25, .45], parE: [0, 0, .3, .45],   // v2.13: lenyap menghindari tebasan (lalu menyerang dari belakang); kabur dari limbung; menebas roket/ledakan operator
     cut: { r: 42, cd: [9, 9, 9, 3], dash: .2, swing: .1, rec: .38, dmgV: [0, 0, 170, 380], dmgI: 320, cleave: 10 },
@@ -1205,6 +1221,10 @@
     u.jpk = Q.t + 3;
     bossEv('w_cray_rduel', u); crEv('rduel', u, { tg: v });
   }
+  war.crStagger = function (u, dur) {   // v3.2 combo katana ANGKAT LANGIT: Cray limbung (kecuali saat jurus berzirah super)
+    const A = u.act; if (!u.cr || u.dead || u.vanish || (A && (A.k === 'iai' || A.k === 'rise' || A.k === 'blink' || A.k === 'jce'))) return false;
+    u.act = { k: 'stun', t: 0, dur }; if (u.duel) u.duel.rest = 0; crEv('parry', u, { tg: null }); return true;
+  };
   function crayBlade(u, dmg, src) {   // tebasan katana operator: damage, TANGKIS (ia limbung), ditahan, atau dihindari (lenyap)
     crayProvoke(u, src); if (u.duel) u.duel.seen = Q.t;
     const A = u.act, DU = CRAY.duel, k = crK(CRAY.blade);
@@ -1689,25 +1709,31 @@
      < 45% → mundur berkumpul di pos kita terdekat (bala bantuan tiap 30 dtk) lalu menyerang lagi setelah ≥ 90%.
      Tidak menerima perintah pemain (mine() & popB() melewatinya) — pasukan kiriman / rekrutan pemain tetap ikut perintah pemain */
   const SATGAS = [['SF', 5], ['TANK', 3], ['JEEP', 3], ['HELI', 2], ['MEDIC', 3]], SAT_REF = 60, SAT_HOLD = 150;
-  function satEv(key, v) { L(Tt(key, v), 'i'); if (war.hooks.sat) war.hooks.sat(key, v); }
-  function satFill(first) {
-    const h = Q.hqB; if (!h || h.dead) return 0;
+  const mkSat = id => ({ id, goal: null, def: false, t: 3 + id, refT: SAT_REF, holdT: 0, skip: [] });
+  const inSat = (u, S) => u.sat === S.id || (u.sat === true && S.id === 1);   // simpanan lama: u.sat = true = satgas 1
+  function satEv(key, v, S) {   // PRO: pengumuman diberi label SATGAS-1 / SATGAS-2
+    if (S && Q.sat2) v = Object.assign({}, v, { g: 'SATGAS-' + S.id });
+    L((v && v.g ? v.g + ' · ' : '') + Tt(key, v), 'i'); if (war.hooks.sat) war.hooks.sat(key, v);
+  }
+  function satFill(S, first) {
+    const h = Q.hqB; if (!h || h.dead || !S) return 0;
     let n = 0;
     for (const [t, k] of SATGAS) {
       const fly = UT[t].fly;
-      for (let i = Q.units.filter(u => u.sat && !u.dead && u.type === t).length; i < k; i++) {
-        let x = h.x + (fly ? rand(20, 60) : rand(300, 360)), y = h.y + rand(-1, 1) * (fly ? 60 : 160), j = 0;
+      for (let i = Q.units.filter(u => inSat(u, S) && !u.dead && u.type === t).length; i < k; i++) {
+        let x = h.x + (fly ? rand(20, 60) : rand(300, 360)), y = h.y + rand(-1, 1) * (fly ? 60 : 160) + (S.id === 2 ? 120 : 0), j = 0;
         while (!fly && j < 12 && terAt(x, y) === W.TER.WATER) { x += (h.x - x) * .15; y += (h.y - y) * .15; j++; }   // titik di air: geser ke arah markas
-        const su = mk('B', t, x, y, { sat: true, base: true, stance: 'AGGR' }); n++;   // base: tidak dilemahkan seperti garnisun markas
+        const su = mk('B', t, x, y, { sat: S.id, base: true, stance: 'AGGR' }); n++;   // base: tidak dilemahkan seperti garnisun markas
         if (GEARH[t] && !(war.hooks.roofAt && war.hooks.roofAt(x, y))) park(su, 'spin');   // heli satgas: rotor berputar dulu, baru naik
       }
     }
-    if (n && !first) satEv('w_sat_fill', { n });
+    if (n && !first) satEv('w_sat_fill', { n }, S);
     return n;
   }
-  function satGoal(cx, cy) {
-    const S = Q.sat, free = Q.objs.filter(o => o.owner !== 'B');
+  function satGoal(S, cx, cy) {
+    const free = Q.objs.filter(o => o.owner !== 'B'), O = S.id === 1 ? Q.sat2 : Q.sat;
     let c = free.filter(o => !S.skip.includes(o)); if (!c.length && free.length) { S.skip = []; c = free; }
+    if (O && O.goal && !O.def && c.length > 1) c = c.filter(o => o !== O.goal);   // dua satgas: pos sasaran BERBEDA
     if (c.length) { let best = null, bd = 1e12; for (const o of c) { const d = Math.hypot(o.x - cx, o.y - cy) + dist(o, Q.hqB) * .5; if (d < bd) { bd = d; best = o; } } return { o: best, def: false }; }   // pos dekat markas kita didahulukan (termasuk merebut kembali)
     let best = null, bs = -1e12;   // semua pos milik kita: jaga yang diserang, kalau aman pos paling dekat ke markas musuh
     for (const o of Q.objs) {
@@ -1716,25 +1742,25 @@
     }
     return { o: best, def: true };
   }
-  function satTick(dt) {
-    const S = Q.sat; if (!S) return;
-    S.refT -= dt; if (S.refT <= 0) { S.refT = S.rally ? SAT_REF / 2 : SAT_REF; satFill(false); }
+  function satTick(dt) { for (const S of [Q.sat, Q.sat2]) if (S) satTick1(S, dt); }
+  function satTick1(S, dt) {
+    S.refT -= dt; if (S.refT <= 0) { S.refT = S.rally ? SAT_REF / 2 : SAT_REF; satFill(S, false); }
     S.t -= dt; if (S.t > 0) return; S.t = 2;
-    const us = Q.units.filter(u => u.sat && !u.dead); if (!us.length) return;
+    const us = Q.units.filter(u => inSat(u, S) && !u.dead); if (!us.length) return;
     const gr = us.filter(u => !u.fly && !UT[u.type].heal), core = gr.length ? gr : us, full = SATGAS.reduce((a, [t, k]) => a + (UT[t].fly || UT[t].heal ? 0 : k), 0);
     let cx = 0, cy = 0; core.forEach(u => { cx += u.x / core.length; cy += u.y / core.length; });
     if (!S.rally && gr.length < full * .45) {   // terlalu lemah: mundur ke pos kita terdekat (atau depan markas), tunggu bala bantuan
       let rp = null, bd = 1e12; for (const o of Q.objs) if (o.owner === 'B') { const d = Math.hypot(o.x - cx, o.y - cy); if (d < bd) { bd = d; rp = o; } }
-      const h = Q.hqB; S.rally = rp || { name: '', x: h.x + 330, y: h.y, r: 220 }; S.goal = S.rally; S.def = true; S.refT = Math.min(S.refT, SAT_REF / 2); satEv('w_sat_fall', { o: rp ? Tt('w_sat_post', { o: rp.name }) : Tt('wu_HQ') });
+      const h = Q.hqB; S.rally = rp || { name: '', x: h.x + 330, y: h.y, r: 220 }; S.goal = S.rally; S.def = true; S.refT = Math.min(S.refT, SAT_REF / 2); satEv('w_sat_fall', { o: rp ? Tt('w_sat_post', { o: rp.name }) : Tt('wu_HQ') }, S);
     } else if (S.rally && gr.length >= full * .9) { S.rally = null; S.goal = null; S.def = false; }   // pulih: serang lagi
     let g = S.goal;
     if (g && !S.def) {
-      if (g.owner === 'B') { satEv('w_sat_cap', { o: g.name }); g = null; }
+      if (g.owner === 'B') { satEv('w_sat_cap', { o: g.name }, S); g = null; }
       else if (Math.hypot(cx - g.x, cy - g.y) < g.r * 1.6 && (S.holdT += 2) > SAT_HOLD) { S.skip.push(g); g = null; }   // terlalu lama tertahan: coba pos lain dulu
     }
     if (!S.rally && (!g || S.def)) {
-      const r = satGoal(cx, cy);
-      if (r.o !== S.goal || r.def !== S.def || !g) { S.goal = g = r.o; S.def = r.def; S.holdT = 0; if (g) satEv(S.def ? 'w_sat_def' : 'w_sat_go', { o: g.name }); }
+      const r = satGoal(S, cx, cy);
+      if (r.o !== S.goal || r.def !== S.def || !g) { S.goal = g = r.o; S.def = r.def; S.holdT = 0; if (g) satEv(S.def ? 'w_sat_def' : 'w_sat_go', { o: g.name }, S); }
     }
     if (!g) return;
     const k = Math.min(1, g.r * .42 / (26 * Math.ceil(Math.sqrt(core.length))));   // sebar di dalam lingkar pos (harus di dalam untuk merebut)
@@ -1742,7 +1768,7 @@
     us.forEach((u, i) => {
       if (u.order.k === 'exit' || u.chute > 0) return;
       if (UT[u.type].heal) {   // paramedis: menempel pada anggota darat rombongan, menyembuhkan dalam radiusnya
-        const o = u.order; if (o.k !== 'follow' || !o.tgt || o.tgt.dead || !o.tgt.sat) u.order = { k: 'follow', tgt: core[i % core.length], dist: 35, ang: rand(-1, 1) };
+        const o = u.order; if (o.k !== 'follow' || !o.tgt || o.tgt.dead || !inSat(o.tgt, S)) u.order = { k: 'follow', tgt: core[i % core.length], dist: 35, ang: rand(-1, 1) };
         return;
       }
       if (u.fly) {   // heli serang: mengitari pos sasaran, menembaki pertahanannya
@@ -1754,7 +1780,55 @@
       if (u.sg !== g || (u.order.k === 'idle' && Math.hypot(u.x - tx, u.y - ty) > 40)) { u.sg = g; u.order = { k: 'amove', x: tx, y: ty }; setPath(u, tx, ty); }
     });
   }
-  war.satgas = () => Q.units.filter(u => u.sat && !u.dead);   // uji / tampilan
+  war.satgas = id => Q.units.filter(u => u.sat && !u.dead && (!id || inSat(u, { id })));   // uji / tampilan
+
+  /* ---------------- v3.2 SAYAP UDARA KITA ----------------
+     pengguna: "bikin kehidupan di daerah bandara / hangar … pesawat tempur yang juga bertugas membunuh musuh di pos yang belum ditaklukkan".
+     Tiap aw[1] dtk (maks aw[2] jet di udara) pintu hanggar 2 lapangan terbang markas terbuka, jet CAS / FGT taksi keluar → ujung barat
+     landasan → lepas landas ke timur (fwTick), lalu mengitari pos yang belum milik kita (pos sasaran satgas didahulukan) dan
+     menggempur pasukan musuh di sana (bom + kanon). Pos jatuh → pindah ke pos berikutnya. Tidak menerima perintah pemain (u.aw). */
+  const AWT = ['CAS', 'FGT', 'CAS', 'FGT', 'CAS'];
+  const awFoes = o => { let n = 0; for (const e of TL.R || []) if (!e.dead && e.tc === 'G' && e.type !== 'HQ' && Math.hypot(e.x - o.x, e.y - o.y) < o.r * 1.5) n++; return n; };
+  function awPost(not) {   // pos yang belum milik kita & masih dijaga musuh; pos sasaran satgas didahulukan
+    let free = Q.objs.filter(o => o.owner !== 'B' && o !== not); if (!free.length) return null;
+    const hot = free.filter(o => awFoes(o) > 0); if (hot.length) free = hot;
+    const sg = [Q.sat, Q.sat2].filter(S => S && S.goal && !S.def && free.includes(S.goal)).map(S => S.goal);
+    return sg.length && Math.random() < .65 ? pick(sg) : pick(free);
+  }
+  function awLaunch(b) {
+    const B = Q.facB, R = B.run, t = AWT[Q.awN++ % AWT.length], gh = GEARF[t] || 2.1, o = awPost(); if (!o) return;
+    const u = mk('B', t, b.sx, b.sy, { hdg: b.yaw, face: b.yaw, aw: true, stance: 'AGGR' });
+    u.alt = gh; u.gearK = 1; u.tc = 'G'; u.lowA = false; u.gzS = undefined;
+    u.ts = { ph: 'bay', t: .6, v: 0, g0: gh, pit: 0, wp: [{ x: b.ex, y: b.ey }, { x: R.x0 + 75, y: b.ey }, { x: R.x0 + 42, y: R.y }] };
+    u.order = { k: 'cap', x: o.x, y: o.y, r: 320 }; u.awO = o; b.u = u;
+    L(Tt('w_aw_go', { o: o.name }), 'i'); if (war.hooks.sat) war.hooks.sat('w_aw_go', { o: o.name });
+  }
+  function awSteer() {
+    for (const u of Q.units) {
+      if (!u.aw || u.dead || u.ts) continue;
+      let o = u.awO;
+      if (o && u.order.k === 'cap' && Math.hypot(u.x - o.x, u.y - o.y) < o.r * 2.5 && !awFoes(o)) { if ((u.awE = (u.awE || 0) + 1) > 4) { u.awE = 0; const n2 = awPost(o); if (n2) { o = u.awO = n2; u.order = { k: 'cap', x: o.x, y: o.y, r: 320 }; } } } else u.awE = 0;   // pos sudah bersih: pindah ke pos lain
+      if (!o || o.owner === 'B') { o = u.awO = awPost(); if (!o) { let fr = null, bd = 1e12; for (const q of Q.objs) { const d = Q.hqR ? dist(q, Q.hqR) : 0; if (d < bd) { bd = d; fr = q; } } o = fr; } if (!o) continue; u.order = { k: 'cap', x: o.x, y: o.y, r: 320 }; }
+      if (u.order.k === 'cap' && Math.hypot(u.order.x - o.x, u.order.y - o.y) > 60) u.order = { k: 'cap', x: o.x, y: o.y, r: 320 };
+      if (u.order.k !== 'cap' || u.bombs < 1 || o.owner === 'B') continue;
+      let best = null, bd = 1e12;   // sasaran darat musuh di sekitar pos (pengintaian udara: tanpa syarat terlihat)
+      for (const e of TL.R || []) if (!e.dead && e.tc === 'G' && e.type !== 'HQ' && Math.hypot(e.x - o.x, e.y - o.y) < o.r * 1.5) { const d = dist(u, e); if (d < bd) { bd = d; best = e; } }
+      if (best && bd > 150) u.order = jetRun(u, best.x, best.y);
+    }
+  }
+  function awTick(dt) {
+    const D = DIFF[Q.diff], B = Q.facB; if (!D.aw || !B || !B.han[1] || !Q.hqB || Q.hqB.dead) return;
+    const b = B.han[1];
+    if (b.u && (b.u.dead || !b.u.ts || Math.hypot(b.u.x - b.x, b.u.y - b.y) > 40)) b.u = null;
+    b.door = b.u || b.want > 0 ? Math.min(1, b.door + dt / DOOR_T) : Math.max(0, b.door - dt / DOOR_T);   // pintu hanggar 2 (fps-gl menggambar Q.facB.bays)
+    if (b.want > 0) { b.want -= dt; if (b.want <= 0) { b.want = 0; awLaunch(b); } }
+    if ((Q.awCk = (Q.awCk || 0) - dt) <= 0) { Q.awCk = 1.5; awSteer(); }
+    Q.awT -= dt; if (Q.awT > 0 || b.want > 0 || b.u) return;
+    Q.awT = D.aw[1] * rand(.85, 1.15);
+    if (Q.units.filter(u => u.aw && !u.dead).length >= D.aw[2] || !Q.objs.some(o => o.owner !== 'B')) return;
+    b.want = DOOR_T * .9;   // pintu terbuka dulu, jet keluar begitu terangkat
+  }
+  war.awNow = () => { Q.awT = 0; awTick(0); };   // uji
 
   /* ---------------- STEP ---------------- */
   function step(dt) {
@@ -1797,7 +1871,7 @@
     if (war.hooks.navAll) war.hooks.navAll(g);   // mode FPS: unit darat yang terdorong ke dalam tapak gedung dikeluarkan
     for (const f of Q.fx) f.t += dt;
     Q.fx = Q.fx.filter(f => f.t < f.d);
-    if (!Q.over) { ai(dt); facTick(dt); sortieTick(dt); nukeTick(dt); spawnWave(); bossWatch(dt); raidWatch(dt); strikeTick(dt); satTick(dt); }
+    if (!Q.over) { ai(dt); facTick(dt); sortieTick(dt); nukeTick(dt); spawnWave(); bossWatch(dt); raidWatch(dt); strikeTick(dt); satTick(dt); awTick(dt); }
     Q.units = Q.units.filter(u => !u.dead);
     Q.sel = Q.sel.filter(u => !u.dead);
   }

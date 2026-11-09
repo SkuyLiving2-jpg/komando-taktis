@@ -18,6 +18,22 @@
      granat: pin dicabut pada pin dtk, tahan klik kiri = lengan ditarik (wind dtk, granat belum dilempar), lepas = lempar (lepas dari tangan rel dtk setelah ayunan mulai); jauh lemparan mengikuti sudut pandang */
   F.FBBAR = { rng: 1300, every: [20, 27], warn: 3.2, gap: .22, n: 7, r: 15, aoe: 9, dmg: 115 };   // hujan artileri bos akhir PROFESIONAL: jarak, jeda, tanda (dtk), selang tiap peluru, jumlah, jari-jari zona, ledakan
   F.LANDP = { t: 1.5, dip: .2, up: .9, rise: .4, eye: 1.02, draw: 1.02 };   // mendarat dari parasut: menekuk ke tinggi mata 1,02 m, berdiri mulai 0,9 dtk, senjata diangkat 1,02 dtk, bebas 1,5 dtk
+  /* v3.2 COMBO KATANA (gaya aksi hack-and-slash): ● ringan = klik kiri / J / △(Y) / RT, ◆ berat = klik kanan / L / ○(B) / LT, arah = W / S / stik kiri.
+     A1–A4: ● ● ● ● (A4 = PUTARAN TOPAN 360°) · flurry: ● ● … jeda … ● (BADAI SERIBU, 7 tebasan) · heavy: ◆ · stinger: W+◆ (TERJANG KILAT, melesat 15 m)
+     launch: S+◆ (ANGKAT LANGIT, lawan limbung) · plunge: ◆ di udara (BELAH BUMI, gelombang kejut saat mendarat) · void: tahan ◆ ≥ charge dtk lalu lepas (IRISAN HAMPA di titik bidik ≤ rng m)
+     t = lama gerak, h = saat-saat bilah mengenai (dtk), r/cone/n = jangkauan, kerucut (−1 = sekeliling), maks sasaran; sp = poin gaya; chain = sisa gerak (bagian) saat serangan berikut boleh menyambung */
+  F.KC = {
+    A: [{ an: 'kesa', t: .5, h: [.2], r: 3.3, dmg: 300, cone: .25, n: 3, sp: 26 }, { an: 'gyaku', t: .5, h: [.19], r: 3.3, dmg: 320, cone: .25, n: 3, sp: 28 },
+      { an: 'yoko', t: .52, h: [.21], r: 3.6, dmg: 340, cone: .1, n: 4, sp: 32 }, { an: 'spin', t: .8, h: [.24, .4], r: 4.8, dmg: 420, cone: -1, n: 8, sp: 70, nm: 'spin', inp: '● ● ● ●', ring: 1 }],
+    flurry: { an: 'flurry', t: 1.15, h: [.12, .24, .36, .48, .6, .72, .86], r: 3.7, dmg: 150, cone: .3, n: 3, sp: 16, nm: 'flurry', inp: '● ● … ●' },
+    heavy: { an: 'shomen', t: .9, h: [.47], r: 4, dmg: 800, cone: .55, n: 2, lunge: 9, lungeAt: .36, sp: 45, heavy: 1 },
+    stinger: { an: 'thrust', t: .74, h: [.2, .3], r: 4.2, dmg: 520, cone: .55, n: 3, lunge: 17, lungeAt: .06, sp: 60, heavy: 1, nm: 'stinger', inp: '▲ + ◆' },
+    launch: { an: 'rise', t: .78, h: [.22], r: 3.6, dmg: 420, cone: .3, n: 4, stun: 2.4, hop: 6, sp: 60, heavy: 1, nm: 'launch', inp: '▼ + ◆' },
+    plunge: { an: 'shomen', t: .9, land: 1, r: 7, dmg: 700, n: 10, dive: 26, sp: 80, heavy: 1, nm: 'plunge', inp: '✈ + ◆' },
+    void: { an: 'iai', t: .95, h: [.38, .47, .56, .65], charge: .85, rng: 45, r: 5.5, dmg: 260, n: 8, sp: 40, heavy: 1, nm: 'void', inp: '◆ ━━ ◆' },
+    gap: [.3, 1.4], chain: .4,
+    style: { lv: [0, 110, 280, 520, 840, 1250, 1750], decay: 34, idle: 2.2, hurt: 260, dmgK: .07, hitT: 2.6 }   // rank D C B A S SS SSS: tiap rank +7% damage katana
+  };
   F.EQ = { draw: { gren: .5, knife: .46, bay: .3, hook: .42 }, pin: .26, wind: .32, thr: .5, rel: .14, spd: 20,
     bash: { t: .5, hit: .17, r: 2.4, dmg: 150, cone: .45 },
     knife: { t: .62, hit: .27, r: 3.2, dmg: 300, cone: .25, n: 3 }, knifeH: { t: 1, hit: .63, r: 4, dmg: 800, cone: .55, n: 2, lunge: 9 },
@@ -59,7 +75,7 @@
      larik = pengali per unsur), opt = jenis bidikan (HUD/ADS), v = model 3D (fps-vm attX) }. Kunci yang belum ada di senjata dasar dianggap 1
      (mis. sway = goyang teropong, bip = pengali hentakan+sebaran saat jongkok dengan bipod). Nama: f_att_<id>, keterangan: f_attd_<senjata>_<id> */
   const SUPm = { sup: { set: true }, rng1: .85, snd: { set: 'rifleS' } }, LAS = { g: 'rail', m: { spread: [.55, 1] }, v: 'laser' }, PLAS = { g: 'rail', m: { spread: [.55, 1] }, v: 'plaser' };
-  const HP = { g: 'ammo', m: { dmg: 1.15, rng1: .85 } }, TAPE = { g: 'grip', m: { kick: .8, ads: 1.1 } }, RMR = { g: 'opt', m: { zoom: { set: .82 }, ads: .95, spread: [1, .75] }, opt: 'rds', v: 'rmr' };
+  const HP = { g: 'ammo', m: { dmg: 1.15, rng1: .85 }, v: 'hp' }, TAPE = { g: 'grip', m: { kick: .8, ads: 1.1 }, v: 'tape' }, RMR = { g: 'opt', m: { zoom: { set: .82 }, ads: .95, spread: [1, .75] }, opt: 'rds', v: 'rmr' };
   F.ATTW = {
     AK: { RDS: { g: 'opt', m: { zoom: { set: .7 }, ads: .95 }, opt: 'rds', v: 'rds' },
       KASH: { g: 'opt', m: { zoom: { set: .36 }, ads: .8, mv: .98 }, opt: 'prism', v: 'prism' },
@@ -73,7 +89,7 @@
       AGRIP: { g: 'under', m: { kick: .8, ads: 1.15 }, v: 'agrip' }, LASER: LAS,
       EXT: { g: 'mag', m: { mag: 1.28, res: 1.2, rel: 1.1, mv: .99 }, v: 'ext' },
       LSTOCK: { g: 'stock', m: { mv: 1.05, ads: 1.2, kick: 1.2, spread: [.92, 1.15] }, v: 'lstock' },
-      RAPID: { g: 'trig', m: { rpm: 1.15, kick: 1.08 } } },
+      RAPID: { g: 'trig', m: { rpm: 1.15, kick: 1.08 }, v: 'rapid' } },
     LMG: { HOLO: { g: 'opt', m: { zoom: { set: .72 }, ads: .95 }, opt: 'holo', v: 'holo' },
       ELCAN: { g: 'opt', m: { zoom: { set: .3 }, ads: .8, mv: .98 }, opt: 'prism', v: 'prism' },
       SUP: { g: 'muz', m: SUPm, v: 'sup' }, COMP: { g: 'muz', m: { kick: .72, spread: [1.05, .85] }, v: 'comp' },
@@ -84,33 +100,33 @@
       S12X: { g: 'opt', m: { zoom: { set: .085 }, ads: .8, rng1: 1.25, sway: 1.25 }, opt: 'scope', v: 'scopeL' },
       BRAKE: { g: 'muz', m: { sup: { set: false }, kick: .55, snd: { set: 'sniper' } }, v: 'brake' },
       BIPOD: { g: 'under', m: { bip: { set: .4 }, sway: .75 }, v: 'bipod' },
-      EXT: { g: 'mag', m: { mag: 2, res: 1.5, rel: 1.1, mv: .98 }, v: 'ext' }, FBOLT: { g: 'trig', m: { rpm: 1.35 } },
+      EXT: { g: 'mag', m: { mag: 2, res: 1.5, rel: 1.1, mv: .98 }, v: 'ext' }, FBOLT: { g: 'trig', m: { rpm: 1.35 }, v: 'fbolt' },
       CHEEK: { g: 'stock', m: { sway: .55, ads: 1.1 }, v: 'cheek' }, LASER: { g: 'rail', m: { spread: [.5, 1] }, v: 'laser' },
-      HVY: { g: 'ammo', m: { dmg: 1.15, rng1: 1.1, kick: 1.15 } } },
+      HVY: { g: 'ammo', m: { dmg: 1.15, rng1: 1.1, kick: 1.15 }, v: 'hvy' } },
     SHOTGUN: { RDS: { g: 'opt', m: { zoom: { set: .78 }, ads: .95 }, opt: 'rds', v: 'rds' }, HOLO: { g: 'opt', m: { zoom: { set: .74 }, ads: .93 }, opt: 'holo', v: 'holo' },
       CHOKE: { g: 'muz', m: { spread: [.7, .6], rng0: 1.3, rng1: 1.25 }, v: 'choke' }, SUP: { g: 'muz', m: SUPm, v: 'sup' },
-      SLUG: { g: 'ammo', m: { pellets: { set: 1 }, dmg: { set: 95 }, rng0: { set: 45 }, rng1: { set: 220 }, spread: { set: [2.2, .35] }, kick: 1.15 } },
+      SLUG: { g: 'ammo', m: { pellets: { set: 1 }, dmg: { set: 95 }, rng0: { set: 45 }, rng1: { set: 220 }, spread: { set: [2.2, .35] }, kick: 1.15 }, v: 'slug' },
       EXT: { g: 'mag', m: { mag: 1.3, res: 1.1, mv: .97 }, v: 'tube' }, SADDLE: { g: 'side', m: { res: 1.5, shl: [.8, .8, .8, .85] }, v: 'saddle' },
       LASER: LAS, STOCK: { g: 'stock', m: { mv: 1.05, ads: 1.25, kick: 1.15 }, v: 'lstock' } },
     M1911: { SUP: { g: 'muz', m: SUPm, v: 'psup' }, COMP: { g: 'muz', m: { kick: .7 }, v: 'pcomp' }, LASER: PLAS,
-      EXT: { g: 'mag', m: { mag: 1.25, res: 1.1, rel: 1.05 }, v: 'pext' }, HP, TAPE, TRIG: { g: 'trig', m: { rpm: 1.25 } },
-      BULL: { g: 'barrel', m: { spread: [.85, .8], mv: .98, kick: .9 } } },
+      EXT: { g: 'mag', m: { mag: 1.25, res: 1.1, rel: 1.05 }, v: 'pext' }, HP, TAPE, TRIG: { g: 'trig', m: { rpm: 1.25 }, v: 'trig' },
+      BULL: { g: 'barrel', m: { spread: [.85, .8], mv: .98, kick: .9 }, v: 'bull' } },
     GLOCK: { RMR, SUP: { g: 'muz', m: SUPm, v: 'psup' }, COMP: { g: 'muz', m: { kick: .7 }, v: 'pcomp' }, LASER: PLAS,
       EXT: { g: 'mag', m: { mag: 1.94, res: 1.3, rel: 1.12, mv: .99 }, v: 'pextL' },
-      AUTO: { g: 'trig', m: { mode: { set: 'auto' }, rpm: 2.3, kick: 1.15, spread: [1.2, 1.4] } }, HP, TAPE },
+      AUTO: { g: 'trig', m: { mode: { set: 'auto' }, rpm: 2.3, kick: 1.15, spread: [1.2, 1.4] }, v: 'auto' }, HP, TAPE },
     M93R: { RMR, SUP: { g: 'muz', m: SUPm, v: 'psup' }, LASER: PLAS, EXT: { g: 'mag', m: { mag: 1.6, res: 1.3, rel: 1.1 }, v: 'pext' },
-      STOCK: { g: 'stock', m: { kick: .6, spread: [.85, .55], mv: .97, ads: .95 }, v: 'pstock' }, HP, TAPE, TRIG: { g: 'trig', m: { bcd: .6 } } },
+      STOCK: { g: 'stock', m: { kick: .6, spread: [.85, .55], mv: .97, ads: .95 }, v: 'pstock' }, HP, TAPE, TRIG: { g: 'trig', m: { bcd: .6 }, v: 'trig' } },
     DEAGLE: { RMR, PSCOPE: { g: 'opt', m: { zoom: { set: .42 }, scope: { set: true }, ads: .75, spread: [1.2, .3], rng1: 1.2 }, opt: 'scope', v: 'pscope' },
       COMP: { g: 'muz', m: { kick: .7, spread: [1, .85] }, v: 'pcomp' }, LONG: { g: 'barrel', m: { rng0: 1.3, rng1: 1.3, mv: .97, ads: .9, spread: [.95, .8] }, v: 'long' },
       LASER: PLAS, EXT: { g: 'mag', m: { mag: 1.43, res: 1.2, rel: 1.08 }, v: 'pext' }, HP, TAPE },
     MAG44: { IRON: { g: 'opt', m: { scope: { set: false }, acc: { set: false }, zoom: { set: .88 }, ads: 1.5, spread: { set: [1.7, .45] }, mv: 1.02 }, opt: 'iron', v: 'iron' },
       RMR: { g: 'opt', m: { scope: { set: false }, acc: { set: false }, zoom: { set: .78 }, ads: 1.35, spread: { set: [1.5, .3] } }, opt: 'rds', v: 'rmr' },
-      LONG: { g: 'barrel', m: { rng0: 1.3, rng1: 1.25, mv: .97, ads: .9 }, v: 'long' }, SNUB: { g: 'barrel', m: { rng0: .7, rng1: .7, mv: 1.03, ads: 1.35, kick: 1.2 } },
-      SPEED: { g: 'mag', m: { rel: .7 } }, HP, COMP: { g: 'muz', m: { kick: .72 }, v: 'pcomp' }, RUBBER: { g: 'grip', m: { kick: .78, ads: .95 } }, LASER: PLAS },
+      LONG: { g: 'barrel', m: { rng0: 1.3, rng1: 1.25, mv: .97, ads: .9 }, v: 'long' }, SNUB: { g: 'barrel', m: { rng0: .7, rng1: .7, mv: 1.03, ads: 1.35, kick: 1.2 }, v: 'snub' },
+      SPEED: { g: 'mag', m: { rel: .7 }, v: 'moon' }, HP, COMP: { g: 'muz', m: { kick: .72 }, v: 'pcomp' }, RUBBER: { g: 'grip', m: { kick: .78, ads: .95 }, v: 'rubber' }, LASER: PLAS },
     AT: { ATSCOPE: { g: 'opt', m: { zoom: { set: .36 }, scope: { set: true }, ads: .8, spread: [1.1, .4] }, opt: 'scope', v: 'atscope' },
-      TANDEM: { g: 'wh', m: { dmg: 1.45, blast: .6 } }, HEF: { g: 'wh', m: { dt: { set: 'he' }, blast: 1.8, dmg: .8 } },
-      FAST: { g: 'motor', m: { rspd: 1.7 } }, BAG: { g: 'mag', m: { res: 2, mv: .95 } }, LIGHT: { g: 'barrel', m: { mv: 1.08, ads: 1.3, kick: 1.15 } },
-      GRIP: { g: 'under', m: { kick: .7, spread: [.8, .85], ads: 1.1 }, v: 'vgrip' }, QUICK: { g: 'load', m: { rel: .75 } }, LASER: { g: 'rail', m: { spread: [.5, 1] }, v: 'laser' } }
+      TANDEM: { g: 'wh', m: { dmg: 1.45, blast: .6 }, v: 'tandem' }, HEF: { g: 'wh', m: { dt: { set: 'he' }, blast: 1.8, dmg: .8 }, v: 'hef' },
+      FAST: { g: 'motor', m: { rspd: 1.7 }, v: 'fast' }, BAG: { g: 'mag', m: { res: 2, mv: .95 }, v: 'bag' }, LIGHT: { g: 'barrel', m: { mv: 1.08, ads: 1.3, kick: 1.15 }, v: 'light' },
+      GRIP: { g: 'under', m: { kick: .7, spread: [.8, .85], ads: 1.1 }, v: 'vgrip' }, QUICK: { g: 'load', m: { rel: .75 }, v: 'quick' }, LASER: { g: 'rail', m: { spread: [.5, 1] }, v: 'laser' } }
   };
   for (const w in F.ATTW) F.ATT_FOR[w] = Object.keys(F.ATTW[w]);
   /* definisi lampiran a untuk senjata w (AR memakai F.ATT lama) */
@@ -149,7 +165,8 @@
      fire/fireSup = terdengar (waspada & mencari, arah kira-kira); impact = peluru menghantam sedekat ini membuat waspada;
      buddy = rekan korban yang melihatnya roboh; call = jarak teriak antar-rekan; mem = ingatan posisi (dtk) */
   /* bantuan mortir [B] = rentetan roket: n roket, dmg & r ledakan sim, S ukuran ledakan 3D, R jarak & alt ketinggian lintasan, dur lama terbang, delay/gap jeda */
-  F.HOOK = { rng: 62, spd: 120, pull: 21, acc: 38, mantle: .62, cd: 1.6 };   // grappling hook [H]: jangkauan m, laju kait, laju tarik maks, percepatan, lama memanjat tepi, jeda
+  F.HOOK = { rng: 62, spd: 120, pull: 21, acc: 38, mantle: .62, cd: 1.6,
+    gnd: 20, ride: 110, hang: 4.6, drop: 9, tagT: 9, stun: 4, snare: 7 };   // v3.2: tanah datar ≥ gnd m = meluncur ke sana · heli kawan ≤ ride m = bergelayut hang m di bawah perut heli (turun tali drop m/dtk) · kait musuh lalu tembak lagi = jerat: prajurit limbung stun dtk, kendaraan terjebak snare dtk (tagT = batas waktu kait kedua)   // grappling hook [H]: jangkauan m, laju kait, laju tarik maks, percepatan, lama memanjat tepi, jeda
   F.CROWD = { r: 650, jog: 8, walk: 7, ring: 46, jogV: 4.8, walkV: 1.45 };   // prajurit kosmetik di markas (fps-life crowdTick)
   F.VOLC = { first: [22, 34], every: 60, jit: 6, warn: 4.5, dur: 9, plume: 34, bombs: 14, r: 8, dmg: 150, boom: 75, msgR: 4000 };   // erupsi gunung berapi (fps-life volcTick)
   F.RKT = { n: 7, dmg: 150, r: 17, S: 11, spread: 24, R: 780, alt: 460, dur: 3.2, delay: 1.4, gap: .42, prox: 9 };   // prox: sumbu jarak dekat terhadap heli/pesawat (m)
@@ -224,7 +241,7 @@
       w: [{ id: 'GAU-8', k: 'gun', rpm: 3900, dmgI: 55, dmgV: 40, r: 3, rng: 2000, spread: .5, mag: 5000, n: 5000, tw: .07, he: true, spin: .45 }],   // minigun 5.000 peluru
       hom: { n: 500, max: 6, lock: .22, cone: .55, rng: 3200, cd: 1.4, gap: .08, dmg: 1250, r: 11, spd: 320, fuze: 6 },   // 500 rudal homing: kunci otomatis ≤6 sasaran, 1 rudal per sasaran (3 pilon tiap sayap)
       flare: { n: 40, cd: 2.5, dur: 4 },
-      roll: { t: 1.15, side: 24, cd: 3.5, dodge: .65 } }   // A/D guling menghindar: lama dtk, dorongan samping maks m/dtk, jeda, peluang rudal pengejar kehilangan kunci   // flare lebih banyak & lebih cepat siap dari ELANG (10 · 6 dtk)
+      roll: { t: 1.7, side: 18, r: 5.5, cd: 3.5, dodge: .65 } }   // A/D guling barel menghindar: lama dtk, geser samping bersih m, jari-jari spiral m, jeda, peluang rudal pengejar kehilangan kunci   // flare lebih banyak & lebih cepat siap dari ELANG (10 · 6 dtk)
   };
   /* laser orbital SATELIT HELIOS: titik dipilih di peta (<= range m dari operator) → sinematik satelit turun (cin) → POV satelit di ketinggian alt m → isi daya charge dtk → sinar dur dtk (radius r, dps, laju spd m/dtk); nova = ledakan penutup.
      hqK: markas musuh hanya tergores agar misi tidak selesai sekali sorot. cin: satelit jatuh dari h0 m selama fall dtk, panel terbuka mulai dep0 selama depT dtk, kamera memutar arc0..arc1 lalu masuk ke optik satelit pada t dtk */

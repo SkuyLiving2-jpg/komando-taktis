@@ -381,8 +381,28 @@
   function hookFail(k) { hkMsg(k); A() && A().local('empty', .8); P.hookCd = P.time + .35; return false; }
   F.hookOk = () => P.alive && !P.veh && !P.mnt && !P.gs && !P.entA && !P.swim && !P.down && !(P.chute > 0) && !P.menu;
   /* rencana kait dari arah bidik sekarang (tanpa efek samping): { H } atau { err }. Dipakai tombol tembak & penanda bidik HUD */
+  const HELIK = { HELI: 1, ATK2: 1, MEDHELI: 1 };
+  function rayUnit(ex, ey, ez, v, maxT, pick) {   // unit terdekat yang dilalui sinar bidik (jarak tegak lurus ≤ rad dari pusat badannya)
+    let best = null, bt = maxT;
+    for (const u of Q.units) {
+      if (u.dead || u.player || u.chute > 0 || u.inV) continue; const rad = pick(u); if (!rad) continue;
+      const cz = F.zOf(u) + (u.tc === 'A' ? 0 : u.armor === 'inf' ? 1.1 : 1.4), dx = u.x - ex, dy = u.y - ey, dz = cz - ez, t = dx * v[0] + dy * v[1] + dz * v[2];
+      if (t < 2 || t > bt) continue; const px = dx - v[0] * t, py = dy - v[1] * t, pz = dz - v[2] * t; if (px * px + py * py + pz * pz > rad * rad) continue;
+      best = { u, t, z: cz }; bt = t;
+    }
+    return best;
+  }
   function hookPlan() {
     const C = HK(), ex = P.x, ey = P.y, ez = P.z + P.eye, v = F.aimVec(P.yaw, P.pitch), t = F.rayTerrain(ex, ey, ez, v[0], v[1], v[2], C.rng);
+    const tw = t < 0 ? C.rng : t;
+    if (P.hook && P.hook.ph === 'tag') {   // kait kedua: titik jangkar (tanah / dinding / apa saja yang kena) untuk menjerat musuh yang terkait
+      if (t < 0) return { err: 'f_hook_far' };
+      return { H: { mode: 'bind', ax: ex + v[0] * t, ay: ey + v[1] * t, az: ez + v[2] * t }, d: t };
+    }
+    const hl = rayUnit(ex, ey, ez, v, Math.min(C.ride, t < 0 ? C.ride : t + 2), u => u.team === 'B' && HELIK[u.type] && u.tc === 'A' && F.altOf(u) > 8 ? 5 : 0);   // heli kawan di udara
+    if (hl) return { H: { mode: 'ride', u: hl.u, ax: hl.u.x, ay: hl.u.y, az: hl.z - 1.2 }, d: hl.t };
+    const en = rayUnit(ex, ey, ez, v, tw + 1, u => u.team === 'R' && u.tc !== 'A' && !u.vanish ? (u.armor === 'inf' ? .9 : u.struct ? 0 : 2.8) : 0);   // musuh di darat
+    if (en) return { H: { mode: 'tag', u: en.u, ax: en.u.x, ay: en.u.y, az: en.z }, d: en.t };
     if (t < 0) return { err: 'f_hook_far' };
     const hx = ex + v[0] * t, hy = ey + v[1] * t, hz = ez + v[2] * t, hh = Math.hypot(v[0], v[1]) || 1, ux = v[0] / hh, uy = v[1] / hh;
     let top = null;
@@ -394,7 +414,9 @@
       H = { ax: hx + ux * .05, ay: hy + uy * .05, az: top + .05, top, wx: hx - ux * .55, wy: hy - uy * .55, sx, sy, bld: true };
     } else if (top === null && F.floorAt(hx, hy) > P.z + 1.2 && !F.water(hx, hy) && !F.lava(hx, hy)) {   // tebing / bukit terjal
       const sx = hx - ux * .6, sy = hy - uy * .6; H = { ax: hx, ay: hy, az: hz, top: F.floorAt(sx, sy), wx: sx, wy: sy, sx, sy, bld: false };
-    } else return { err: top !== null ? 'f_hook_bad' : 'f_hook_low' };
+    } else if (top === null && !F.water(hx, hy) && !F.lava(hx, hy) && Math.hypot(hx - ex, hy - ey) >= C.gnd) {   // v3.2 tanah datar ≥ 20 m: meluncur ke titik itu
+      const sx = hx - ux * .9, sy = hy - uy * .9; H = { ax: hx, ay: hy, az: hz, top: F.floorAt(sx, sy), wx: sx, wy: sy, sx, sy, bld: false, gnd: true };
+    } else return { err: top !== null ? 'f_hook_bad' : F.water(hx, hy) || F.lava(hx, hy) ? 'f_hook_low' : 'f_hook_near' };
     const d = Math.hypot(H.ax - ex, H.ay - ey, H.az - ez); if (d > C.rng) return { err: 'f_hook_far' };
     // jalur tarikan harus bebas: dari mata & dari pinggang ke titik gantung di bawah tepi atap (dulu tidak diuji → badan bisa menembus gedung lain / tersangkut)
     const tz = H.bld ? H.top - .25 : H.top + P.eye + .2;
@@ -408,35 +430,76 @@
   F.hookAim = () => { if (P.time - aimC.t > .08) aimC = { t: P.time, r: hookPlan() }; return aimC.r; };   // penanda bidik HUD (di-cache 0,08 dtk)
   /* [H] = keluarkan / simpan alat kait (senjata diturunkan, tangan memegang peluncur kait). Saat tali terpasang: [H] = lepas tali */
   F.hookTool = function () {
-    if (P.hook) { hookRelease(); F.eqSet && F.eqSet(null); return true; }
+    if (P.hook) { if (P.hook.ph === 'ride') { P.hook.ph = 'drop'; return true; } if (P.hook.ph === 'drop') return true; hookRelease(); F.eqSet && F.eqSet(null); return true; }   // bergelayut: H = turun tali (bukan jatuh bebas)
     if (P.eq === 'hook') { F.eqSet(null); return true; }
     if (!F.hookOk() || P.abA || P.gT > 0 || P.melT > 0 || P.bashT > 0) return false;
     F.eqSet('hook'); aimC.t = -1; return true;
   };
   F.hookUse = function () {   // tombol tembak saat alat kait dipegang: luncurkan kait ke titik bidik
+    if (P.hook && P.hook.ph === 'tag') {   // kait kedua: tali dari musuh disangkutkan ke jangkar → musuh terjerat
+      const pl = hookPlan(); if (pl.err) return hookFail(pl.err);
+      const u = P.hook.u, C = HK(), J = pl.H, hum = u.armor === 'inf', T = u.boss ? 1.5 : hum ? C.stun : C.snare;
+      u.stunT = Math.max(u.stunT || 0, Q.t + T * (Q.speed || 1)); if (u.cr && war.crStagger) war.crStagger(u, 1);
+      if (F.tethers) F.tethers.push({ u, ax: J.ax, ay: J.ay, az: J.az, t1: P.time + T });
+      F.msg(TK.t(hum ? 'f_hook_bind' : 'f_hook_bindV'), 'g'); A() && A().local('throw', .9); A() && A().at('tap', u.x, u.y, 1); F.sparks && F.sparks(J.ax, J.ay, J.az, 6);
+      P.hook = null; P.hookCd = P.time + HK().cd; if (P.eq === 'hook' && F.eqSet) F.eqSet(null); return true;
+    }
     if (P.hook) return false;
     if (!F.hookOk() || (P.hookCd || 0) > P.time) return false;
     const pl = hookPlan(); if (pl.err) return hookFail(pl.err);
     const H = pl.H, ez = P.z + P.eye;
     Object.assign(H, { ph: 'fly', hx: P.x, hy: P.y, hz: ez - .3, t: 0, sp: 0, tug: 0, d0: pl.d });
+    if (H.mode === 'ride') { const a = Math.random() * 6.283; H.ox = Math.cos(a) * .8; H.oy = Math.sin(a) * .8; }
     P.hook = H; P.ads = 0; P.vx = P.vy = 0; A() && A().local('throw', .9); A() && A().local('pin', .6); P.shake = Math.min(1, P.shake + .2);
     return true;
   };
   function hookRelease() { const H = P.hook; if (!H) return; P.hook = null; P.hookCd = P.time + HK().cd * .5; P.grounded = false; if (H.ph !== 'pull') P.vx = P.vy = 0; if (P.eq === 'hook' && F.eqSet) F.eqSet(null); }
   F.hookCancel = () => { P.hook = null; };
+  F.tethers = [];   // v3.2 musuh terjerat: tali dari badan ke jangkar (digambar fps-gl)
+  const hkZ = u => F.zOf(u) + (u.tc === 'A' ? -1.2 : u.armor === 'inf' ? 1.1 : 1.4);
+  F.hookRides = () => !!(P.hook && (P.hook.ph === 'ride' || P.hook.ph === 'drop'));   // bergelayut: senjata tetap bisa dipakai (fps.js)
   F.hookTick = function (dt) {   // true = kait mengendalikan pemain (gerak normal dilewati)
     const H = P.hook, C = HK(); if (!H) return false;
     if (!F.hookOk()) { P.hook = null; if (P.eq === 'hook' && F.eqSet) F.eqSet(null); return false; }
     H.t += dt;
+    for (let i = F.tethers.length - 1; i >= 0; i--) if (F.tethers[i].u.dead || P.time > F.tethers[i].t1) F.tethers.splice(i, 1);
+    if (H.u && (H.ph === 'fly' || H.ph === 'tag' || H.ph === 'pull')) { if (H.u.dead) { hookRelease(); return false; } H.ax = H.u.x; H.ay = H.u.y; H.az = hkZ(H.u); }   // sasaran bergerak: kepala kait mengikuti
+    if (H.ph === 'tag') {   // kait menancap di musuh: pemain bebas bergerak, tembak lagi ke tanah / dinding = jerat
+      H.hx = H.ax; H.hy = H.ay; H.hz = H.az;
+      if (P.time - H.tg0 > HK().tagT || Math.hypot(H.u.x - P.x, H.u.y - P.y) > HK().rng * 1.6) { hookRelease(); return false; }
+      return false;
+    }
+    if (H.ph === 'ride' || H.ph === 'drop') {   // bergelayut di bawah heli kawan (bisa menembak) · turun tali sampai tanah
+      const u = H.u, live = u && !u.dead && u.tc === 'A';
+      if (live) { H.hx = u.x; H.hy = u.y; H.hz = hkZ(u); }
+      if (H.ph === 'ride') {
+        if (!live || F.altOf(u) < 7 || (F.in.jump && H.t - H.r0 > .4)) { H.ph = 'drop'; H.dz = P.z; A() && A().local('tug', .8); }
+        else { const C = HK(); P.x = u.x + H.ox; P.y = u.y + H.oy; P.z = H.hz - C.hang - P.eye + Math.sin(P.time * 1.7) * .15; P.vx = P.vy = P.vz = 0; P.grounded = false; P.shake = Math.max(P.shake, .05); return true; }
+      }
+      const fl = F.floorAt(P.x, P.y); P.vx = P.vy = 0; P.vz = -HK().drop; P.z = Math.max(fl, P.z - HK().drop * dt); P.grounded = false;
+      if (P.z <= fl + .01) { P.z = fl; P.vz = 0; P.grounded = true; finish(); return false; }
+      return true;
+    }
     if (H.ph === 'fly') {   // kepala kait melesat ke titik kait; pemain masih bisa bergerak
       const dx = H.ax - H.hx, dy = H.ay - H.hy, dz = H.az - H.hz, d = Math.hypot(dx, dy, dz), s = C.spd * dt;
-      if (d <= s) { H.hx = H.ax; H.hy = H.ay; H.hz = H.az; H.ph = 'pull'; H.p0 = H.t; A() && A().local('tap', 1); P.shake = Math.min(1, P.shake + .25); F.sparks && F.sparks(H.ax, H.ay, H.az, 5); }
+      if (d <= s) {
+        H.hx = H.ax; H.hy = H.ay; H.hz = H.az; H.ph = 'pull'; H.p0 = H.t; A() && A().local('tap', 1); P.shake = Math.min(1, P.shake + .25); F.sparks && F.sparks(H.ax, H.ay, H.az, 5);
+        if (H.mode === 'tag') { H.ph = 'tag'; H.tg0 = P.time; F.msg(TK.t('f_hook_tag'), 'g'); return false; }
+      }
       else { H.hx += dx / d * s; H.hy += dy / d * s; H.hz += dz / d * s; }
       if (H.t > 1.5) { P.hook = null; if (P.eq === 'hook' && F.eqSet) F.eqSet(null); return false; }
       P.vx = P.vy = 0; if (!P.grounded) { P.vz -= 20 * dt; P.z = Math.max(F.floorAt(P.x, P.y), P.z + P.vz * dt); if (P.z <= F.floorAt(P.x, P.y) + .01) { P.vz = 0; P.grounded = true; } }
       return true;   // kepala kait melesat: pemain menahan posisi (kaki tertanam, tangan menahan sentakan)
     }
     if (H.ph === 'pull' && F.in.jump && H.t - H.p0 > .25) { hookRelease(); P.vz = Math.max(P.vz, 4); return false; }
+    if (H.ph === 'pull' && H.mode === 'ride') {   // ditarik naik ke perut heli lalu bergelayut
+      const C = HK(), u = H.u; if (!u || u.dead) { hookRelease(); return false; }
+      const tx = u.x + H.ox, ty = u.y + H.oy, tz = hkZ(u) - C.hang, ex = P.x, ey = P.y, ez = P.z + P.eye, dx = tx - ex, dy = ty - ey, dz = tz - ez, d = Math.hypot(dx, dy, dz);
+      H.sp = Math.min(C.pull * 1.3, H.sp + C.acc * dt); const s = H.sp * dt; H.tug -= dt; if (H.tug <= 0) { H.tug = .11; A() && A().local('tug', .9); }
+      if (d <= s + .3 || H.t - H.p0 > 6) { H.ph = 'ride'; H.r0 = H.t; F.msg(TK.t('f_hook_ride'), 'g'); if (P.eq === 'hook' && F.eqSet) F.eqSet(null); }
+      else { P.x += dx / d * s; P.y += dy / d * s; P.z += dz / d * s; }
+      P.vx = P.vy = P.vz = 0; P.grounded = false; return true;
+    }
     if (H.ph === 'pull') {   // mata ditarik lurus ke tepi atap (sedikit di bawahnya), makin cepat
       const tz = H.bld ? H.top - .25 : H.top + P.eye + .2, ex = P.x, ey = P.y, ez = P.z + P.eye;
       const dx = H.wx - ex, dy = H.wy - ey, dz = tz - ez, d = Math.hypot(dx, dy, dz);

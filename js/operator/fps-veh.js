@@ -63,7 +63,7 @@
   function sync(V) {
     const u = V.u; if (!u) return;
     u.x = V.x; u.y = V.y; u.hdg = V.yaw; u.face = V.air ? V.yaw : V.ty; u.gunE = V.gE; u.rec = V.rec;
-    u.pose = { z: V.z + (V.bob || 0), yaw: V.yaw, pit: V.pit, rol: V.rol }; u.steer = (u.steer || 0) + ((V.str || 0) * .5 - (u.steer || 0)) * .25;
+    u.pose = { z: V.z + (V.bob || 0), yaw: V.yaw + (V.brY || 0), pit: V.pit + (V.brP || 0), rol: V.rol };   // brY/brP: hidung mengikuti lintasan spiral guling barel u.steer = (u.steer || 0) + ((V.str || 0) * .5 - (u.steer || 0)) * .25;
     if (V.air) { u.alt = V.z - F.hAt(V.x, V.y); u.lowA = u.alt < 150; u.noz = V.noz; u.gearK = V.gear; }
     u.stealth = V.smT > 0 ? .15 : 1;   // tabir asap: musuh hampir tidak bisa melihat kendaraan
   }
@@ -472,11 +472,13 @@
   function fwGround(V, dt, I) {
     const D = V.D, gh = VX(V.id).gear;
     if (I.f) V.thr = Math.min(1, V.thr + dt * .6); if (I.b && V.spd > .2) V.thr = Math.max(0, V.thr - dt * .9);
-    const toga = !!I.sprint && (V.thr > .05 || !!I.f), rough = !onRwy(V.x, V.y), ws0 = Math.abs(V.spd);
+    const tup = !!(TK.fpsui && TK.fpsui.touch) && P.veh === V && P.pitch > .1;   // v3.2 HP: cukup ARAHKAN BIDIKAN KE ATAS = tenaga penuh + lepas landas otomatis di Vr (dulu butuh joystick penuh terkunci + tombol → praktis tidak bisa)
+    const toga = (!!I.sprint || tup) && (V.thr > .05 || !!I.f || tup), rough = !onRwy(V.x, V.y), ws0 = Math.abs(V.spd);
+    if (tup && V.spd > 3 && !V.tko) { V.tko = true; if (V.spd < D.vr * .95) F.msg(Tt('f_wf_arm'), 'g'); }
     // SPASI saat lari lepas landas (SHIFT) = siapkan lepas landas otomatis di Vr; SPASI tanpa SHIFT = rem (taksi / setelah mendarat)
     if (I.jump && (toga || V.tko) && V.spd > 3) { if (!V.tko) { V.tko = true; if (P.veh === V && V.spd < D.vr * .95) F.msg(Tt('f_wf_arm'), 'g'); } }
     if (!toga && !I.jump && V.spd < D.vr * .6) V.tko = false;
-    const brake = (!!I.jump && !V.tko) || (I.b && V.thr <= 0 && V.spd > .3);
+    const brake = (!!I.jump && !(V.tko && !tup)) || (I.b && V.thr <= 0 && V.spd > .3);   // HP: tombol REM selalu mengerem
     let a;
     if (toga) { V.thr = Math.max(V.thr, .9); a = D.tko * (1 - V.spd / (D.max * 1.1)); }   // tenaga lepas landas: dorongan besar yang makin melemah mendekati laju puncak
     else a = clamp((D.taxi * V.thr - V.spd) * .7, -1.1, 2.2);                          // taksi: laju mengikuti tuas gas (gelinding & hambatan udara memperlambat)
@@ -529,7 +531,7 @@
     const rl = (+I.r || 0) > .6 ? 1 : (+I.l || 0) > .6 ? -1 : 0, R0 = D.roll;
     V.rcd = Math.max(0, (V.rcd || 0) - dt);
     if (rl && !V.rlP && !V.br && V.rcd <= 0 && !stall && R0) {
-      V.br = { t: 0, d: rl }; V.rcd = R0.cd;
+      V.br = { t: 0, d: rl }; V.rcd = R0.cd; V.brY = V.brY || 0; V.brP = V.brP || 0;
       for (const p of Q.projs) if (p.kind === 'missile' && !p.done && p.tgt === V.u && Math.random() < R0.dodge) { p.tgt = null; p.tx = V.x + rand(-120, 120); p.ty = V.y + rand(-120, 120); }
       if (P.veh === V) { F.msg(Tt('f_wf_roll'), 'g'); A() && A().local('switch', .5); }
     }
@@ -539,12 +541,20 @@
     const cp = Math.cos(V.pit), sink = stall ? (1 - V.spd / D.vs) * 16 + 2 : 0;
     V.vx = Math.cos(V.yaw) * cp * V.spd; V.vy = Math.sin(V.yaw) * cp * V.spd; V.vz = Math.sin(V.pit) * V.spd - sink;
     let lat = 0;
-    if (V.br) {   // guling: sudut guling penuh 2π (tampak mulus), dorongan menyamping berbentuk lonceng
-      V.br.t += dt; const u = Math.min(1, V.br.t / R0.t); lat = V.br.d * R0.side * Math.sin(Math.PI * u);
+    let bo = null;
+    if (V.br) {   // GULING BAREL sungguhan: pesawat mengelilingi "tong" khayal di samping garis terbang (atap kabin selalu menghadap pusat tong),
+      // jadi lintasannya spiral: naik sambil menyilang, terbalik di puncak, turun ke sisi seberang — ditambah geser bersih R0.side ke arah tombol
+      const B = V.br; B.t += dt; const u = Math.min(1, B.t / R0.t), e = ss01(u), th = 6.2832 * e, R = R0.r || 8;
+      const sd = B.d * (-R * Math.sin(th) + R0.side * e), up = R * (1 - Math.cos(th)) * .9, hx = sd - B.d * R0.side * e;   // hx = bagian spiral saja (kamera kejar mengabaikannya)
+      const o = B.o || [0, 0], ds = sd - o[0], du = up - o[1]; B.o = [sd, up];
+      const sx = -Math.sin(V.yaw), sy = Math.cos(V.yaw);
+      bo = [sx * ds, sy * ds, du]; V.brH = [sx * hx, sy * hx, up];
+      V.brY += (-Math.atan2(ds / Math.max(dt, 1e-3), V.spd) * .6 - V.brY) * Math.min(1, dt * 10); V.brP += (Math.atan2(du / Math.max(dt, 1e-3), V.spd) * .6 - V.brP) * Math.min(1, dt * 10);
       V.rolB = (V.rolB === undefined ? V.rol : V.rolB) + (clamp(-V.yr * 1.05, -1.2, 1.2) - (V.rolB || 0)) * Math.min(1, dt * 2.6);
-      V.rol = V.rolB + V.br.d * 6.2832 * ss01(u);
-      if (u >= 1) { V.br = null; V.rol = V.rolB; V.rolB = undefined; }
-    } else V.rol += (clamp(-V.yr * 1.05, -1.2, 1.2) - V.rol) * Math.min(1, dt * 2.6);
+      V.rol = V.rolB + B.d * th;
+      if (u >= 1) { V.br = null; V.rol = V.rolB; V.rolB = undefined; V.brH = null; }
+    } else { V.rol += (clamp(-V.yr * 1.05, -1.2, 1.2) - V.rol) * Math.min(1, dt * 2.6); V.brY *= Math.max(0, 1 - dt * 8); V.brP *= Math.max(0, 1 - dt * 8); }
+    if (bo) { V.x = clamp(V.x + bo[0], 20, W.WW - 20); V.y = clamp(V.y + bo[1], 20, W.WH - 20); V.z += bo[2]; }
     V.x = clamp(V.x + (V.vx - Math.sin(V.yaw) * lat) * dt, 20, W.WW - 20); V.y = clamp(V.y + (V.vy + Math.cos(V.yaw) * lat) * dt, 20, W.WH - 20);
     V.z = Math.min(V.z + V.vz * dt, F.hAt(V.x, V.y) + D.ceil);
     const fz = floorZ(V.x, V.y) + gh;
@@ -552,7 +562,7 @@
       const ok = V.gear > .85 && V.vz > -9 && Math.abs(V.rol) < .45 && V.pit > -.22 && V.pit < .45 && !F.water(V.x, V.y) && fz - V.z < 3;
       if (!ok) { hurtV(V, 1e6); V.z = fz; return; }
       if (V.vz < -4.5) hurtV(V, (-V.vz - 4.5) * 90);
-      V.z = fz; V.gnd = true; V.spd = Math.hypot(V.vx, V.vy); V.vz = 0; V.yr = 0; V.gearMan = false; V.stall = false; V.br = null; V.rolB = undefined; V.tko = false; V.climbT = 0;
+      V.z = fz; V.gnd = true; V.spd = Math.hypot(V.vx, V.vy); V.vz = 0; V.yr = 0; V.gearMan = false; V.stall = false; V.br = null; V.rolB = undefined; V.brH = null; V.brY = V.brP = 0; V.tko = false; V.climbT = 0;
       F.puff(V.x, V.y, fz - gh + .3, 8, [170, 170, 166], 2.5); A() && A().at('thud', V.x, V.y, 1.2);
       if (P.veh === V) { F.msg(Tt('f_wf_land'), 'g'); P.shake = Math.min(1, P.shake + .25); }
     }
@@ -568,13 +578,13 @@
   function camPose(V) {
     const v = F.aimVec(P.yaw, P.pitch), C = VX(V.id), zm = F.in.ads && !V.air;
     if (V.cam || zm) { const p = MX().ap(V.air ? frame(V) : turFrame(V), C.eye); return { x: p[0], y: p[1], z: p[2], v, fp: true }; }
-    const D = V.D.cam, pz = V.z + (V.air ? 4.2 : C.eye[2] + .6), x = V.x - v[0] * D, y = V.y - v[1] * D;   // jet: kamera lebih tinggi agar badan pesawat tidak menutupi sasaran di bawah garis bidik
+    const h = V.brH || [0, 0, 0], D = V.D.cam, pz = V.z - h[2] * .55 + (V.air ? 4.2 : C.eye[2] + .6), x = V.x - h[0] * .55 - v[0] * D, y = V.y - h[1] * .55 - v[1] * D;   // jet: kamera lebih tinggi agar badan pesawat tidak menutupi sasaran di bawah garis bidik
     return { x, y, z: Math.max(pz + 1.4 - v[2] * D, F.hAt(x, y) + 1.3), v };
   }
   F.vehCamera = function () {
     const V = P.veh, c = camPose(V), sh = (Math.random() - .5) * P.shake * F.shakeK * .02, zm = F.in.ads && !V.air;
     F.camHide = c.fp ? V.u : null;
-    return { x: c.x, y: c.y, z: c.z, yaw: P.yaw + sh, pitch: P.pitch + sh, fov: (zm ? 24 : c.fp ? 62 : 74) * D2R };
+    return { x: c.x, y: c.y, z: c.z, yaw: P.yaw + sh, pitch: P.pitch + sh, fov: (zm ? 24 : c.fp ? 62 : 74) * D2R, roll: c.fp && V.br && V.rolB !== undefined ? -(V.rol - V.rolB) : 0 };
   };
   F.vehLookK = () => P.veh ? (F.in.ads && !P.veh.air ? .35 : 1) : 1;
   F.vehCam = function () { const V = P.veh; if (!V) return; V.cam = 1 - V.cam; A() && A().local('switch', .5); };

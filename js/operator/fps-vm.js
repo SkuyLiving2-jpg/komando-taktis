@@ -413,14 +413,14 @@
   let OPTK = null, AV = {};
   const AM = {
     AK: { yb: -.0294, oz: -.1, muz: [0, AKB, .667], mr: .0115, und: [-.091, .305], side: [.026, -.066, .31], mag: { b: [0, -.262, .078], p: .73, w: .0125, d: .03, L: .06 } },
-    SMG: { yb: -.0334, oz: -.02, muz: [0, -.062, .354], mr: .0118, und: [-.0835, .232], side: [.0195, -.062, .25], mag: { b: [0, -.278, .072], p: .3, w: .0118, d: .023, L: .045 } },
-    LMG: { yb: -.0304, oz: -.02, cov: true, muz: [0, -.062, .665], mr: .0145, und: [-.104, .29], side: [.027, -.075, .27] },
-    SNIPER: { yb: -.0224, oz: .06, muz: [0, -.052, .86], mr: .0132, und: [-.09, .3], side: [.021, -.075, .3], mag: { b: [0, -.112, .037], p: 0, w: .0145, d: .034, L: .035 }, cheek: [-.034, -.27] },
-    SHOTGUN: { yb: -.0134, oz: -.01, muz: [0, -.034, .555], mr: .0126, side: [.0185, -.055, .32], tube: [-.061, .48] },
-    M1911: { yb: -.0075, oz: -.03, muz: [0, -.03, .159], mr: .0062, und: [-.05, .1], mag: { b: [0, -.1295, -.042], p: -.15, w: .0095, d: .019, L: .028 } },
-    GLOCK: { yb: -.0075, oz: -.03, muz: [0, -.0285, .167], mr: .0062, und: [-.0535, .103], mag: { b: [0, -.1445, -.046], p: -.24, w: .0128, d: .021, L: .03 } },
-    M93R: { yb: -.0075, oz: -.035, muz: [0, -.0255, .19], mr: .0098, und: [-.062, .16], mag: { b: [0, -.1925, -.052], p: -.15, w: .0122, d: .021, L: .03 }, stock: true },
-    DEAGLE: { yb: -.0063, oz: -.03, muz: [0, -.026, .203], mr: .0089, und: [-.064, .13], mag: { b: [0, -.146, -.05], p: -.165, w: .0118, d: .022, L: .028 } },
+    SMG: { trig: [-.104, -.022, -.35], yb: -.0334, oz: -.02, muz: [0, -.062, .354], mr: .0118, und: [-.0835, .232], side: [.0195, -.062, .25], mag: { b: [0, -.278, .072], p: .3, w: .0118, d: .023, L: .045 } },
+    LMG: { bip: [-.076, .5, .2], yb: -.0304, oz: -.02, cov: true, muz: [0, -.062, .665], mr: .0145, und: [-.104, .29], side: [.027, -.075, .27] },
+    SNIPER: { bip: [-.092, .34, .17], cuff: [-.1, -.33, .0195], yb: -.0224, oz: .06, muz: [0, -.052, .86], mr: .0132, und: [-.09, .3], side: [.021, -.075, .3], mag: { b: [0, -.112, .037], p: 0, w: .0145, d: .034, L: .035 }, cheek: [-.034, -.27] },
+    SHOTGUN: { cuff: [-.094, -.292, .0202], yb: -.0134, oz: -.01, muz: [0, -.034, .555], mr: .0126, side: [.0185, -.055, .32], tube: [-.061, .48] },
+    M1911: { trig: [-.058, .012, -.2], grip: [.0141, [[-.021, -.056], [-.026, -.116], [-.055, -.118], [-.054, -.056]]], yb: -.0075, oz: -.03, muz: [0, -.03, .159], mr: .0062, und: [-.05, .1], mag: { b: [0, -.1295, -.042], p: -.15, w: .0095, d: .019, L: .028 } },
+    GLOCK: { grip: [.0152, [[-.017, -.053], [-.028, -.118], [-.064, -.12], [-.062, -.053]]], yb: -.0075, oz: -.03, muz: [0, -.0285, .167], mr: .0062, und: [-.0535, .103], mag: { b: [0, -.1445, -.046], p: -.24, w: .0128, d: .021, L: .03 } },
+    M93R: { trig: [-.06, .012, -.25], grip: [.0168, [[-.021, -.058], [-.026, -.116], [-.057, -.118], [-.056, -.058]]], yb: -.0075, oz: -.035, muz: [0, -.0255, .19], mr: .0098, und: [-.062, .16], mag: { b: [0, -.1925, -.052], p: -.15, w: .0122, d: .021, L: .03 }, stock: true },
+    DEAGLE: { grip: [.0181, [[-.024, -.068], [-.029, -.13], [-.066, -.133], [-.063, -.068]]], yb: -.0063, oz: -.03, muz: [0, -.026, .203], mr: .0089, und: [-.064, .13], mag: { b: [0, -.146, -.05], p: -.165, w: .0118, d: .022, L: .028 } },
     MAG44: { yb: -.024, oz: -.005, muz: [0, -.052, .193], mr: .0105, und: [-.082, .14], rev: true },
     AT: { at: true, muz: [.056, -.046, .53], und: [-.088, .34], side: [.1, -.046, .18] }
   };
@@ -433,7 +433,9 @@
     if (kind === 'prism') { const ya = Math.max(0, M.yb + .022); return { ya, z: M.oz, eye: M.oz - .052 }; }
     return { ya: 0, z: M.oz };
   }
-  const LEDm = mt([255, 50, 34], 0), LENS2 = mt([60, 90, 120], 1, 40), SHL = mt([118, 28, 26], .25);
+  const LEDm = mt([255, 50, 34], 0), LENS2 = mt([60, 90, 120], 1, 40), SHL = mt([118, 28, 26], .25), SLG = mt([46, 104, 52], .25), TAPEm = mt([92, 94, 90], .02), RTRG = mt([196, 40, 30], .45, 24),
+    CORD = mt([92, 84, 62], .04), BLK = mt([16, 16, 17], .2), YLW = mt([214, 172, 40], .3), RBR = mt([58, 40, 30], .05), MOON = mt([58, 74, 104], .55, 26), OLV0 = OLV;
+  let PVM = false;   // true saat menggambar pratinjau meja senjata (roket selalu terisi, bipod terbuka)
   function mount(ya, r, yb, z, len, w) {   // dudukan dari rel ke bawah tabung/rumah optik + rahang klem
     const top = ya - r; if (top - yb > .001) box([0, (top + yb) / 2, z], [w || .0095, (top - yb) / 2, len], ANO);
     for (const s of [-1, 1]) box([s * ((w || .0095) + .0013), yb + .0035, z], [.0013, .0035, len + .002], ANO);
@@ -506,7 +508,8 @@
     }
     // ---- moncong ----
     if (M.muz) {
-      const [mx, my, mz] = M.muz, r = M.mr || .012;
+      const [mx, my, mz0] = M.muz, r = M.mr || .012, mz = mz0 + (A.short ? -.12 : A.snub ? -.088 : A.bull ? .007 : 0);
+      if (A.bull) { tube([mx, my, mz - .016], [mx, my, mz], .0079, .0079, 14, STL); tube([mx, my, mz - .002], [mx, my, mz], .0083, .0083, 14, STL); disc([mx, my, mz + .0002], [0, 0, 1], .0046, 10, INN, 0, -.001); }   // laras bull tanpa bushing, menonjol dari slide
       if (A.sup) { tube([mx, my, mz - .025], [mx, my, mz + .16], .019, .019, 16, ANO, { segs: 3, m1: ANO }); for (const z of [mz - .02, mz + .155]) tube([mx, my, z - .003], [mx, my, z + .003], .0196, .0196, 16, INN); disc([mx, my, mz + .1602], [0, 0, 1], .006, 10, INN, 0, -.001); for (let k = 0; k < 5; k++) box([mx, my + .019, mz + .02 + k * .025], [.004, .0006, .008], INN, { zb: -.001 }); }
       if (A.psup) { tube([mx, my, mz - .005], [mx, my, mz + .125], .0145, .0145, 14, ANO, { segs: 2 }); disc([mx, my, mz + .1252], [0, 0, 1], .0045, 10, INN, 0, -.001); tube([mx, my, mz - .006], [mx, my, mz + .006], .0072, .0072, 10, STL); }
       if (A.comp) { tube([mx, my, mz - .01], [mx, my, mz + .05], r * 1.3, r * 1.3, 12, ANO); for (let k = 0; k < 3; k++) { const z = mz + .006 + k * .013; box([mx, my + r * 1.3, z], [.0045, .0008, .004], INN, { zb: -.001 }); for (const s of [-1, 1]) box([mx + s * r * 1.3, my + .002, z], [.0008, .004, .004], INN, { zb: -.001 }); } disc([mx, my, mz + .0502], [0, 0, 1], r * .55, 10, INN, 0, -.001); }
@@ -530,7 +533,37 @@
     if (A.plaser && M.und) { const [y, z] = M.und; box([0, y - .0085, z], [.0105, .0085, .026], POL); box([0, y - .0005, z], [.0095, .0012, .022], ANO); disc([0, y - .0085, z + .0262], [0, 0, 1], .0072, 14, GLT, 0, -.001); disc([.0055, y - .014, z + .0262], [0, 0, 1], .0022, 8, LEDm, 0, -.002); }
     // ---- shotgun: tabung magasin diperpanjang + sabuk peluru samping ----
     if (A.tube && M.tube) { const [y, z] = M.tube; tube([0, y, z], [0, y, z + .085], .0108, .0108, 12, ANO, { segs: 2 }); tube([0, y, z + .085], [0, y, z + .093], .0118, .0098, 12, ANO); box([0, (y - .034) / 2 - .002, z + .06], [.006, .014, .006], ANO); }
-    if (A.saddle) { box([-.0181, -.047, -.008], [.0016, .016, .05], POL); for (let k = 0; k < 6; k++) { const z = -.048 + k * .0162; tube([-.0215, -.066, z], [-.0215, -.036, z], .0058, .0058, 10, SHL, { up: [0, 0, 1] }); tube([-.0215, -.071, z], [-.0215, -.066, z], .0062, .0062, 10, BRS, { up: [0, 0, 1] }); } box([-.0222, -.051, -.008], [.0012, .0035, .05], POL); }
+    if (A.saddle) { box([-.0181, -.047, -.008], [.0016, .016, .05], POL); for (let k = 0; k < 6; k++) { const z = -.048 + k * .0162; tube([-.0215, -.066, z], [-.0215, -.036, z], .0058, .0058, 10, A.slug ? SLG : SHL, { up: [0, 0, 1] }); tube([-.0215, -.071, z], [-.0215, -.066, z], .0062, .0062, 10, BRS, { up: [0, 0, 1] }); } box([-.0222, -.051, -.008], [.0012, .0035, .05], POL); }
+    // ---- v3.2: picu / selektor, pegangan berlakban, laras bull, saklar otomatis, bipod, kantong peluru popor, roket ----
+    if ((A.trig || A.rapid) && M.trig) { const [y, z, p] = M.trig; box([0, y, z], [.0032, .0082, .0034], RTRG, { p: p + st.trig * .35 }); box([0, y - .006, z + .002], [.0036, .0012, .0036], RTRG, { p: p + st.trig * .35 }); }
+    if (A.rapid) for (const s of [-1, 1]) { box([s * .0153, -.0815, -.096], [.0013, .0026, .009], RTRG, { p: .3 }); box([s * .0151, -.0745, -.088], [.0006, .0016, .0016], YLW, { zb: -.002 }); }
+    if (A.tape && M.grip) { const [gx, pg] = M.grip; for (const s of [-1, 1]) { ext(pg, s * gx, .0008, TAPEm); for (let k = 1; k < 6; k++) { const t = k / 6, y = pg[0][1] + (pg[2][1] - pg[0][1]) * t, z0 = pg[0][0] + (pg[1][0] - pg[0][0]) * t, z1 = pg[3][0] + (pg[2][0] - pg[3][0]) * t; box([s * (gx + .0009), y, (z0 + z1) / 2], [.0003, .0007, Math.abs(z1 - z0) / 2], BLK, { zb: -.001 }); } } }
+    if (A.auto) { box([0, -.0185, -.0565], [.0068, .0105, .0028], POL); box([-.0082, -.012, -.0575], [.0026, .0032, .0042], POL); box([-.0102, -.012, -.0575], [.0008, .0018, .0026], mt([255, 120, 30], .2), { zb: -.002 }); }   // saklar otomatis di belakang slide
+    if (A.bipod && M.bip) {   // bipod gaya Harris (FDE): terlipat ke depan saat berdiri, kaki terbuka ke bawah saat jongkok (efek stabil aktif)
+      V.bipK = (V.bipK || 0) + ((PVM || P.crouch ? 1 : 0) - (V.bipK || 0)) * (PVM ? 1 : .12);
+      const [y, z0, L] = M.bip, z = z0 + (A.short ? -.12 : 0), k = ss(V.bipK);
+      box([0, y - .004, z], [.017, .008, .016], FDE2); box([0, y + .006, z], [.012, .003, .02], ANO);
+      for (const s of [-1, 1]) {
+        const dv = [s * .32 * k, -(.12 + .88 * k), -(1 - k) + .12 * k], n = Math.hypot(...dv), u = dv.map(q => q / n), a = [s * .013, y - .008, z], b = add(a, u.map(q => q * L * .6)), c = add(a, u.map(q => q * L));
+        tube(a, b, .0058, .0058, 8, FDE2); tube(b, c, .0042, .0042, 8, STL); tube(c, add(c, u.map(q => q * .014)), .0072, .0072, 8, RUB);
+        box(add(a, u.map(q => q * .02)), [.0026, .006, .006], STL);
+      }
+    }
+    if ((A.hvy || A.slug) && M.cuff && st.rear) {   // kantong peluru di popor: 5 peluru berat ujung hitam (runduk) / 4 slug hijau (shotgun)
+      const [y, z, hw] = M.cuff; box([0, y, z], [hw + .0022, .03, .04], CORD);
+      for (const s of [-1, 1]) { box([s * (hw + .0026), y + .022, z], [.0006, .004, .041], BLK, { zb: -.001 }); box([s * (hw + .0026), y - .022, z], [.0006, .004, .041], BLK, { zb: -.001 });
+        if (A.hvy) for (let i = 0; i < 5; i++) { const zz = z - .03 + i * .015, x = s * (hw + .0075); tube([x, y - .034, zz], [x, y + .026, zz], .0056, .0056, 8, BRS, { up: [0, 0, 1] }); tube([x, y + .026, zz], [x, y + .046, zz], .0052, .0016, 8, BLK, { up: [0, 0, 1] }); }
+        else for (let i = 0; i < 4; i++) { const zz = z - .027 + i * .018, x = s * (hw + .0105); tube([x, y - .032, zz], [x, y + .018, zz], .0086, .0086, 10, SLG, { up: [0, 0, 1] }); tube([x, y - .04, zz], [x, y - .032, zz], .009, .009, 10, BRS, { up: [0, 0, 1] }); }
+      }
+    }
+    if (M.at) {   // peluncur: hulu ledak menonjol dari moncong saat terisi, motor cepat di belakang, roket cadangan, kerah isi cepat
+      const TX = .056, TY = -.046, ld = PVM || ((P.w[P.cur] || {}).ammo > 0 && !(P.relT > 0));
+      if (ld && A.tandem) { tube([TX, TY, .49], [TX, TY, .63], .0062, .0062, 10, STL); tube([TX, TY, .63], [TX, TY, .672], .0135, .0135, 12, mt([60, 62, 58], .25)); tube([TX, TY, .672], [TX, TY, .69], .0135, .004, 12, STL); tube([TX, TY, .6], [TX, TY, .606], .0075, .0075, 10, YLW); }
+      if (ld && A.hef) { tube([TX, TY, .48], [TX, TY, .548], .031, .031, 14, mt([74, 78, 60], .12)); tube([TX, TY, .548], [TX, TY, .574], .031, .011, 14, mt([74, 78, 60], .12)); tube([TX, TY, .528], [TX, TY, .538], .0314, .0314, 14, YLW); }
+      if (A.fast) { tube([TX, TY, -.6], [TX, TY, -.67], .046, .056, 14, STL, { cap0: false, cap1: false }); tube([TX, TY, -.6], [TX, TY, -.67], .04, .05, 14, INN, { inner: true }); tube([TX, TY, -.62], [TX, TY, -.632], .0565, .0565, 14, RTRG); }
+      if (A.bag) { const bx = TX + .03, by = TY - .088, RB = mt([120, 104, 70], .1); tube([bx, by, -.36], [bx, by, .18], .03, .03, 12, RB, { segs: 3 }); tube([bx, by, .18], [bx, by, .28], .032, .012, 12, mt([40, 42, 40], .25)); tube([bx, by, -.4], [bx, by, -.36], .024, .03, 12, RUB); tube([bx, by, -.26], [bx, by, -.25], .0322, .0322, 12, YLW); for (const zz of [-.2, .06]) { box([(TX + bx) / 2, (TY + by) / 2, zz], [.03, .066, .011], CORD); box([(TX + bx) / 2 + .03, (TY + by) / 2, zz], [.0012, .05, .012], BLK, { zb: -.001 }); } }   // tas roket: roket cadangan diikat di bawah tabung
+      if (A.quick) { tube([TX, TY, -.55], [TX, TY, -.49], .0475, .0475, 14, ANO); tube([TX, TY, -.53], [TX, TY, -.522], .0482, .0482, 14, YLW); box([TX, TY + .062, -.52], [.006, .016, .022], ANO); box([TX, TY + .075, -.52], [.008, .004, .03], RUB); }
+    }
     // ---- popor: pipi senapan runduk, popor lipat 93R ----
     if (A.cheek && st.rear && M.cheek) { const [y, z] = M.cheek; box([0, y + .012, z], [.0175, .008, .06], RUB); for (const s of [-1, 1]) box([s * .0178, y + .006, z], [.0008, .004, .052], ANO, { zb: -.001 }); }
     if (A.pstock && st.rear) { for (const s of [-1, 1]) tube([s * .009, -.09, -.06], [s * .009, -.078, -.27], .0035, .0035, 8, STL); box([0, -.098, -.272], [.013, .036, .0045], RUB); box([0, -.086, -.07], [.012, .008, .012], ANO); }
@@ -548,6 +581,7 @@
       for (let k = 0; k < 10; k++) { const a = k * .628; box([0, cy + Math.sin(a) * .0725, cz + Math.cos(a) * .0725], [.0345, .0012, .004], mt([30, 31, 33], .1), { p: -a, zb: -.001 }); }
       return;
     }
+    if (AV.hp) { const L = AV.ext || AV.pext || AV.pextL ? (AV.pextL ? .068 : G.L) + .0062 : .0034; box(at(L), [G.w + .0016, .0026, G.d + .0035], CPR, { p: G.p }); }
     if (AV.ext || AV.pext || AV.pextL) {
       const L = AV.pextL ? .068 : G.L, m = at(L / 2);
       box(m, [G.w, L / 2 + .001, G.d], id === 'AK' ? GRN : AV.ext ? POL : ANO, { p: G.p });
@@ -571,7 +605,7 @@
     }
     const mz = d => { o.muz = [o.muz[0], o.muz[1], o.muz[2] + d]; };
     if (A.sup) { mz(.16); o.fl = .35; } else if (A.psup) { mz(.125); o.fl = .3; } else if (A.comp) mz(.05); else if (A.pcomp) mz(.026); else if (A.choke) mz(.032); else if (A.brake) { mz(.073); o.fl = (o.fl || 1) * 1.25; }
-    if (A.long) mz(.065);
+    if (A.long) mz(.065); if (A.short) mz(-.12); if (A.snub) mz(-.088); if (A.bull) mz(.007);
     if (A.laser && M.side) o.lz = [M.side[0] + .0065, M.side[1] + .003, M.side[2] + .03];
     if (A.plaser && M.und) o.lz = [.0055, M.und[0] - .014, M.und[1] + .026];
     return (SPC[key] = o);
@@ -777,7 +811,10 @@
       }
       // adaptor lipat (engsel bulat) + tabung + popor teleskopik
       tube([0, BS, -.108], [0, BS, -.124], .0165, .0165, 12, ANO); tube([.0, -.05, -.128], [0, -.092, -.128], .0085, .0085, 10, ANO, { up: [0, 0, 1] });
-      if (st.rear) {
+      if (st.rear && AV.lstock) {   // popor ringan: rangka dua batang + pelat bahu tipis
+        for (const s of [-1, 1]) tube([s * .009, BS, -.132], [s * .009, BS - .01, -.27], .0042, .0042, 8, ANO);
+        tube([0, BS - .065, -.13], [0, BS - .045, -.27], .0042, .0042, 8, ANO); box([0, -.098, -.275], [.017, .042, .004], RUB); box([0, -.098, -.268], [.012, .036, .004], ANO);
+      } else if (st.rear) {
         tube([0, BS, -.132], [0, BS, -.24], .0145, .0145, 12, ANO, { segs: 2 });   // popor teleskopik SIG ringkas (sesuai foto): batang atas lurus, pelat popor tegak, penopang bawah miring
         ext([[-.158, -.049], [-.266, -.049], [-.282, -.055], [-.285, -.142], [-.27, -.147], [-.252, -.134], [-.198, -.09], [-.172, -.081], [-.158, -.078]], 0, .0185, POL);
         for (let k = 0; k < 3; k++) { const z = -.205 - k * .02; for (const s of [-1, 1]) ext([[z, -.087 - k * .008], [z - .011, -.087 - k * .008], [z - .026, -.122 - k * .006], [z - .015, -.122 - k * .006]], s * .0187, .0005, INN, { zb: -.001 }); }   // rongga miring
@@ -860,17 +897,18 @@
       ext([[.11, -.07], [.3, -.07], [.305, -.076], [.305, -.104], [.296, -.11], [.12, -.114], [.11, -.106]], 0, .0245, POL);
       for (let k = 0; k < 8; k++) for (const s of [-1, 1]) box([s * .0247, -.09, .13 + k * .022], [.0008, .013, .0032], INN, { zb: -.001 });
       // laras, tabung gas, pegangan angkut
-      tube([0, BL, .11], [0, BL, .61], .0112, .0112, 10, PRK, { segs: 5 });
+      const SB = AV.short ? -.12 : 0;   // laras pendek: semua bagian depan mundur 12 cm
+      tube([0, BL, .11], [0, BL, .61 + SB], .0112, .0112, 10, PRK, { segs: 5 });
       tube([0, BL - .02, .305], [0, BL - .02, .45], .0085, .0085, 8, PRK); tube([0, BL - .02, .45], [0, BL - .02, .465], .0105, .0105, 8, PRK);
       ext([[.31, BL + .011], [.39, BL + .011], [.382, BL + .049], [.318, BL + .049]], -.006, .0035, PRK); box([-.006, BL + .049, .35], [.0042, .0035, .036], POL);
       // bipod terlipat sepanjang laras + kuk
-      tube([0, BL, .53], [0, BL, .55], .0145, .0145, 10, PRK);
-      for (const s of [-1, 1]) { tube([s * .009, BL - .014, .54], [s * .014, BL - .03, .36], .0045, .0045, 6, PRK); box([s * .014, BL - .031, .357], [.006, .0025, .008], PRK); }
+      if (!AV.bipod) { tube([0, BL, .53 + SB], [0, BL, .55 + SB], .0145, .0145, 10, PRK);
+      for (const s of [-1, 1]) { tube([s * .009, BL - .014, .54 + SB], [s * .014, BL - .03, .36 + SB], .0045, .0045, 6, PRK); box([s * .014, BL - .031, .357 + SB], [.006, .0025, .008], PRK); } }
       // pejera depan tinggi + flash hider berlubang
-      tube([0, BL, .585], [0, BL, .605], .0135, .0135, 10, PRK);
-      ext([[.588, BL + .012], [.604, BL + .012], [.599, 0], [.593, 0]], 0, .0028, PRK);
-      tube([0, BL, .61], [0, BL, .665], .0122, .0145, 10, PRK, { m1: INN });
-      for (let k = 0; k < 5; k++) { const a = k * 1.2566; box([Math.cos(a) * .0136, BL + Math.sin(a) * .0136, .64], [.0016, .0016, .016], INN, { r: a, zb: -.001 }); }
+      tube([0, BL, .585 + SB], [0, BL, .605 + SB], .0135, .0135, 10, PRK);
+      ext([[.588 + SB, BL + .012], [.604 + SB, BL + .012], [.599 + SB, 0], [.593 + SB, 0]], 0, .0028, PRK);
+      tube([0, BL, .61 + SB], [0, BL, .665 + SB], .0122, .0145, 10, PRK, { m1: INN });
+      for (let k = 0; k < 5; k++) { const a = k * 1.2566; box([Math.cos(a) * .0136, BL + Math.sin(a) * .0136, .64 + SB], [.0016, .0016, .016], INN, { r: a, zb: -.001 }); }
     },
     LMGmag(clip, out) {   // kotak 100 butir + sabuk peluru 7,62 naik ke jendela pengisi
       ext([[-.03, -.098], [.072, -.098], [.072, -.208], [-.03, -.208]], -.036, .028, OLV); box([-.036, -.152, .072], [.024, .045, .0015], FDE2, { zb: -.001 });
@@ -896,7 +934,9 @@
       ext([[-.12, -.036], [.085, -.036], [.085, -.03], [-.12, -.03]], 0, .0095, ANO); rail(-.115, .08, -.03, ANO);
       const Xa = X; X = cmp(X0, bone([0, BN + .006, 0], [0, 0, -st.bolt], 0, 0, st.boltR));                                // baut (bisa diputar & ditarik)
       tube([0, BN + .006, -.128], [0, BN + .006, -.06], .0095, .0095, 10, STL); box([0, BN + .006, -.134], [.0085, .0085, .006], PRK);
-      tube([.009, BN + .004, -.088], [.036, BN - .014, -.094], .0045, .0045, 6, STL); tube([.033, BN - .012, -.098], [.044, BN - .02, -.09], .0095, .0095, 8, POL);
+      tube([.009, BN + .004, -.088], [.036, BN - .014, -.094], .0045, .0045, 6, STL);
+      if (AV.fbolt) { tube([.031, BN - .011, -.099], [.048, BN - .022, -.088], .0128, .0128, 10, CPR); for (const [x, y, w, h] of [[0, .0096, .0016, .0006], [.0096, 0, .0006, .0016], [-.0096, 0, .0006, .0016]]) box([x, BN + .006 + y, -.094], [w, h, .03], INN, { zb: -.001 }); }   // baut halus: kenop tembaga besar + alur baut
+      else tube([.033, BN - .012, -.098], [.044, BN - .02, -.09], .0095, .0095, 8, POL);
       X = Xa;
       box([.0172, BN + .006, -.03], [.0006, .008, .03], INN, { zb: -.002 });                                                // lubang ejeksi
       // pelindung pelatuk & pelatuk (logam)
@@ -916,8 +956,8 @@
       for (const z of [-.02, .165]) { tube([0, 0, z - .008], [0, 0, z + .008], .0152, .0152, 16, ANO); box([0, -.022, z], [.0085, .009, .008], ANO); for (const s of [-1, 1]) box([s * .0095, -.022, z], [.0015, .0035, .0035], STL); }
       }
       // bipod Harris terlipat ke depan di bawah forend
-      box([0, -.088, .34], [.0105, .006, .012], PRK);
-      for (const s of [-1, 1]) { tube([s * .012, -.09, .345], [s * .012, -.094, .2], .0042, .0042, 6, PRK); tube([s * .012, -.094, .2], [s * .012, -.095, .18], .0055, .0055, 6, RUB); }
+      if (!AV.bipod) { box([0, -.088, .34], [.0105, .006, .012], PRK);
+      for (const s of [-1, 1]) { tube([s * .012, -.09, .345], [s * .012, -.094, .2], .0042, .0042, 6, PRK); tube([s * .012, -.094, .2], [s * .012, -.095, .18], .0055, .0055, 6, RUB); } }
     },
     SNIPERmag(clip) { ext([[.004, -.07], [.07, -.07], [.07, -.112], [.004, -.112]], 0, .0145, PRK, { clip }); box([0, -.1125, .037], [.0155, .002, .036], STL); },
     /* Benelli M4 (sesuai foto): semi-otomatis — receiver rel Picatinny + ghost ring, tuas kokang di kanan (tersentak mundur tiap
@@ -964,7 +1004,10 @@
       for (let k = 0; k < 3; k++) box([0, -.098 - k * .016, -.064 - k * .0035], [.0144, .0018, .0025], RUB, { zb: -.001 });
       box([0, -.083, -.03], [.0032, .0022, .023], ANO); box([0, -.075, -.006], [.0032, .0085, .0024], ANO);
       box([0, -.075, -.026], [.0026, .007, .0026], STL, { p: -.35 + st.trig * .35 });
-      if (st.rear) {   // popor teleskopik: tabung, badan baji ramping, bantalan karet tinggi
+      if (st.rear && AV.lstock) {   // popor ringan lipat: rangka segitiga + bantalan
+        for (const s of [-1, 1]) tube([s * .011, -.04, -.095], [s * .011, -.045, -.33], .0045, .0045, 8, ANO);
+        tube([0, -.085, -.1], [0, -.13, -.33], .0048, .0048, 8, ANO); box([0, -.092, -.335], [.02, .062, .0045], RUB); box([0, -.092, -.327], [.014, .055, .004], ANO);
+      } else if (st.rear) {   // popor teleskopik: tabung, badan baji ramping, bantalan karet tinggi
         tube([0, -.048, -.095], [0, -.048, -.255], .0115, .0115, 10, ANO, { segs: 2 }); box([0, -.062, -.18], [.004, .004, .012], STL);
         ext([[-.15, -.034], [-.338, -.033], [-.35, -.04], [-.35, -.162], [-.336, -.167], [-.29, -.152], [-.2, -.09], [-.15, -.07]], 0, .02, POL);
         for (const s of [-1, 1]) ext([[-.23, -.075], [-.31, -.06], [-.31, -.13], [-.285, -.13]], s * .0202, .0006, INN, { zb: -.001 });
@@ -1128,11 +1171,12 @@
       ext([[.031, BY + .028], [.041, BY + .028], [.041, BY - .03], [.031, BY - .03]], 0, .0106, STN);
       box([-.0124, BY + .006, -.026], [.0016, .004, .007], STN);   // tombol pelepas silinder
       // laras + underlug + rusuk berventilasi + pejera
-      tube([0, BY, .04], [0, BY, .193], .0102, .0102, 14, STN, { segs: 3 }); disc([0, BY, .1932], [0, 0, 1], .0055, 10, INN, 0, -.001);
-      ext([[.04, BY - .004], [.193, BY - .004], [.193, BY - .025], [.06, BY - .03], [.04, BY - .03]], 0, .0088, STN);
-      ext([[.04, BY + .0095], [.193, BY + .0095], [.193, BY + .0175], [.04, BY + .0175]], 0, .0042, STN);
-      for (let z = .05; z < .19; z += .016) for (const s of [-1, 1]) box([s * .0043, BY + .0145, z], [.0004, .0022, .005], INN, { zb: -.001 });
-      ext([[.172, BY + .0175], [.19, BY + .0175], [.19, BY + .0255], [.182, BY + .0255]], 0, .0017, STN);
+      const BE = AV.snub ? .105 : .193;   // laras snub 2,5"
+      tube([0, BY, .04], [0, BY, BE], .0102, .0102, 14, STN, { segs: 3 }); disc([0, BY, BE + .0002], [0, 0, 1], .0055, 10, INN, 0, -.001);
+      ext([[.04, BY - .004], [BE, BY - .004], [BE, BY - .025], [.06, BY - .03], [.04, BY - .03]], 0, .0088, STN);
+      ext([[.04, BY + .0095], [BE, BY + .0095], [BE, BY + .0175], [.04, BY + .0175]], 0, .0042, STN);
+      for (let z = .05; z < BE - .003; z += .016) for (const s of [-1, 1]) box([s * .0043, BY + .0145, z], [.0004, .0022, .005], INN, { zb: -.001 });
+      ext([[BE - .021, BY + .0175], [BE - .003, BY + .0175], [BE - .003, BY + .0255], [BE - .011, BY + .0255]], 0, .0017, STN);
       // palu (tertarik saat pelatuk ditekan, double-action) + pelatuk + pelindung
       X = cmp(X0, bone([0, BY + .004, -.038], [0, 0, 0], st.trig * .45, 0, 0));
       ext([[-.036, BY + .006], [-.03, BY + .016], [-.048, BY + .034], [-.058, BY + .031], [-.044, BY + .014]], 0, .003, STL);
@@ -1140,20 +1184,23 @@
       box([0, BY - .043, -.008], [.0026, .0095, .0026], STL, { p: -.2 + st.trig * .4 });
       box([0, BY - .0545, -.006], [.003, .0022, .021], STN); box([0, BY - .043, .015], [.003, .012, .0025], STN);
       // gagang karet bersirip jari
-      ext([[-.032, BY - .024], [-.04, BY - .06], [-.047, BY - .098], [-.088, BY - .101], [-.083, BY - .05], [-.062, BY - .022], [-.045, BY - .02]], 0, .0162, RUB);
-      for (let k = 0; k < 3; k++) tube([-.0158, BY - .046 - k * .017, -.0375 - k * .0036], [.0158, BY - .046 - k * .017, -.0375 - k * .0036], .0052, .0052, 8, RUB, { up: [0, 0, 1] });
+      const GR = AV.rubber ? RBR : RUB, GW = AV.rubber ? .0182 : .0162;   // gagang karet besar (cokelat tua, sirip jari lebih dalam, palm swell)
+      ext(AV.rubber ? [[-.03, BY - .022], [-.04, BY - .062], [-.047, BY - .104], [-.094, BY - .108], [-.09, BY - .05], [-.064, BY - .02], [-.045, BY - .018]] : [[-.032, BY - .024], [-.04, BY - .06], [-.047, BY - .098], [-.088, BY - .101], [-.083, BY - .05], [-.062, BY - .022], [-.045, BY - .02]], 0, GW, GR);
+      for (let k = 0; k < 3; k++) tube([-GW + .0004, BY - .046 - k * .017, -.0375 - k * .0036], [GW - .0004, BY - .046 - k * .017, -.0375 - k * .0036], AV.rubber ? .0066 : .0052, AV.rubber ? .0066 : .0052, 8, GR, { up: [0, 0, 1] });
+      if (AV.rubber) for (const s of [-1, 1]) for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) box([s * (GW + .0003), BY - .058 - i * .012, -.054 - j * .011 - i * .002], [.0004, .0035, .0035], mt([44, 30, 22], .05), { zb: -.001 });
       // silinder pada crane: diayun keluar ke kiri (st.cyl), berputar per tembakan (st.cr), ejector didorong (st.ejk)
       const CR = cmp(X0, bone(REV.pv, [0, 0, 0], 0, 0, st.cyl));
       X = CR;
       box([-.0072, BY - .0135, .036], [.0035, .0125, .0028], STN, { r: .55 }); tube([0, BY, .032], [0, BY, .064 - st.ejk], .0032, .0032, 8, STN); tube([0, BY, .06 - st.ejk], [0, BY, .066 - st.ejk], .0042, .0042, 8, STN);   // crane + batang ejector
       X = cmp(CR, bone([0, BY, 0], [0, 0, 0], 0, 0, st.cr));
       tube([0, BY, -.012], [0, BY, .032], .0205, .0205, 18, STN, { segs: 2 });
+      if (AV.moon && st.ch6 !== 'empty') disc([0, BY, -.0119 - st.ejk], [0, 0, -1], .0205, 6, MOON, 0, -.001);   // klip bulan (speedloader cepat)
       for (let i = 0; i < 6; i++) {
         const a = i * 1.0472 + .5236, c = Math.cos(a), s = Math.sin(a), b = i * 1.0472;
         box([c * .0198, BY + s * .0198, .012], [.0012, .0042, .014], mt([84, 86, 90], .45), { r: a, zb: -.001 });   // alur
         const ch = [Math.cos(b) * .0125, BY + Math.sin(b) * .0125, -.0122 - st.ejk];
         if (st.ch6 === 'empty') disc(add(ch, [0, 0, st.ejk - .0001]), [0, 0, -1], .0058, 10, INN, 0, -.002);
-        else { disc(ch, [0, 0, -1], .0064, 10, BRS, 0, -.003); disc(add(ch, [0, 0, -.0002]), [0, 0, -1], .0022, 8, st.ch6 === 'spent' ? mt([120, 110, 90], .3) : STL, 0, -.004); }
+        else { disc(ch, [0, 0, -1], .0064, 10, AV.hp ? mt([196, 198, 202], .7, 28) : BRS, 0, -.003); disc(add(ch, [0, 0, -.0002]), [0, 0, -1], .0022, 8, st.ch6 === 'spent' ? mt([120, 110, 90], .3) : AV.hp ? RTRG : STL, 0, -.004); }   // hollow point: selongsong nikel, primer bersegel merah
       }
       if (st.ejk > 0) tube([0, BY, -.0122 - st.ejk], [0, BY, -.0118], .0105, .0105, 12, STN);   // bintang ejector
       X = X0;
@@ -1165,8 +1212,9 @@
     },
     /* peluncur roket sekali pakai (AT4/Armbrust) */
     AT(st) {
-      const TX = .056, TY = -.046;
-      tube([TX, TY, -.55], [TX, TY, .5], .042, .042, 14, OLV, { segs: 7 }); tube([TX, TY, -.6], [TX, TY, -.55], .05, .042, 14, RUB, { m0: INN }); tube([TX, TY, .5], [TX, TY, .53], .045, .045, 14, RUB, { m1: INN });
+      const TX = .056, TY = -.046, OLV = AV.light ? FDE2 : OLV0;   // tabung ringan: komposit warna gurun
+      tube([TX, TY, -.55], [TX, TY, .5], .042, .042, 14, OLV, { segs: 7 });
+      if (AV.light) for (let k = 0; k < 9; k++) tube([TX, TY, -.46 + k * .1], [TX, TY, -.452 + k * .1], .0424, .0424, 14, mt([96, 80, 56], .05)); tube([TX, TY, -.6], [TX, TY, -.55], .05, .042, 14, RUB, { m0: INN }); tube([TX, TY, .5], [TX, TY, .53], .045, .045, 14, RUB, { m1: INN });
       for (const z of [-.25, .16, .36]) tube([TX, TY, z], [TX, TY, z + .014], .0435, .0435, 14, mt([58, 64, 44], .06));
       ext([[.1, TY - .04], [.13, TY - .04], [.126, TY - .118], [.1, TY - .118]], TX, .012, RUB);
       box([TX + .028, TY + .035, -.05], [.006, .01, .03], RUB); tube([TX, TY + .042, .1], [TX, TY + .05, .1], .006, .006, 8, RSH, { up: [0, 0, 1] });
@@ -1177,6 +1225,9 @@
       const TX = .056, TY = -.046;
       tube([TX, TY, z - .62], [TX, TY, z - .2], .034, .034, 12, mt([96, 100, 72], .1), { segs: 3 }); tube([TX, TY, z - .2], [TX, TY, z - .03], .036, .016, 12, mt([58, 60, 56], .25)); tube([TX, TY, z - .03], [TX, TY, z], .016, .005, 10, STL);
       tube([TX, TY, z - .27], [TX, TY, z - .25], .0372, .0372, 12, mt([170, 140, 40], .2));
+      if (AV.tandem) { tube([TX, TY, z - .01], [TX, TY, z + .14], .0062, .0062, 10, STL); tube([TX, TY, z + .14], [TX, TY, z + .182], .0135, .0135, 12, mt([60, 62, 58], .25)); }
+      if (AV.hef) { tube([TX, TY, z - .1], [TX, TY, z - .02], .031, .031, 12, mt([74, 78, 60], .12)); tube([TX, TY, z - .065], [TX, TY, z - .055], .0314, .0314, 12, YLW); }
+      if (AV.fast) tube([TX, TY, z - .45], [TX, TY, z - .43], .0352, .0352, 12, RTRG);
       if (z - .58 > .52) for (let k = 0; k < 4; k++) { const a = k * 1.5708 + .785; box([TX + Math.cos(a) * .042, TY + Math.sin(a) * .042, z - .58], [.012, .0012, .035], STL, { r: a }); }
     },
     /* katana pemain: sumbu z = bilah, 0 = tsuba; mata bilah ke -y (arah jari), sori melengkung ke +y. v2.12: BIRU (bilah baja biru tua, mata & tsuba biru menyala) — merah khusus katana Cray Martin. Gagang hitam belah ketupat emas */
@@ -1256,13 +1307,22 @@
     yoko: { cut: [.3, .62], cam: [-.002, .03], k: [[0, ...KG], [.24, .22, -.16, .42, .945, .218, .242, -.251, .1, .963], [.34, .22, -.16, .42, .655, .269, .706, -.755, .207, .622], [.41, .13, -.16, .5, .186, .337, .923, -.982, .044, .182], [.48, .04, -.16, .52, -.334, .313, .889, -.91, -.257, -.326], [.57, -.07, -.17, .48, -.817, .179, .548, -.452, -.579, -.678], [.72, -.12, -.18, .44, -.882, .02, .471, -.302, -.302, -.905], [1, ...KG]] },
     shomen: { cut: [.52, .76], cam: [-.034, 0], k: [[0, ...KG], [.3, .12, .12, .33, -.1, .72, -.68, -.02, .68, .72], [.47, .12, .18, .33, -.08, .66, -.75, -.02, .75, .66], [.57, .08, .14, .44, -.12, .86, .5, -.02, -.5, .86], [.65, .05, -.02, .55, -.13, .34, .93, 0, -.93, .34], [.75, .03, -.14, .47, -.08, .04, .99, 0, -.99, .04], [.87, .04, -.16, .45, -.08, .01, .99, 0, -.99, .01], [1, ...KG]] }
   };
+  /* v3.2 gerak combo baru: spin = yoko diperlebar (PUTARAN TOPAN), thrust = tusukan lurus menerjang (TERJANG KILAT), rise = tebasan naik (ANGKAT LANGIT),
+     iai = sarungkan rendah di pinggang kiri lalu cabut-tebas mendatar secepat kilat (IRISAN HAMPA); flurry = kesa/gyaku bergantian dipercepat (di katPose) */
+  KS.spin = { cut: [.22, .62], cam: [-.004, .085], k: KS.yoko.k.map((q, i, a) => i === 0 || i === a.length - 1 ? q : [q[0] * .9, q[1] * 1.45, q[2] - .02, q[3] + .03, ...q.slice(4)]) };
+  KS.thrust = { cut: [.16, .44], cam: [-.006, 0], k: [[0, ...KG], [.13, .14, -.19, .17, -.12, .12, .98, 0, -.99, .12], [.25, .085, -.13, .5, -.06, .08, 1, 0, -1, .08], [.55, .085, -.13, .5, -.06, .08, 1, 0, -1, .08], [.78, .1, -.15, .36, -.45, .1, .88, 0, -.99, .1], [1, ...KG]] };
+  KS.rise = { cut: [.18, .46], cam: [.026, 0], k: [[0, ...KG], [.14, .13, -.27, .36, -.25, -.55, .8, 0, .82, .57], [.26, .1, -.07, .46, -.05, .3, .95, 0, .95, -.3], [.38, .15, .08, .42, .12, .72, .68, 0, .68, -.72], [.6, .16, .09, .41, .14, .76, .63, 0, .63, -.76], [1, ...KG]] };
+  KS.iai = { cut: [.36, .7], cam: [-.002, .05], k: [[0, ...KG], [.26, ...KS.draw[0].slice(1)], [.33, ...KS.draw[0].slice(1)], ...KS.yoko.k.slice(1, -1).map(q => [.36 + (q[0] - .24) * .62, q[1] * 1.3, ...q.slice(2)]), [1, ...KG]] };
+  KS.shomenA = KS.shomen;
   /* kunci → bingkai katana: z = bilah, y = punggung (lawan mata), x = sisi lebar */
   function katF(q) { const z = nrm([q[3], q[4], q[5]]), e = nrm(ma([q[6], q[7], q[8]], z, -dot([q[6], q[7], q[8]], z))), y = mul(e, -1); return { c: [crs(y, z), y, z], t: [q[0], q[1], q[2]] }; }
   let KC = null;   // serangan yang sedang berjalan (dibaca jejak bilah)
   function katPose() {
     KC = null; const t = P.time, idle = [Math.sin(t * 1.3) * .002, Math.sin(t * 1.7) * .003, 0, Math.sin(t * .9) * .006, Math.sin(t * 1.1) * .005, 0, 0, 0, 0]; let q;
     if (P.melT > 0) {
-      const A = P.melH ? KS.shomen : [KS.kesa, KS.gyaku, KS.yoko][(P.melN || 0) % 3], m = clamp(1 - P.melT / (P.melD || .62), 0, 1); KC = A; KC.m = m; q = crv(A.k, m);
+      let A = P.melAn && KS[P.melAn] ? KS[P.melAn] : P.melH ? KS.shomen : [KS.kesa, KS.gyaku, KS.yoko][(P.melN || 0) % 3], m = clamp(1 - P.melT / (P.melD || .62), 0, 1);
+      if (P.melAn === 'flurry') { const N = 7, i = Math.min(N - 1, Math.floor(m * N)); A = i % 2 ? KS.gyaku : KS.kesa; m = .16 + (m * N - i) * .58; }   // BADAI SERIBU: 7 tebasan bolak-balik
+      KC = A; KC.m = m; q = crv(A.k, m);
       V.cam = [A.cam[0] * bump(m, A.cut[0], A.cut[1] - A.cut[0] + .12) + (P.melH ? .014 * bump(m, .12, .4) : 0), A.cam[1] * bump(m, A.cut[0], A.cut[1] - A.cut[0] + .12)];
     } else if (P.eq === 'knife' && P.eqA < F.EQ.draw.knife) q = crv(KS.draw, clamp(P.eqA / F.EQ.draw.knife, 0, 1));
     else { const k = V.spr; q = KG.map((v, i) => lerp(v, KS.run[i], k)); const b = Math.sin(P.bob * 2 + .6) * clamp(P.spd / 8, 0, 1.5); q[1] += b * (.006 + .012 * k); q[0] += Math.sin(P.bob + 2.1) * clamp(P.spd / 8, 0, 1.5) * (.005 + .014 * k); q[4] += b * .012; }
@@ -1959,7 +2019,7 @@
   const PVB = { AR: [-.3, .62, -.06], AK: [-.42, .67, -.08], SMG: [-.3, .36, -.08], LMG: [-.45, .67, -.08], SNIPER: [-.44, .86, -.06], SHOTGUN: [-.42, .56, -.06],
     PISTOL: [-.08, .16, -.06], M1911: [-.08, .16, -.06], GLOCK: [-.08, .17, -.07], M93R: [-.08, .19, -.08], DEAGLE: [-.08, .21, -.07], MAG44: [-.09, .2, -.05], AT: [-.6, .53, -.05] };
   V.preview = function (ctx, CW, CH, id, list, yaw, pit) {
-    if (!MODEL[id]) return;
+    if (!MODEL[id]) return; PVM = true;
     const keep = { GL, GLon, ATT, AV, OPTK, X, faces, HOLE, tint, nvg };
     GL = GLP; if (!GL.tried && V.useGL !== false) glInit(); GLon = GL.ok && V.useGL !== false; GL.An = 0; GL.Bn = 0; faces = [];
     ctx2 = ctx; CWv = CW; CHv = CH; FOC = CH * 1.15; tint = [1, 1, 1]; nvg = false; HOLE = null;
@@ -1974,7 +2034,7 @@
       MODEL[id](st); attX(id, st, G); X = G;
       const mk = MODEL[id + 'mag']; if (mk && sp && sp.well !== undefined) { if (!AV.drum) mk([1, 0, sp.well], false); attMag(id); }
       X = G; flush();
-    } finally { GL = keep.GL; GLon = keep.GLon; ATT = keep.ATT; AV = keep.AV; OPTK = keep.OPTK; X = keep.X; faces = []; HOLE = keep.HOLE; tint = keep.tint; nvg = keep.nvg; }
+    } finally { GL = keep.GL; GLon = keep.GLon; ATT = keep.ATT; AV = keep.AV; OPTK = keep.OPTK; X = keep.X; faces = []; HOLE = keep.HOLE; tint = keep.tint; nvg = keep.nvg; PVM = false; }
   };
   /* dorong sway dari gerak mouse */
   V.push = (dx, dy) => { V.sx = clamp(V.sx - dx * .00035, -.06, .06); V.sy = clamp(V.sy + dy * .00035, -.05, .05); };

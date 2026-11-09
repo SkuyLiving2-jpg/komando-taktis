@@ -256,7 +256,7 @@
   W.facB = function (hx, hy) {
     const ry = hy + 215, han = [];
     for (const dx of [-160, -95]) { const x = hx + dx, y = ry + 52; han.push({ k: 'han', x, y, yaw: -Math.PI / 2, sx: x, sy: y + 21, ex: x, ey: ry + 24, w: 44, h: 9, door: 0, u: null }); }
-    return { hx, hy, han, bays: han, run: { y: ry, x0: hx - 300, x1: hx + 420, hw: 15 }, apron: [hx - 190, ry + 15, hx - 65, ry + 52], atc: [hx - 20, ry + 66],
+    return { hx, hy, han, bays: han, rwT: 0, run: { y: ry, x0: hx - 300, x1: hx + 420, hw: 15 }, apron: [hx - 190, ry + 15, hx - 65, ry + 52], atc: [hx - 20, ry + 66],
       rects: [[hx - 320, ry - 30, hx + 440, ry + 98]] };
   };
 

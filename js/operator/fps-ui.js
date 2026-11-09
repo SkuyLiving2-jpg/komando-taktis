@@ -202,7 +202,8 @@
         (TK.fpsbeta ? sl(Tt('b_mus'), 'v4', 'mus', 0, 1, .05, F.opts.mus, Math.round(F.opts.mus * 100) + '%') + sl(Tt('b_sfx'), 'v5', 'sfx', 0, 1, .05, F.opts.sfx, Math.round(F.opts.sfx * 100) + '%') +
           sl(Tt('b_hud'), 'v6', 'hud', .8, 1.3, .05, F.opts.hudK, Math.round(F.opts.hudK * 100) + '%') + sl(Tt('b_shk'), 'v7', 'shk', 0, 1, .1, F.shakeK, Math.round(F.shakeK * 100) + '%') +
           sw('calm', F.opts.calm, Tt('b_calm')) + sw('cb', F.opts.cb, Tt('b_cb') + ' · ' + Tt('b_cb_s')) : '')
-      : tab === 'c' ? (U.touch ? (U.pauseExtra ? U.pauseExtra() : '') : sl(Tt('f_set_sens'), 'v1', 'sens', .3, 3, .05, P.sens, P.sens.toFixed(2)) + '<div class="tp-keys">' + Tt('f_ctl_t').split(' · ').map(k => { const i = k.indexOf(' '); return '<span><b>' + esc(k.slice(0, i)) + '</b>' + esc(k.slice(i + 1)) + '</span>'; }).join('') + '</div>')
+      : tab === 'c' ? (U.touch ? (U.pauseExtra ? U.pauseExtra() : '') : sl(Tt('f_set_sens'), 'v1', 'sens', .3, 3, .05, P.sens, P.sens.toFixed(2)) + '<div class="tp-keys">' + Tt('f_ctl_t').split(' · ').map(k => { const i = k.indexOf(' '); return '<span><b>' + esc(k.slice(0, i)) + '</b>' + esc(k.slice(i + 1)) + '</span>'; }).join('') + '</div>' +
+          '<div class="tp-r" style="margin-top:8px"><span>' + Tt('f_kc_title') + '</span></div><div class="tp-keys">' + Tt('f_kc_help').split(' · ').map(k => { const i = k.indexOf('|'); return '<span><b>' + esc(k.slice(0, i)) + '</b>' + esc(k.slice(i + 1)) + '</span>'; }).join('') + '</div>')
         : sl(Tt('f_set_fov'), 'v2', 'fov', 60, 105, 1, P.fov, P.fov + '°') + sw('inv', P.inv, Tt('f_set_inv')) + sw('nvg', R.nvg, Tt('f_nvg')) +
           seg(Tt('f_set_doc'), '<button data-doc="tni"' + (S.doc === 'tni' ? ' class="on"' : '') + '>TNI</button><button data-doc="us"' + (S.doc === 'us' ? ' class="on"' : '') + '>US</button>') +
           (TK.fpsbeta ? '<div class="tp-r"><span>' + Tt('b_pad_s') + '</span><b style="font-size:.85em;opacity:.85">' + esc(TK.fpsbeta.padName() || Tt('b_pad_none')) + '</b></div>' + (TK.fpsbeta.padName() ? '<small class="ctl" style="display:block;opacity:.7;margin:2px 0 8px">' + Tt('b_pad_map') + '</small>' : '') +
@@ -273,6 +274,40 @@
     CAR: 'M3 12.5l3-5.5h10.5l3.2 5.5H21v5H3zM7.2 8.6l-2 3.6h12.6l-2.1-3.6zM5.2 17.6a2.1 2.1 0 1 0 4.2 0 2.1 2.1 0 1 0-4.2 0zM14.8 17.6a2.1 2.1 0 1 0 4.2 0 2.1 2.1 0 1 0-4.2 0z'
   };
   const aIco = k => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + ARI[k] + '"/></svg>';
+  /* v3.2 ikon per unit / kendaraan (siluet samping menghadap kanan untuk darat, laut & heli; tampak atas untuk pesawat; viewBox 48×28).
+     Kelas k = detail terang (jendela, roda, rotor), s = garis (rotor, laras tipis) */
+  const UIC = {
+    INF: '<circle cx="21" cy="6.3" r="2.6"/><path d="M17.6 6a3.7 3.5 0 0 1 7.2-.4l.6 1h-8.2z"/><path d="M16.8 9.6h7.6l1.3 7.6h-9.6zM15.9 17.2h4l-.6 5.9h-3.9zM21 17.2h4l1.7 5.9h-4z"/><path d="M14.5 11.3h23v1.5h-23zM13 12.1h3.2v3.4H13z"/><path d="M24 10.4l6.6 1.4-.6 1.5-6.4-1.2z"/>',
+    SF: '<circle cx="21" cy="6.3" r="2.6"/><path d="M17.6 6a3.7 3.5 0 0 1 7.2-.4l.6 1h-8.2z"/><path class="k" d="M23.6 2.2h2.6v3h-2.6z"/><path d="M16.8 9.6h7.6l1.3 7.6h-9.6zM15.9 17.2h4l-.6 5.9h-3.9zM21 17.2h4l1.7 5.9h-4z"/><path d="M14.5 11.3h19v1.5h-19zM33.5 10.8h8v2.5h-8zM13 12.1h3.2v3.4H13zM27 9.4h4.6v1.9H27z"/><path d="M24 10.4l6.6 1.4-.6 1.5-6.4-1.2z"/>',
+    MEDIC: '<circle cx="17" cy="6.3" r="2.6"/><path d="M13.6 6a3.7 3.5 0 0 1 7.2-.4l.6 1h-8.2z"/><path d="M12.8 9.6h7.6l1.3 7.6h-9.6zM11.9 17.2h4l-.6 5.9h-3.9zM17 17.2h4l1.7 5.9h-4z"/><path d="M21 12.2l5 1.6-.4 1.4-5-1.4z"/><rect x="26" y="11" width="15" height="11" rx="2"/><path d="M32 8.6h3v2.6h-3z"/><path class="k" d="M27.6 16.8h3l1.4-3 2 5.4 1.6-2.4h2.8v1.2h-2.1l-2.2 3.2-2-5.2-.9 2h-3.6z"/>',
+    REPAIR: '<circle cx="17" cy="6.3" r="2.6"/><path d="M13.6 6a3.7 3.5 0 0 1 7.2-.4l.6 1h-8.2z"/><path d="M12.8 9.6h7.6l1.3 7.6h-9.6zM11.9 17.2h4l-.6 5.9h-3.9zM17 17.2h4l1.7 5.9h-4z"/><path d="M20.5 11.6l5.6 1.8-.4 1.4-5.6-1.6z"/><path d="M25.4 13.9l12.2-9.2 1.4 1.8-12.2 9.2z"/><path d="M36.4 1.8a4.4 4.4 0 0 1 5.6 5.4l-2.1-1.3-1.7 1.3.3 2.4a4.4 4.4 0 0 1-5.6-5.4l2 1.3 1.8-1.3z"/>',
+    AT: '<circle cx="19" cy="8.6" r="2.6"/><path d="M15.6 8.3a3.7 3.5 0 0 1 7.2-.4l.6 1h-8.2z"/><path d="M14.4 11.8h7.4l1.4 6.4h-9zM14.2 18.2h8.8l3.6 4.8h-4.4l-2.2-2.6-.4 2.6h-5.4z"/><path d="M6 8.4h30v3.6H6z"/><path d="M36 7.8h4l3.6 2.4-3.6 2.4h-4z"/><path class="k" d="M3 7.6h3v5.2H3zM20 12h2.6v3.4H20z"/>',
+    MORT: '<ellipse cx="13" cy="22.4" rx="8" ry="1.6"/><path d="M11.4 21.6L32.2 4.2l2.3 2.6-20.4 17z"/><path class="k" d="M31.4 3.1l3.8-1.2.8 1.8-3 2.6z"/><path d="M24 12.6l3.4 10.4h-2.1l-2.9-8.6zM24.8 12.4l7.2 10.6h-2.4l-6.2-9z"/><path class="k" d="M22.6 13.6h5v1.4h-5z"/>',
+    JEEP: '<path d="M5.5 19.6v-6h21.6l1.5-4.1h1.6l1 4.1h8.5l3.3 2.8v3.2z"/><path d="M11 13.6V8.3h1.6v3.8h8.4V8.3h1.6v5.3" fill="none" class="s"/><path d="M15.5 4.6h1.8v4h-1.8zM17.3 5.4h10.5v1.3H17.3z"/><circle cx="13" cy="20.6" r="3.6"/><circle cx="35.5" cy="20.6" r="3.6"/><circle class="k" cx="13" cy="20.6" r="1.4"/><circle class="k" cx="35.5" cy="20.6" r="1.4"/>',
+    HMV: '<path d="M4.5 19.4v-5.4l3-1V9.4h22.2l4.6 4.2 7.6.9 2 1.7v3.2z"/><path class="k" d="M18.2 10.6h5.4v3.2h-5.4zM24.8 10.6h4.2l3 3.2h-7.2z"/><path d="M13 9.4V6.8h8.4v2.6zM15.4 6.8V4.4h1.4v2.4zM16.8 5h9v1.2h-9z"/><circle cx="12.4" cy="20.4" r="3.7"/><circle cx="35.2" cy="20.4" r="3.7"/><circle class="k" cx="12.4" cy="20.4" r="1.5"/><circle class="k" cx="35.2" cy="20.4" r="1.5"/>',
+    LTANK: '<rect x="8" y="17.4" width="31" height="5.8" rx="2.9"/><path d="M9 17.4l2.4-3.4h24.8l3 3.4z"/><path d="M16.4 14l1.6-3.6h9.4l2 3.6z"/><path d="M28.6 11.4h12.6v1.2H28.6z"/><circle class="k" cx="12.5" cy="20.3" r="1.4"/><circle class="k" cx="18.2" cy="20.3" r="1.4"/><circle class="k" cx="23.8" cy="20.3" r="1.4"/><circle class="k" cx="29.4" cy="20.3" r="1.4"/><circle class="k" cx="34.8" cy="20.3" r="1.4"/>',
+    TANK: '<rect x="3.6" y="16.8" width="39" height="6.4" rx="3.2"/><path d="M5 16.8l3.2-4.2h31l3.4 4.2z"/><path d="M13.4 12.6l2.2-5.2h14l3.6 2.4v2.8z"/><path d="M32.6 8.8h14v1.6h-14z"/><path class="k" d="M17.4 5.6h4.4v1.8h-4.4z"/><circle class="k" cx="8.4" cy="20" r="1.5"/><circle class="k" cx="14.2" cy="20" r="1.5"/><circle class="k" cx="20" cy="20" r="1.5"/><circle class="k" cx="25.8" cy="20" r="1.5"/><circle class="k" cx="31.6" cy="20" r="1.5"/><circle class="k" cx="37.4" cy="20" r="1.5"/>',
+    MBT: '<rect x="3.6" y="16.8" width="39" height="6.4" rx="3.2"/><path d="M5 16.8l3.2-4.2h31l3.4 4.2z"/><path d="M12.4 12.6l2.6-5.6h15l3.8 2.6v3z"/><path d="M33.2 8.6h14v1.8h-14zM45.4 8.2h2.2v2.6h-2.2z"/><path class="k" d="M16.6 4.8h5v2.2h-5zM24.6 5.6h3v1.4h-3z"/><circle class="k" cx="8.4" cy="20" r="1.5"/><circle class="k" cx="14.2" cy="20" r="1.5"/><circle class="k" cx="20" cy="20" r="1.5"/><circle class="k" cx="25.8" cy="20" r="1.5"/><circle class="k" cx="31.6" cy="20" r="1.5"/><circle class="k" cx="37.4" cy="20" r="1.5"/>',
+    IFV: '<rect x="4.6" y="17.8" width="37" height="5.4" rx="2.7"/><path d="M5.6 17.8v-6.6l3.6-2.4h24.2l8.4 5.4v3.6z"/><path d="M19.4 8.8V6h8l1.4 2.8z"/><path d="M28.2 6.6h12.2v1.1H28.2z"/><path class="k" d="M9 11.2h3.4v3H9z"/><circle class="k" cx="9.6" cy="20.5" r="1.4"/><circle class="k" cx="15.4" cy="20.5" r="1.4"/><circle class="k" cx="21.2" cy="20.5" r="1.4"/><circle class="k" cx="27" cy="20.5" r="1.4"/><circle class="k" cx="32.8" cy="20.5" r="1.4"/><circle class="k" cx="37.6" cy="20.5" r="1.4"/>',
+    APC: '<path d="M3.6 18.8v-6.4l4-3.2h27.4l8.6 5v4.6z"/><path d="M23 9.2V6.6h6.4v2.6z"/><path d="M29.4 7.1h8v1.2h-8z"/><path class="k" d="M35.8 10.6l4.4 2.6h-4.4z"/><circle cx="9.4" cy="20.6" r="3"/><circle cx="17" cy="20.6" r="3"/><circle cx="28.4" cy="20.6" r="3"/><circle cx="36" cy="20.6" r="3"/><circle class="k" cx="9.4" cy="20.6" r="1.1"/><circle class="k" cx="17" cy="20.6" r="1.1"/><circle class="k" cx="28.4" cy="20.6" r="1.1"/><circle class="k" cx="36" cy="20.6" r="1.1"/>',
+    ARTY: '<rect x="3.6" y="17.4" width="34" height="5.8" rx="2.9"/><path d="M4.6 17.4v-4.4h32l1.4 4.4z"/><path d="M7.4 13V6.6h16.4l3 6.4z"/><path d="M23.4 8.2L45.6 1.4l.7 1.7-22.2 7.2z"/><path class="k" d="M10.4 8.6h3.6v2.4h-3.6z"/><circle class="k" cx="8.4" cy="20.3" r="1.4"/><circle class="k" cx="14.2" cy="20.3" r="1.4"/><circle class="k" cx="20" cy="20.3" r="1.4"/><circle class="k" cx="25.8" cy="20.3" r="1.4"/><circle class="k" cx="31.6" cy="20.3" r="1.4"/>',
+    MLRS: '<path d="M3.6 19.2v-3.4h40v3.4z"/><path d="M33 15.8V9.8h6.2l4.4 4.4v1.6z"/><path class="k" d="M34.6 10.8h3.8l2.6 2.8h-6.4z"/><path d="M5.4 15.4L26.2 4l3.6 6.8-20.6 7z"/><path class="k" d="M24.4 5.8l1.8-1 1 1.8-1.8 1zM26.2 8.6l1.8-1 1 1.8-1.8 1zM21 7.6l1.8-1 1 1.8-1.8 1zM22.8 10.4l1.8-1 1 1.8-1.8 1z"/><circle cx="9" cy="21" r="2.8"/><circle cx="16.4" cy="21" r="2.8"/><circle cx="37.2" cy="21" r="2.8"/>',
+    AA: '<path d="M3.6 19.2v-3.4h40v3.4z"/><path d="M33.4 15.8V9.8h6l4.2 4.4v1.6z"/><path d="M12 15.8l2.4-4h6l1.2 4z"/><path d="M8.6 11.8L30 2.6l1 2.2L9.8 14z"/><path d="M10.6 14.4L32 5.2l1 2.2-21.2 9.2z"/><path class="k" d="M30 2.6l3.4-.6-2.4 2.8zM32 5.2l3.4-.6-2.4 2.8z"/><circle cx="9" cy="21" r="2.8"/><circle cx="16.4" cy="21" r="2.8"/><circle cx="37.2" cy="21" r="2.8"/>',
+    ZSU: '<rect x="4.6" y="17.4" width="34" height="5.8" rx="2.9"/><path d="M5.6 17.4v-4.4h32l1.6 4.4z"/><path d="M12 13V8.4h15l2.6 4.6z"/><path d="M24.4 9.2L41.8 3.4l.5 1.3-17.4 5.8zM24.8 11.2L42.2 5.4l.5 1.3-17.4 5.8z"/><ellipse class="k" cx="16.4" cy="5" rx="4.6" ry="1.6"/><path d="M15.8 6.4h1.2v2h-1.2z"/><circle class="k" cx="9.4" cy="20.3" r="1.4"/><circle class="k" cx="15.2" cy="20.3" r="1.4"/><circle class="k" cx="21" cy="20.3" r="1.4"/><circle class="k" cx="26.8" cy="20.3" r="1.4"/><circle class="k" cx="32.6" cy="20.3" r="1.4"/>',
+    HELI: '<path d="M4 11.6l1.8-.6 1.8 4.2 12-1.4 6.6-3.2h6.6q8 0 9.6 4.6-1.4 3.8-8.6 4H22l-6.4-1.8-8.6-.6z"/><path class="k" d="M33.4 11.2h3.6q4 .4 4.6 3.2h-8.2z"/><path d="M8 5h36v1.4H8z"/><path d="M28.8 6.4h1.6v4.4h-1.6z"/><circle class="s" cx="4.6" cy="10.4" r="3" fill="none"/><path d="M26 18.6l-1.2 3.4h14.6l1.6-1.4H26.4z"/>',
+    ATK2: '<path d="M3.6 11.4l1.8-.6 1.8 4 12.6-1 5-2.8h2.4l3.4-2h4.2l2 2.2q6 .6 7.4 4.6-1.2 2.6-6 2.6l-2.2 2.2h-3l-1.8-2H22l-5.4-1.6-9.4-.8z"/><path class="k" d="M32.4 9.6h3l1.4 2h-4.4zM37 11.8h2.6q3 .6 3.6 2.6h-6.2z"/><path d="M6 4.6h40v1.4H6z"/><path d="M28.4 6h1.6v3.6h-1.6z"/><path d="M20.4 15.4h10.4v1.6H20.4z"/><path class="k" d="M21 17h9v2.2h-9z"/><circle class="s" cx="4.4" cy="10.2" r="3" fill="none"/><path d="M42.6 17.2h3.8v1.2h-3.8z"/>',
+    MEDHELI: '<path d="M4 9.4l2-.6 2 4.6h6.8l4-3.4h17.6q6.4 0 7.4 5.4-.6 3.6-6.6 3.6H17.6l-4.4-2.2-6.2-.4z"/><path class="k" d="M36.6 10.8q4 .4 5 3.6h-5zM21 12h3.6v3H21zM26.2 12h3.6v3h-3.6z"/><path d="M6 4.4h38v1.4H6z"/><path d="M27.8 5.8h1.6v4.2h-1.6z"/><circle class="s" cx="4.8" cy="8.4" r="3" fill="none"/><path d="M19.4 19.6l-.6 2.6h3l.6-2.6zM36 19.6l.6 2.6h3l-.6-2.6z"/>',
+    UCAV: '<path d="M22 13.2h14.8q6 0 9 .8-3 .8-9 .8H22z"/><path d="M24.6 2.8h3.2l2.6 10.4h-3.4zM24.6 25.2h3.2l2.6-10.4h-3.4z"/><path d="M6.4 13.2l3.8-3.4h1.6l-1.4 3.4zM6.4 14.8l3.8 3.4h1.6l-1.4-3.4z"/><path d="M8 13.2h14v1.6H8z"/><path class="k" d="M40 13.4h4v1.2h-4z"/>',
+    FGT: '<path d="M45.6 14q-3-1.4-8.6-1.6l-4.2-.4-9.6-9.4h-3.6l4.2 9.2-8.6-.4-3.6-4.6h-2.8l1.6 5.6-5 .6v1.8l5 .6-1.6 5.6h2.8l3.6-4.6 8.6-.4-4.2 9.2h3.6l9.6-9.4 4.2-.4q5.6-.2 8.6-1.6z"/><path class="k" d="M36.6 13.2q3.4.2 5.2.8-1.8.6-5.2.8z"/>',
+    CAS: '<path d="M44 14q-2-1-6-1.2h-6.4l-2.4-10.6h-3.8l-.6 10.6h-6.6V9.6h-2.4v3.2H10l-2.6-3.6H5.2l1.6 4.8-1.6 4.8h2.2l2.6-3.6h5.8v3.2h2.4v-3.2h6.6l.6 10.6h3.8l2.4-10.6H38q4-.2 6-1.2z"/><path d="M27 2.6h1.8v3.6H27zM27 21.8h1.8v3.6H27z"/><path class="k" d="M36.4 13.2q3 .2 4.6.8-1.6.6-4.6.8z"/>',
+    WOLF: '<path d="M44.6 14q-2-1.2-6.4-1.3h-4.6l-1.4-11h-4l-.8 11h-5.2v-2h-1.6l-.6-2h-4.4l-.6 2H10.8L8.6 7.8H6.2l1.2 6.2-1.2 6.2h2.4l2.2-2.9h4.2l.6 2h4.4l.6-2h1.6v-2h5.2l.8 11h4l1.4-11h4.6q4.4-.1 6.4-1.3z"/><path class="k" d="M15.4 10.2h4.6v1.8h-4.6zM15.4 16h4.6v1.8h-4.6zM37 13.2q3 .2 4.8.8-1.8.6-4.8.8z"/><path d="M5.8 6.6h3v2.4h-3zM5.8 19h3v2.4h-3z"/>',
+    BMB: '<path d="M45 14q-1.6-1.6-5.4-2.2L22.4 2.6h-4.2l8 9.4-12.4.4-4.4-3.6H7.2l2 5.2-2 5.2h2.2l4.4-3.6 12.4.4-8 9.4h4.2l17.2-9.2q3.8-.6 5.4-2.2z"/><path class="k" d="M20 6.2l2.4 1.4-1.2 1-1.8-1.4zM20 21.8l2.4-1.4-1.2-1-1.8 1.4zM38.8 13.2q2.8.3 4 .8-1.2.5-4 .8z"/>',
+    VTOL: '<path d="M45 14q-3-1.6-8-1.8l-3.6-.2-7.2-7.6h-3.6l2.8 7.4-6.2-.2-3-3.6H13.8l1.4 4.4-6.6.6v2l6.6.6-1.4 4.4h2.4l3-3.6 6.2-.2-2.8 7.4h3.6l7.2-7.6 3.6-.2q5-.2 8-1.8z"/><circle class="k" cx="31.6" cy="14" r="2.4"/><path class="k" d="M20.4 12.6h3v2.8h-3z"/><path d="M8.2 11.6h2.2v4.8H8.2z"/>',
+    UAV: '<path d="M18 11.8h12v4.4H18z"/><path d="M11.6 6.6l4.2 4 1.2-1.2-4.2-4zM36.4 6.6l-4.2 4-1.2-1.2 4.2-4zM11.6 21.4l4.2-4 1.2 1.2-4.2 4zM36.4 21.4l-4.2-4-1.2 1.2 4.2 4z"/><circle class="k" cx="11" cy="6" r="4"/><circle class="k" cx="37" cy="6" r="4"/><circle class="k" cx="11" cy="22" r="4"/><circle class="k" cx="37" cy="22" r="4"/><circle cx="24" cy="14" r="1.4" class="k"/>',
+    SHIP: '<path d="M2.6 16.6h43.8l-4.6 6H6.6z"/><path d="M12 16.6v-4h6.4V8h5.4v-3h1.8v3h3.2v4.6h7.6v4z"/><path d="M36 13.6l4.6-2.2.6 1-4 2.2z"/><path class="k" d="M19.8 9.4h2.6v1.8h-2.6zM24 2.6h1.8v2.6H24z"/><path d="M6.4 14.6h4.4v2H6.4z"/>',
+    GBOAT: '<path d="M6 16.2h36.6l-4.4 5.6H9.4z"/><path d="M16.6 16.2v-4.6h10l3 4.6z"/><path class="k" d="M19 12.6h2.6v2.2H19zM23 12.6h2.6v2.2H23z"/><path d="M33 14.2h7v1.2h-7zM31 12.8h2.6v3.4H31zM20.6 8.4h1.2v3.2h-1.2z"/>'
+  };
+  const uIco = t => UIC[t] ? '<span class="ta-ic"><svg viewBox="0 0 48 28" aria-hidden="true">' + UIC[t] + '</svg></span>' : aIco(F.armyCat(t) || 'INF');
   function taHTML() {
     const mine = F.myArmy('ALL'), have = {}; mine.forEach(u => { (have[u.type] = have[u.type] || []).push(u); });
     const tab = M.arTab || 'rec', cat = M.arCat || 'INF', sig = tab + cat, anim = sig !== M.taSig; M.taSig = sig;
@@ -280,7 +315,7 @@
     if (tab === 'veh') {
       body = '<p class="ta-note">' + Tt('f_vh_sub') + '</p><div class="ta-grid">' + F.VEH_ORDER.map((id, i) => {
         const st = F.vehState(id), c = F.vehPrice(id), lk = F.lockR('veh', id), ok = Q.cr >= c && st !== 'in' && !lk;
-        return '<button class="ta-u' + (ok ? '' : ' dis') + '" data-v="' + id + '" style="--d:' + i + '">' + aIco('CAR') + '<b>' + esc(Tt('f_vh_' + id)) + '</b><span class="ta-c">' + (lk ? '🔒' : c + '<small> KR</small>') + '</span>' +
+        return '<button class="ta-u' + (ok ? '' : ' dis') + '" data-v="' + id + '" style="--d:' + i + '">' + uIco(id) + '<b>' + esc(Tt('f_vh_' + id)) + '</b><span class="ta-c">' + (lk ? '🔒' : c + '<small> KR</small>') + '</span>' +
           '<small>' + (lk ? Tt('b_lockt', { r: Tt('f_rank_' + lk) }) + ' · ' : '') + (st === 'ok' ? Tt('f_vh_refit') + ' · ' : '') + Tt('f_vh_d_' + id) + '</small>' + (st === 'in' ? '<i class="w">' + Tt('f_vh_inb') + '</i>' : st === 'ok' ? '<i>' + Tt('f_vh_have') + '</i>' : '') + '</button>';
       }).join('') + '</div>';
     } else if (tab === 'cmd') {
@@ -291,7 +326,7 @@
         const us = have[t], cnt = {}; us.forEach(u => { cnt[u.cmdO] = (cnt[u.cmdO] || 0) + 1; });
         const hp = us.reduce((s, u) => s + u.hp / u.hpMax, 0) / us.length, col = hp > .6 ? 'var(--a)' : hp > .3 ? '#ffb43a' : '#ff5a46';
         const ks = us.some(u => u.kit) ? kitSum(us.map(u => u.kit).filter(Boolean)) : Object.keys(cnt).map(o => Tt('f_cmd_' + o) + (Object.keys(cnt).length > 1 ? ' ' + cnt[o] : '')).join(' · ');
-        return '<div class="ta-row">' + aIco(F.armyCat(t) || 'INF') + '<b>' + esc(uname(t)) + ' <em>×' + us.length + '</em></b><small>' + ks + '</small><span class="ta-hp"><i style="width:' + Math.round(hp * 100) + '%;background:' + col + '"></i></span><u style="color:' + col + '">' + Math.round(hp * 100) + '%</u></div>';
+        return '<div class="ta-row">' + uIco(t) + '<b>' + esc(uname(t)) + ' <em>×' + us.length + '</em></b><small>' + ks + '</small><span class="ta-hp"><i style="width:' + Math.round(hp * 100) + '%;background:' + col + '"></i></span><u style="color:' + col + '">' + Math.round(hp * 100) + '%</u></div>';
       }).join('') || '<p class="ta-note">' + Tt('f_ar_none') + '</p>';
       body = '<div class="ta-cmd"><div class="ta-cl"><div class="ta-h">' + Tt('f_ar_grp') + '</div><div class="tx-seg ta-grp">' + grp + '</div><div class="ta-h">' + Tt('f_ar_ord') + '</div><div class="ta-ord">' + ord + '</div>' +
         '<div class="ta-h">' + Tt('f_ar_def') + '</div><div class="tx-seg">' + def + '</div></div><div class="ta-cr"><div class="ta-h">' + Tt('f_ar_list') + ' · ' + mine.length + '</div><div class="ta-list">' + list + '</div>' +
@@ -301,7 +336,7 @@
       const qty = [1, 5, 10, 25].map(n => '<button data-n="' + n + '"' + (M.arN === n ? ' class="on"' : '') + '>×' + n + '</button>').join('');
       body = '<div class="ta-bar"><div class="tx-seg ta-cat">' + cats + '</div><div class="tx-seg ta-qty">' + qty + '</div></div><div class="ta-grid">' + F.ARMY.filter(t => F.armyCat(t) === cat).map((t, i) => {
         const c = UT[t].cost, ok = Q.cr >= c;
-        return '<button class="ta-u' + (ok ? '' : ' dis') + '" data-r="' + t + '" style="--d:' + i + '">' + aIco(cat) + '<b>' + esc(uname(t)) + '</b><span class="ta-c">' + c * M.arN + '<small> KR' + (M.arN > 1 ? ' · ' + c + '×' + M.arN : '') + '</small></span>' +
+        return '<button class="ta-u' + (ok ? '' : ' dis') + '" data-r="' + t + '" style="--d:' + i + '">' + uIco(t) + '<b>' + esc(uname(t)) + '</b><span class="ta-c">' + c * M.arN + '<small> KR' + (M.arN > 1 ? ' · ' + c + '×' + M.arN : '') + '</small></span>' +
           (t === 'INF' || t === 'SF' ? '<small>' + Tt('f_ar_kitrand') + '</small>' : '') + (have[t] ? '<i>' + have[t].length + '</i>' : '') + '</button>';
       }).join('') + '</div>';
     }
@@ -488,6 +523,8 @@
       case 'KeyG': if (!e.repeat) F.throwGrenade(); break;
       case 'KeyH': if (!e.repeat) F.hookTool && F.hookTool(); break;   // grappling hook: keluarkan / simpan alat (tembak = luncurkan)
       case 'KeyV': if (!e.repeat) F.melee(); break;
+      case 'KeyJ': if (!e.repeat && P.eq === 'knife') F.in.press = .2; break;   // v3.2 combo katana dari keyboard: J = ● ringan, L = ◆ berat (tahan = IRISAN HAMPA)
+      case 'KeyL': if (!e.repeat && P.eq === 'knife') F.in.ads = true; break;
       case 'KeyF': if (!e.repeat) F.useAbility(); break;
       case 'KeyB': if (!e.repeat) { M.ci = !M.ci; M.cmd = false; } break;
       case 'KeyZ': if (!e.repeat) { M.cmd = !M.cmd; M.ci = false; } break;
@@ -502,6 +539,7 @@
     if (c === 'Tab') { M.sb = false; if (S.view === 'fps') e.preventDefault(); }
     if (MOVE[c]) F.in[MOVE[c]] = 0;
     if (c === 'ShiftLeft' || c === 'ShiftRight') F.in.sprint = false; if (c === 'Space') F.in.jump = false; if (c === 'KeyC' || c === 'ControlLeft' || c === 'ControlRight') F.in.dn = 0;
+    if (c === 'KeyL' && P.eq === 'knife') F.in.ads = false;
     if (c === 'ArrowLeft') F.in.kl = 0; if (c === 'ArrowRight') F.in.kr = 0; if (c === 'ArrowUp') F.in.ku = 0; if (c === 'ArrowDown') F.in.kd = 0;
   }, true);
   window.addEventListener('blur', () => { Object.assign(F.in, { f: 0, b: 0, l: 0, r: 0, sprint: false, jump: false, dn: 0, fire: false, ads: false, kl: 0, kr: 0, ku: 0, kd: 0 }); M.sb = false; });
@@ -824,6 +862,26 @@
     for (const q of parts) { const n = cur ? cur + ' · ' + q : q; if (cur && ctx.measureText(n).width > maxW) { lines.push(cur); cur = q; } else cur = n; }
     if (cur) lines.push(cur);
     lines.forEach((l, i) => { const yy = y === null ? slotY(size, true) : y + i * (size + 5); if (yy !== null) text(l, CW / 2, yy, size, col, 'center', false); });
+  }
+  /* v3.2 meter GAYA combo katana: huruf rank D…SSS (membesar saat naik), kata rank, bilah ke rank berikut, hitungan kena beruntun,
+     nama + input combo terakhir; cincin isi di tengah saat ◆ ditahan (IRISAN HAMPA). PC: kanan tengah (di atas killstreak), HP: kiri tengah */
+  function styleHud(s) {
+    const S = P.sty; if (!S || P.mnt || P.veh || P.gs) return;
+    const pp = P.kcPop, popOn = pp && P.time - pp.t < 1.8;
+    if (P.eq !== 'knife' && S.p <= 0 && !popOn) return;
+    const K = F.KC.style, LT = ['D', 'C', 'B', 'A', 'S', 'SS', 'SSS'], col = ['#9fb1c4', '#7fd0ff', '#6fe08f', '#ffd24a', '#ff9b2f', '#ff5a46', '#ff4df2'][S.r];
+    const tc = U.touch, al = tc ? 'left' : 'right', x = tc ? LX() + 24 * s : CW - 30 * s, y = CH * (tc ? .3 : .34), sg = tc ? 1 : -1;
+    const up = clamp(1 - (P.time - (S.up || -9)) / .35, 0, 1), sz = (44 + up * 20) * s;
+    ctx.save(); ctx.globalAlpha = S.p > 0 ? 1 : .4; ctx.shadowColor = col; ctx.shadowBlur = (10 + up * 14) * s;
+    text(LT[S.r], x, y + 40 * s, sz, col, al, true, false); ctx.restore();
+    if (S.p > 0) {
+      text(Tt('f_sty_' + S.r), x, y + 57 * s, 11 * s, col, al, true);
+      const lo = K.lv[S.r], hi = K.lv[S.r + 1] || lo + 400, pr = clamp((S.p - lo) / (hi - lo), 0, 1), bw = 118 * s, bx = tc ? x : x - bw;
+      ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(bx, y + 63 * s, bw, 4 * s); ctx.fillStyle = col; ctx.fillRect(tc ? bx : bx + bw * (1 - pr), y + 63 * s, bw * pr, 4 * s);
+    }
+    if (S.hits > 1 && P.time - S.hT < K.hitT) text(S.hits + ' ' + Tt('f_sty_hit'), x, y + 84 * s, 14 * s, '#fff', al, true);
+    if (popOn) { ctx.globalAlpha = clamp((1.8 - (P.time - pp.t)) / .4, 0, 1); text(Tt('f_kc_' + pp.k), x + sg * 0, y + 104 * s, 15 * s, '#bfe6ff', al, true); text(pp.inp, x, y + 120 * s, 11 * s, 'rgba(255,255,255,.8)', al, false); ctx.globalAlpha = 1; }
+    if (P.eq === 'knife' && P.kcH > .12) { const k = clamp(P.kcH / F.KC.void.charge, 0, 1); ctx.strokeStyle = k >= 1 ? '#7fd0ff' : 'rgba(255,255,255,.55)'; ctx.lineWidth = 3 * s; ctx.beginPath(); ctx.arc(CW / 2, CH / 2, 24 * s, -Math.PI / 2, -Math.PI / 2 + k * 6.2832); ctx.stroke(); if (k >= 1) text(Tt('f_kc_void'), CW / 2, CH / 2 + 44 * s, 11 * s, '#7fd0ff', 'center', true); }
   }
   function streaks(s) {   // killstreak bertumpuk di kanan (di atas amunisi): nomor tombol, nama, bilah kemajuan kill
     if (U.touch) return;   // layar sentuh: killstreak siap pakai jadi tombol (fps-touch)
@@ -1665,6 +1723,7 @@
     if (D.fw) {   // WOLFPACK: petunjuk rotasi, stall, roda belum turun saat mendekat tanah
       if (V.gnd && V.rotHint) text(Tt('f_wf_rot'), cx, cy + 72 * s, 15 * s, bl ? '#ffffff' : AMB, 'center');
       else if (V.gnd && V.tko) text(Tt('f_wf_arm'), cx, cy + 72 * s, 13 * s, G, 'center');
+      else if (V.gnd && U.touch && Math.abs(V.spd) < V.D.vr * .9) text(Tt('f_wf_tch'), cx, cy + 72 * s, 13 * s, AMB, 'center');   // v3.2 HP: petunjuk lepas landas
       else if (!V.gnd && V.stall) { text(Tt('f_wf_stall'), cx, cy + 72 * s, 18 * s, bl ? '#ff3b3b' : '#ffdd33', 'center'); }
       else if (!V.gnd && V.gear < .5 && V.vz < -1 && V.z - F.hAt(V.x, V.y) < 45) text(Tt('f_wf_nogear'), cx, cy + 72 * s, 15 * s, bl ? '#ff3b3b' : '#ffdd33', 'center');
     }
@@ -1735,7 +1794,7 @@
     }
     vignette(); nvgOverlay(); if (P.alive && !P.menu) { buffFx(s); streakFx(s); } nukeFx(s); if (F.crayFx && !P.menu) F.crayFx(ctx, CW, CH, s);   // v2.12: duel Cray, tebasan Judgement Cut End di layar
     if (!P.menu || P.alive) {
-      if (P.alive) { damage(s); if (P.entA) { /* animasi naik kendaraan: tanpa HUD kokpit */ } else if (P.mnt) { HF = FONT; heliHud(s); HF = SANS; } else if (P.veh) { HF = FONT; vehHud(s); HF = SANS; } else { crosshair(s); bottomRight(s); kitHud(s); } tags(s); bottomLeft(s); streaks(s); targeting(s); if (!U.touch) chuteHud(s); heliMark(s); vehMark(s); kitMark(s); }
+      if (P.alive) { damage(s); if (P.entA) { /* animasi naik kendaraan: tanpa HUD kokpit */ } else if (P.mnt) { HF = FONT; heliHud(s); HF = SANS; } else if (P.veh) { HF = FONT; vehHud(s); HF = SANS; } else { crosshair(s); bottomRight(s); kitHud(s); } tags(s); bottomLeft(s); streaks(s); styleHud(s); targeting(s); if (!U.touch) chuteHud(s); heliMark(s); vehMark(s); kitMark(s); }
       else deadScreen(s);
       compass(s); minimap(s); if (P.alive && !(U.touch && (P.mnt || P.veh))) stealthHud(s); scorePanel(s); bossHud(s); if (U.touch && P.alive) chuteHud(s); killfeed(s); pops(s); if (F.ccDraw) F.ccDraw(ctx, s); msgs(s); callin(s); cmdPanel(s); scoreboard(s); bigMap(s);
     }
