@@ -1,5 +1,5 @@
 /* =========================================================================
-   fps-claycam.js — kamera mini Clay Martin (PC), kanan atas layar
+   fps-claycam.js — kamera mini Clay Martin: PC kanan atas layar · HP (v2.17) tengah atas, tulisan rata-tengah HUD disembunyikan selama tampil
    Muncul hanya pada dua saat: ketika Clay Martin pertama kali muncul, dan setiap kali ia akan terbang.
    Gambar 3D-nya dirender fps-gl (pipPass) ke persegi C.rect; berkas ini mengatur kamera, waktu, dan lapisan siaran di atasnya.
    ========================================================================= */
@@ -30,7 +30,7 @@
     return { x, y, z, yaw: Math.atan2(ty - y, tx - x), pitch: Math.atan2(tz - z, Math.hypot(tx - x, ty - y)), fov, therm, fogD: 3200 };
   }
   F.ccTick = function (dt) {
-    if (F.opts.mobile || F.swGL) { C.mode = ''; return; }
+    if (F.swGL) { C.mode = ''; return; }
     if (C.q !== Q.g) { C.q = Q.g; C.u = null; C.mode = ''; C.jf = false; C.cam = null; }
     if (!C.u) {
       C.scan -= dt;
@@ -56,7 +56,11 @@
   };
   F.ccLayout = function (CW, CH, s, hide) {
     C.vis = false;
-    if (!C.mode || hide || F.opts.mobile || F.swGL || P.menu || !P.alive) return;
+    if (!C.mode || hide || F.swGL || P.menu || !P.alive || Q.over) return;
+    if (TK.fpsui && TK.fpsui.touch) {   // HP: di tengah, tepat di bawah kompas; bawahnya berhenti sedikit di atas bidikan
+      const y = Math.round(70 * s), h = clamp(Math.min(CH / 2 - y - 8, 210 * s), 84, 260), w = Math.min(h / .5625, CW * .5);
+      C.rect = [Math.round((CW - w) / 2), y, Math.round(w), Math.round(w * .5625)]; C.vis = true; return;
+    }
     let w = Math.min(340 * s, CW / 2 - 336 * s), y = 14 * s;
     if (w < 210 * s) { w = 260 * s; y = 64 * s; }   // layar sempit: di bawah kompas
     const gx = P.gs ? 70 * s : 0;   // kamera udara (AC-130/laser/drone): kompas lingkaran di pojok kanan atas tetap terlihat

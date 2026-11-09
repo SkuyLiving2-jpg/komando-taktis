@@ -517,7 +517,9 @@
   const TX = () => U.touch ? -(U.hudR || 0) : 0;
   const LX = () => U.touch ? (U.hudL || 0) : 0;
   const TOPY = () => U.touch ? (U.topY || 60) : 0;   // layar sentuh: HUD kanan atas mulai di bawah bilah ❚❚ / RADIO (fps-touch mengisi U.topY & U.topR)   // layar sentuh: HUD kiri menghindari poni/lubang kamera (area aman dari fps-touch)   // layar sentuh: panel kanan-bawah digeser ke kiri gugus tombol (fps-touch mengisi U.hudR)
+  let MIDH = null;   // v2.17 HP: persegi Cray cam di tengah → tulisan rata-tengah di kolom tengah (dari tepi atas kamera ke bawah) tidak digambar; kompas & panel kiri tetap
   function text(t, x, y, size, col, align, bold, shadow) {
+    if (MIDH && align === 'center' && y > MIDH[1] - 6 && Math.abs(x - CW / 2) < CW * .3) return;
     if (U.touch) size = Math.max(9, size * 1.06);
     ctx.font = (bold === false ? '' : 'bold ') + Math.round(size) + 'px ' + HF; ctx.textAlign = align || 'left'; ctx.textBaseline = 'alphabetic';
     if (shadow !== false) { ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillText(t, x + 1, y + 1); }
@@ -719,7 +721,8 @@
     const md = d.mode === 'auto' ? 'AUTO' : d.mode === 'semi' ? 'SEMI' : d.mode === 'burst' ? 'BURST' : d.mode === 'bolt' ? 'BOLT' : d.mode === 'pump' ? 'PUMP' : 'ROCKET';
     text(md, ax, cy + 22 * s, 10 * s, CD.dim, 'right', false); ctx.font = Math.round(10 * s) + 'px ' + HF; const mw = ctx.measureText(md).width;
     text(wn(w.id), ax - mw - 8 * s, cy + 22 * s, 12 * s, '#fff', 'right');
-    if (P.relT > 0) { const pr = 1 - P.relT / P.relD, y = slotY(15 * s); text(Tt('f_reloading'), CW / 2, y, 15 * s, '#fff', 'center'); ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(CW / 2 - 60 * s, y + 8 * s, 120 * s, 4 * s); ctx.fillStyle = '#fff'; ctx.fillRect(CW / 2 - 60 * s, y + 8 * s, 120 * s * pr, 4 * s); CY += 10 * s; }
+    if (MIDH) { /* Cray cam di tengah (HP) */ }
+    else if (P.relT > 0) { const pr = 1 - P.relT / P.relD, y = slotY(15 * s); text(Tt('f_reloading'), CW / 2, y, 15 * s, '#fff', 'center'); ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(CW / 2 - 60 * s, y + 8 * s, 120 * s, 4 * s); ctx.fillStyle = '#fff'; ctx.fillRect(CW / 2 - 60 * s, y + 8 * s, 120 * s * pr, 4 * s); CY += 10 * s; }
     else if (w.ammo === 0 && w.res === 0) text(Tt('f_empty'), CW / 2, slotY(15 * s), 15 * s, '#ff6b6b', 'center');
     else if (low && w.res > 0) text(Tt('f_reload_hint'), CW / 2, slotY(14 * s), 14 * s, '#ffd24a', 'center');
     if (P.eq) wrapC(Tt('f_eq_' + P.eq), null, 12 * s, 'rgba(255,255,255,.85)', cMaxW(s));   // granat / pisau / bayonet di tangan: petunjuk klik
@@ -1121,12 +1124,15 @@
   function chuteHud(s) {
     if (!P.chute) return;
     if (U.touch) {   // HP: satu baris ringkas di tumpukan atas-tengah (dulu 3 baris di y 24% layar = menimpa bilah bos & pesan)
-      if (M.cine) return; const alt = Math.max(0, P.z - F.hAt(P.x, P.y)), y = topTake(24 * s) + 17 * s;
-      ctx.font = 'bold ' + Math.round(Math.max(9, 16 * s * 1.06)) + 'px ' + HF; const t1 = Tt('f_alt') + ' ' + Math.round(alt) + ' m', w1 = ctx.measureText(t1).width;
-      ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(CW / 2 - w1 / 2 - 70 * s, y - 15 * s, w1 + 140 * s, 21 * s);
-      text(t1, CW / 2, y, 16 * s, '#ffd24a', 'center', true, false);
-      text(P.chute === 1 ? 'FREEFALL' : 'PARACHUTE', CW / 2 - w1 / 2 - 8 * s, y, 11 * s, '#cfe', 'right', true, false);
-      text(Math.round(-P.vz) + ' m/s', CW / 2 + w1 / 2 + 8 * s, y, 11 * s, '#fff', 'left', true, false); return;
+      if (M.cine || MIDH) return; const alt = Math.max(0, P.z - F.hAt(P.x, P.y)), y = topTake(24 * s) + 17 * s;
+      // v2.17: lebar ketiga teks diukur dengan huruf yang sama seperti text() (HP ×1,06), lalu SATU kelompok diletakkan tepat di tengah & latar pas membungkusnya
+      const fnt = z => 'bold ' + Math.round(Math.max(9, z * 1.06)) + 'px ' + HF, t0 = P.chute === 1 ? 'FREEFALL' : 'PARACHUTE', t1 = Tt('f_alt') + ' ' + Math.round(alt) + ' m', t2 = Math.round(-P.vz) + ' m/s';
+      ctx.font = fnt(11 * s); const w0 = ctx.measureText(t0).width, w2 = ctx.measureText(t2).width; ctx.font = fnt(16 * s); const w1 = ctx.measureText(t1).width;
+      const gap = 10 * s, pad = 12 * s, tw = w0 + gap + w1 + gap + w2, x0 = Math.round(CW / 2 - tw / 2);
+      ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(x0 - pad, y - 16 * s, tw + 2 * pad, 22 * s);
+      text(t0, x0, y - 1 * s, 11 * s, '#cfe', 'left', true, false);
+      text(t1, x0 + w0 + gap, y, 16 * s, '#ffd24a', 'left', true, false);
+      text(t2, x0 + w0 + gap + w1 + gap, y - 1 * s, 11 * s, '#fff', 'left', true, false); return;
     }
     const alt = Math.max(0, P.z - F.hAt(P.x, P.y)), x = U.touch ? CW / 2 : CW - 120 * s, y0 = U.touch ? CH * .24 : CH / 2;   // layar sentuh: tengah atas (kanan = tombol)
     text(Tt('f_alt') + ' ' + Math.round(alt) + ' m', x, y0, 16 * s, '#ffd24a', 'center'); text(P.chute === 1 ? 'FREEFALL' : 'PARACHUTE', x, y0 + 20 * s, 12 * s, '#cfe', 'center');
@@ -1136,7 +1142,7 @@
   function bossHud(s) {
     let b = null, bd = 1100;
     for (const u of Q.units) { if (!u.boss || u.dead) continue; const d = Math.hypot(u.x - P.x, u.y - P.y); if (d < bd || (u === Q.fb && !b)) { bd = Math.min(bd, d); b = u; } }
-    M.bossOn = !!b;
+    M.bossOn = !!b; if (MIDH) return;
     if (b) {
       const T = UT[b.type], w = U.touch ? Math.min(380 * s, CW * .44) : 380 * s, x = (CW - w) / 2, y = topTake(30 * s) + 16 * s, f = clamp(b.hp / b.hpMax, 0, 1);
       text('☠ ' + Tt(T.final ? 'w_final_tag' : T.raid ? 'w_raid_tag' : 'w_boss_tag') + ' · ' + Tt('wu_' + b.type), CW / 2, y - 4 * s, 11.5 * s, T.final ? '#ff4a4a' : '#ff8a5a', 'center');
@@ -1674,7 +1680,8 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (!F.world || !P.cam || !R.ready) { ctx.fillStyle = '#05100a'; ctx.fillRect(0, 0, CW, CH); text(Tt('f_loading'), CW / 2, CH / 2, 16, '#39ff6e', 'center'); return; }
     HF = FONT;
-    if (F.ccLayout) F.ccLayout(CW, CH, sc(), U.touch || F.paused || M.map || M.sb || M.army || !!(P.gs && (P.gs.mode === 'pick' || P.gs.mode === 'pred')));
+    if (F.ccLayout) F.ccLayout(CW, CH, sc(), F.paused || M.map || M.sb || M.army || !!(P.gs && (P.gs.mode === 'pick' || P.gs.mode === 'pred')));
+    MIDH = U.touch && F.clayCam && F.clayCam.vis ? F.clayCam.rect : null;
     if (P.gs && P.alive) {   // kamera udara: render 3D dari drone / AC-130 / hulu ledak (cadangan tanpa WebGL: pandangan atas datar)
       const g = P.gs, s = sc();
       if (g.mode === 'pick') { R.render(ctx, CW, CH, dpr, dt); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); pickHud(s); return; }

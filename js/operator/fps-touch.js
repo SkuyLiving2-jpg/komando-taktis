@@ -24,10 +24,10 @@
   /* ---------- elemen ---------- */
   const root = document.createElement('div'); root.id = 'ftouch'; root.className = 'off';
   root.innerHTML = '<div class="tj"><i></i></div><div class="tsp"></div><div class="tbs"></div>' +
-    '<div class="ttopbar"><button class="tbtn ttop tstk" data-a="stk">★<i></i></button><button class="tbtn ttop tpause" data-a="pause">❚❚</button><button class="tbtn ttop tradio" data-a="radio"></button></div><div class="tradiop off"></div><div class="tstkp tsk2 off"></div><div class="tstkp thwp off"></div>';
+    '<div class="ttopbar"><button class="tbtn ttop tstk" data-a="stk">★<i></i></button><button class="tbtn ttop tpause" data-a="pause">❚❚</button><button class="tbtn ttop tradio" data-a="radio"></button></div><button class="tbtn ttop tsup" data-a="sup"></button><div class="tradiop off"></div><div class="tstkp tsk2 off"></div><div class="tstkp thwp off"></div>';
   stage.appendChild(root);
   const joyEl = root.querySelector('.tj'), knob = joyEl.querySelector('i'), sprEl = root.querySelector('.tsp'), btnBox = root.querySelector('.tbs'), radio = root.querySelector('.tradiop'), topBar = root.querySelector('.ttopbar');
-  const stkBtn = root.querySelector('.tstk'), stkN = stkBtn.querySelector('i'), stkP = root.querySelector('.tstkp'), hwP = root.querySelector('.thwp');
+  const supBtn = root.querySelector('.tsup'), stkBtn = root.querySelector('.tstk'), stkN = stkBtn.querySelector('i'), stkP = root.querySelector('.tstkp'), hwP = root.querySelector('.thwp');
   const probe = document.createElement('div');   // membaca env(safe-area-inset-*) lewat padding elemen tak terlihat
   probe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
   document.body.appendChild(probe);
@@ -314,9 +314,15 @@
     if (a === 'pause') { if (M.map) M.map = false; else { radioShow(false); stkShow(false); U.setPause(true); } }
     else if (a === 'radio') { stkShow(false); radioShow(radio.classList.contains('off')); }
     else if (a === 'stk') stkShow(stkP.classList.contains('off'));
+    else if (a === 'sup') {   // v2.17: isi nyawa + amunisi + granat (sama dengan RADIO → PASOKAN AMUNISI + MEDKIT)
+      const u = P.unit, full = u && u.hp >= u.hpMax && P.w.every(w => !w || (w.ammo >= F.WEAPONS[w.id].mag && w.res >= F.WEAPONS[w.id].res)) && P.gren >= P.cls.gren + 1;
+      if (full) { F.msg(Tt('f_sup_full'), 'c'); return; }
+      const r = F.callin('AMMO'); if (r && !r.ok && r.msg) F.msg(Tt(r.msg), 'c');
+    }
   }
   /* RADIO (v2.0): laci kaca di kanan — kepala berfrekuensi + kredit, 5 ubin aksi cepat, kartu bantuan (ikon, harga, bilah keterjangkauan), komando regu */
   const RI = {   // ikon 24×24
+    sup: 'M9 2h6v5h5v6h-5v5H9v-5H4V7h5z M3 20h18v2H3z',   // salib medis + alas (isi nyawa & amunisi)
     army: 'M8 6a3 3 0 1 0 0 6 3 3 0 1 0 0-6zM16 6a3 3 0 1 0 0 6 3 3 0 1 0 0-6zM2 20q1-6 6-6t6 6zM12 20q1-6 5-6t5 6z',
     cls: 'M2 11h13l2-2h5v3h-4l-1 2H9l-1 4H5l1-4H2z', map: 'M3 5l6-2 6 2 6-2v16l-6 2-6-2-6 2zM9 3v16M15 5v16',
     sb: 'M7 3h10v4a5 5 0 0 1-10 0zM4 4h3v3a3 3 0 0 1-3-3zM20 4h-3v3a3 3 0 0 0 3-3zM10 14h4v3h3v3H7v-3h3z', nvg: 'M2 9h20v6h-6l-2-2h-4l-2 2H2zM5 11a1.6 1.6 0 1 0 0 .1zM19 11a1.6 1.6 0 1 0 0 .1zM10 6h4v3h-4z',
@@ -392,6 +398,10 @@
     const w = stage.clientWidth, h = stage.clientHeight;
     if (w !== CWp || h !== CHp) { CWp = w; CHp = h; readSafe(); u = unit(); sig = ''; }
     root.style.setProperty('--ta', CFG.alpha); U.hudR = SA.r + u * hudW(); U.hudL = SA.l;
+    { const ss = clamp(h / 520, .62, 1), c = (F.CALLINS.find(q => q.id === 'AMMO') || { cost: 60 }).cost;   // tombol pasokan: kanan minimap (minimap fps-ui: x 20·s + area aman, jari-jari 74·s)
+      supBtn.style.left = Math.round(SA.l + 176 * ss) + 'px'; supBtn.style.top = Math.round(20 * ss) + 'px'; supBtn.style.display = P.gs ? 'none' : '';
+      if (!supBtn.firstChild) supBtn.innerHTML = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="' + RI.sup + '"/></svg><span class="tn">' + c + '</span>';
+      supBtn.classList.toggle('dim', Q.cr < c); supBtn.setAttribute('aria-label', Tt('f_ci_AMMO')); supBtn.title = Tt('f_ci_AMMO'); }
     topBar.style.right = stkP.style.right = hwP.style.right = (SA.r + 8) + 'px'; topBar.style.top = (SA.t + 6) + 'px'; stkP.style.top = hwP.style.top = (SA.t + 58) + 'px'; U.topR = SA.r + 10; U.topY = SA.t + 58;   // HUD kanan atas mulai di bawah bilah ❚❚ / RADIO
     if (J.id !== null && !joyOK()) { const p = ptr.get(J.id); if (p) p.role = 'ui'; joyEnd(); }
     if (!P.mnt) { hw = 'gun'; if (!hwP.classList.contains('off')) hwShow(false); }

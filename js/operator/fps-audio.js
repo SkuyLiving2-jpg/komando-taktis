@@ -13,6 +13,10 @@
   let ctx = null, bus = null, master = null, muf = null, budget = 0, budgetT = 0, ambT = 2, beatT = 0, scanT = 0, envT = 0, urban = 0, rvO = null, rvU = null, rvOg = null, rvUg = null, deafT = 0, windOn = false;
   const SFX = () => TK.fpssfx, bank = {}, lastV = {}, lastAt = {};
   const mob = () => !!(F.opts && F.opts.mobile);
+  /* v2.17 HP: speaker kecil & CPU lemah — volume master ×0,7, suara serentak dibatasi, limiter keras di ujung, gema lebih pendek,
+     dan penjaga yang membangun ulang rantai bila keluaran rusak (NaN/diam) atau konteks terputus (telepon, notifikasi, tab latar) */
+  const MV = () => F.opts.vol * (mob() ? .7 : 1);
+  let nAct = 0, lim = null, comp = null, an = null, wdT = 0, wdBuf = null, resT = 0;
 
   /* ---------- bank: render per varian, yang belum siap dirender saat diminta, sisanya dicicil saat senggang ---------- */
   function varN(name) { const i = SFX().info(name); if (!i) return 0; return mob() ? Math.min(i.v, 2) : i.v; }
@@ -58,28 +62,44 @@
   }
   function setupReverb() {
     try {
-      rvO = ctx.createConvolver(); rvO.buffer = mkIR(2.1, [[.11, .3], [.24, .34], [.46, .26], [.82, .17], [1.3, .1]], 2.3, .42); rvOg = ctx.createGain(); rvOg.gain.value = .55; rvO.connect(rvOg); rvOg.connect(bus);
+      rvO = ctx.createConvolver(); rvO.buffer = mob() ? mkIR(1.2, [[.11, .3], [.24, .3], [.46, .2], [.82, .12]], 3, .42) : mkIR(2.1, [[.11, .3], [.24, .34], [.46, .26], [.82, .17], [1.3, .1]], 2.3, .42); rvOg = ctx.createGain(); rvOg.gain.value = mob() ? .4 : .55; rvO.connect(rvOg); rvOg.connect(bus);
       if (!mob()) { rvU = ctx.createConvolver(); rvU.buffer = mkIR(1.5, [[.028, .55], [.05, .5], [.083, .42], [.13, .34], [.2, .24], [.31, .16]], 3.4, .3); rvUg = ctx.createGain(); rvUg.gain.value = 0; rvU.connect(rvUg); rvUg.connect(bus); }
     } catch (e) { rvO = rvU = null; }
   }
 
   function init() {
-    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return ctx; }
+    if (ctx) { if (ctx.state !== 'running' && ctx.state !== 'closed') ctx.resume().catch(() => { }); return ctx; }   // 'interrupted' (iOS) juga dipulihkan
     if (!SFX()) return null;
     try {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       // pembatas puncak: tembakan menekan ambience seperti telinga & mikrofon, tanpa memompa
-      const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -10; comp.knee.value = 8; comp.ratio.value = 10; comp.attack.value = .002; comp.release.value = .16;
-      master = ctx.createGain(); master.gain.value = F.opts.vol;
-      muf = ctx.createBiquadFilter(); muf.type = 'lowpass'; muf.frequency.value = 20000; muf.Q.value = .5;
-      bus = ctx.createGain(); bus.connect(muf); muf.connect(master); master.connect(comp); comp.connect(ctx.destination);
+      master = ctx.createGain(); master.gain.value = MV();
+      bus = ctx.createGain(); chain();
       setupReverb();
       startBank();
     } catch (e) { ctx = null; }
     return ctx;
   }
+  function chain() {   // bus → lowpass (tuli ledakan) → master → kompresor → limiter → speaker; dipanggil ulang oleh penjaga bila rusak
+    for (const n of [muf, comp, lim, an]) if (n) try { n.disconnect(); } catch (e) { /* ok */ }
+    try { bus.disconnect(); master.disconnect(); } catch (e) { /* ok */ }
+    // pembatas puncak: tembakan menekan ambience seperti telinga & mikrofon, tanpa memompa
+    comp = ctx.createDynamicsCompressor(); comp.threshold.value = mob() ? -14 : -10; comp.knee.value = 8; comp.ratio.value = mob() ? 6 : 10; comp.attack.value = .002; comp.release.value = mob() ? .22 : .16;
+    lim = ctx.createDynamicsCompressor(); lim.threshold.value = -2; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = .001; lim.release.value = .1;   // limiter: puncak tidak pernah pecah di speaker HP
+    muf = ctx.createBiquadFilter(); muf.type = 'lowpass'; muf.frequency.value = 20000; muf.Q.value = .5;
+    an = ctx.createAnalyser(); an.fftSize = 512; wdBuf = new Float32Array(512);
+    bus.connect(muf); muf.connect(master); master.connect(comp); comp.connect(lim); lim.connect(ctx.destination); lim.connect(an);
+  }
+  function watchdog(dt) {   // keluaran NaN/Inf (filter meledak) = seluruh suara mati permanen → bangun ulang rantai & loop
+    if ((wdT -= dt) > 0) return; wdT = 1;
+    an.getFloatTimeDomainData(wdBuf); let bad = false; for (let i = 0; i < wdBuf.length; i += 8) if (!isFinite(wdBuf[i])) { bad = true; break; }
+    if (!bad) return;
+    for (const id in LV) { const v = LV[id]; try { v.s.stop(); } catch (e) { /* sudah */ } try { v.g.disconnect(); } catch (e) { /* ok */ } delete LV[id]; }
+    try { if (rvO) rvO.disconnect(); if (rvOg) rvOg.disconnect(); if (rvU) rvU.disconnect(); if (rvUg) rvUg.disconnect(); } catch (e) { /* ok */ }
+    bus = ctx.createGain(); chain(); setupReverb(); nAct = 0;
+  }
   const ok = () => ctx && ctx.state === 'running' && F.opts.sound && (() => {
-    const t = ctx.currentTime; if (t - budgetT > .1) { budgetT = t; budget = 0; } return ++budget < 26;
+    const t = ctx.currentTime; if (t - budgetT > .1) { budgetT = t; budget = 0; } return ++budget < (mob() ? 12 : 26);
   })();
   const pan = p => { if (!ctx.createStereoPanner) return null; const n = ctx.createStereoPanner(); n.pan.value = clamp(p, -1, 1); return n; };
   const panOf = (dx, dy, d) => d > 1 ? (-dx * Math.sin(P.yaw) + dy * Math.cos(P.yaw)) / d : 0;
@@ -88,8 +108,9 @@
 
   /* play(name, {vol, pan, lp, wet, rate, delay}) */
   function play(name, o) {
+    if (nAct >= (mob() ? 28 : 64) || (mob() && nAct >= 18 && (o.vol || 0) < .45)) return null;   // terlalu banyak suara serentak: yang pelan dilewati dulu
     const buf = nextBuf(name); if (!buf) return null;
-    const s = ctx.createBufferSource(); s.buffer = buf; s.playbackRate.value = o.rate || 1;
+    const s = ctx.createBufferSource(); s.buffer = buf; s.playbackRate.value = o.rate || 1; nAct++; s.onended = () => { nAct = Math.max(0, nAct - 1); };
     let n = s; if (o.lp && o.lp < 19000) { const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; f.Q.value = .4; n.connect(f); n = f; }
     const g = ctx.createGain(); g.gain.value = o.vol; n.connect(g);
     const pn = pan(o.pan || 0); if (pn) { g.connect(pn); pn.connect(bus); } else g.connect(bus);
@@ -223,8 +244,9 @@
     _dbg() { if (!ctx) return null; if (!A._an) { A._an = ctx.createAnalyser(); A._an.fftSize = 2048; master.connect(A._an); } const d = new Float32Array(2048); A._an.getFloatTimeDomainData(d); let pk = 0, nan = 0; for (const v of d) { if (!isFinite(v)) nan++; pk = Math.max(pk, Math.abs(v)); } return { state: ctx.state, sr: ctx.sampleRate, pk: +pk.toFixed(4), nan, loops: Object.keys(LV), bank: Object.keys(bank).length, worker: !!wk, sisa: wk ? wkLeft : warmQ ? warmQ.length : -1 }; },
     /* dipanggil tiap frame: gema & angin, tingkat kota, dengung serangga, mesin AI, detak jantung */
     tick(dt, hpRatio, alive) {
-      if (!ctx || ctx.state !== 'running' || !F.opts.sound) { if (ctx && master) master.gain.value = F.opts.sound ? F.opts.vol : 0; return; }
-      master.gain.value = F.opts.vol;
+      if (ctx && ctx.state !== 'running' && ctx.state !== 'closed' && F.opts.sound && (resT -= dt) <= 0) { resT = 1.5; ctx.resume().catch(() => { }); }   // terputus (telepon/notifikasi/tab latar): coba lanjutkan
+      if (!ctx || ctx.state !== 'running' || !F.opts.sound) { if (ctx && master) master.gain.value = F.opts.sound ? MV() : 0; return; }
+      master.gain.value = MV(); watchdog(dt);
       envT -= dt;
       if (envT <= 0) {   // kota: gema rapat · terbuka: gema lebar. Dievaluasi perlahan
         envT = .5; const cs = F.world && F.world.cities; let u = 0; if (cs) for (const c of cs) { const q = Math.hypot(c.x - P.x, c.y - P.y); if (q < 260) u = Math.max(u, clamp((260 - q) / 90, 0, 1)); }
