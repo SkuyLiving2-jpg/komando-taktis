@@ -281,6 +281,19 @@ body[data-view="fps"] .tabs { opacity: .75; }
 .ar-vg { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } .ar-v { border-color: rgba(255,210,74,.45); } .ar-v b { color: #ffd24a; font-size: 12px; } .ar-v small.ar-kit { line-height: 1.35; margin-top: 3px; }
 .ar-row { display: flex; gap: 8px; align-items: baseline; font-size: 10.5px; padding: 3px 0; border-bottom: 1px dotted var(--gdim); } .ar-row span { color: var(--txt); flex: 1; } .ar-row em { font-style: normal; color: var(--cyan); font-size: 9.5px; } .ar-row b { font-weight: normal; min-width: 34px; text-align: right; }
 /* meja senjata: lampiran & perk (fps-kit.js) */
+/* v3.10 OVERKILL: pemilih senjata utama kedua */
+.kt-ok2 { margin-top: 8px; padding: 8px; border: 1px solid #ffc42855; border-radius: 6px; background: linear-gradient(180deg, #2a220833, #0000); }
+.kt-ok2 h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: .08em; color: #ffc428; }
+.kt-ok2g { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 5px; }
+.kt-ow { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 4px; border: 1px solid #ffffff22; border-radius: 5px; background: #0d1117cc; color: #cfd6df; cursor: pointer; font: inherit; transition: border-color .15s, background .15s, transform .15s; }
+.kt-ow:hover { border-color: #ffc42899; transform: translateY(-1px); }
+.kt-ow.on { border-color: #ffc428; background: #2a2208; box-shadow: inset 0 0 0 1px #ffc428; color: #ffe08a; }
+.kt-ow.lock { opacity: .45; cursor: not-allowed; }
+.kt-ow .kt-osv { width: 100%; height: 30px; display: flex; align-items: center; justify-content: center; }
+.kt-ow .kt-osv svg { width: 92%; height: 100%; fill: #7f8b98; color: #7f8b98; }
+.kt-ow:hover .kt-osv svg { fill: #c9d2dc; color: #c9d2dc; } .kt-ow.on .kt-osv svg { fill: #ffc428; color: #ffc428; filter: drop-shadow(0 0 4px #ffc42877); }
+.kt-ow b { font-size: 10px; line-height: 1.15; text-align: center; } .kt-ow em { font-size: 9px; font-style: normal; opacity: .8; }
+.kt-ok2s { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-size: 10px; } .kt-ok2s span { padding: 2px 6px; border-radius: 3px; background: #ffc42822; color: #ffe08a; } .kt-ok2s s { opacity: .5; padding: 2px 4px; }
 .kt-grid.pk { gap: 5px; } .kt-grid.pk .kt-card { min-height: 0; padding: 6px 8px; } .kt-grid.pk .kt-card small { font-size: 9.5px; line-height: 1.35; } .fm-foot small.mid { color: #ffd24a; }   /* perk di menu pilih kelas */
 .kt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; } .kt-grid.three { grid-template-columns: repeat(3, 1fr); }
 .kt-card { border: 1px solid var(--line); background: #05180c; padding: 7px 9px 8px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; min-height: 74px; }
