@@ -67,10 +67,18 @@ body[data-doc="us"] .pm-p { background: linear-gradient(160deg, rgba(27,25,24,.8
 .pm-map { position: relative; flex: 1; min-height: 120px; overflow: hidden; border: 1px solid var(--pl); cursor: pointer; background: #0f0d0c; }
 .pm-map canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .pm-sweep { position: absolute; width: 220%; aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0deg, transparent 300deg, var(--pa2) 350deg, rgba(255,255,255,.12) 360deg); animation: pmSweep 5s linear infinite; mix-blend-mode: screen; }
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 300deg, var(--pa2) 350deg, rgba(255,255,255,.12) 360deg); animation: pmSweep 5s linear infinite; mix-blend-mode: screen; opacity: .5; }
 @keyframes pmSweep { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
 .pm-leg { position: absolute; left: 6px; bottom: 5px; display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 10.5px; letter-spacing: .08em; text-shadow: 0 1px 2px #000; }
-.pm-leg .b { color: var(--pa); } .pm-leg .r { color: #ff7a66; } .pm-leg .n { color: #dedacf; }
+.pm-leg .b { color: var(--pa); } .pm-leg .r { color: #ff7a66; } .pm-leg .n { color: #dedacf; } .pm-leg .t { color: #ffc93a; }
+/* v3.12 kartu intel di bawah peta beranda */
+.pm-intel { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 6px; }
+.pm-it { position: relative; display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 7px 10px 8px; border: 1px solid var(--pl); background: rgba(0,0,0,.28); box-shadow: inset 2px 0 0 var(--pa); animation: pmPanel .35s ease; }
+.pm-p.still .pm-it { animation: none; }
+.pm-it em { font-style: normal; font-size: 9.5px; letter-spacing: .24em; color: var(--pd); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pm-it b { font-size: clamp(13px, 2.8vh, 17px); letter-spacing: .08em; color: var(--pt); white-space: nowrap; }
+.pm-it small { font-size: 10.5px; color: var(--pd); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pm-bb { display: flex; height: 4px; gap: 1px; margin: 2px 0 1px; } .pm-bb span { display: block; min-width: 2px; }
 .pm-brief { font-size: clamp(9.5px, 2vh, 11px); letter-spacing: .08em; color: var(--pd); }
 /* briefing: tingkat kesulitan */
 .pt-diff { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -657,3 +665,4 @@ body.play #stage { overflow: hidden; overflow: clip; }
 #ftouch .tj { border: 1.5px solid rgba(255,255,255,.3); background: radial-gradient(circle, rgba(0,0,0,.05), rgba(0,0,0,.28)); }
 #ftouch .tj i { background: rgba(241,237,227,.5); border: 2px solid rgba(255,255,255,.75); box-shadow: 0 0 10px rgba(0,0,0,.4); }
 #ftouch .tsp { color: #ff9f1c; font-family: var(--ui); }
+@media (max-height: 430px) { .pm-it small, .pm-bb { display: none; } .pm-it { padding: 4px 8px; } .pm-it b { font-size: 12px; } .pm-it em { font-size: 8.5px; } }
