@@ -69,7 +69,7 @@ body[data-doc="us"] .pm-p { background: linear-gradient(160deg, rgba(27,25,24,.8
 .pm-sweep { position: absolute; width: 220%; aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; border-radius: 50%;
   background: conic-gradient(from 0deg, transparent 0deg, transparent 300deg, var(--pa2) 350deg, rgba(255,255,255,.12) 360deg); animation: pmSweep 5s linear infinite; mix-blend-mode: screen; opacity: .5; }
 @keyframes pmSweep { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
-.pm-leg { position: absolute; left: 6px; bottom: 5px; display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 10.5px; letter-spacing: .08em; text-shadow: 0 1px 2px #000; }
+.pm-leg { position: absolute; left: 6px; right: 6px; bottom: 5px; display: flex; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; gap: 3px 10px; font-size: 10.5px; letter-spacing: .08em; text-shadow: 0 1px 2px #000; }
 .pm-leg .b { color: var(--pa); } .pm-leg .r { color: #ff7a66; } .pm-leg .n { color: #dedacf; } .pm-leg .t { color: #ffc93a; }
 /* v3.12 kartu intel di bawah peta beranda */
 .pm-intel { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 6px; }
