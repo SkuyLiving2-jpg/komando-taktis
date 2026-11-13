@@ -649,6 +649,7 @@ body.play button, body.play input, body.play select { font-family: var(--ui); }
 /* menu utama: baris terpilih = bilah terang bertulisan gelap (gaya daftar menu Cold War) */
 .pm-i.cur { background: linear-gradient(90deg, #f1ede3 0%, #f1ede3 72%, rgba(241,237,227,0) 100%); border-left-color: #ff9f1c; }
 .pm-i.cur b, .pm-i.cur em, .pm-i.cur i { color: #121212 !important; text-shadow: none !important; }
+.pm-i.cur small { color: rgba(18,18,18,.68) !important; }   /* v3.21.1 keterangan di bawah judul ikut gelap di sorotan putih */
 .pm-i.cur::after { display: none; }
 .pm-i b { letter-spacing: .12em; }
 .pt-go { letter-spacing: .22em; color: #111; }
