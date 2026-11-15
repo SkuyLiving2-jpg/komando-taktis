@@ -15,6 +15,12 @@
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/play.css">
+  <style>/* v3.26 layar pembuka instan (tanpa menunggu JS) */
+    .pboot{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:radial-gradient(120% 90% at 30% 30%,#242220 0%,#131210 46%,#080707 100%);color:#f3efe3;font-family:'Barlow Condensed',system-ui,sans-serif;letter-spacing:.08em;text-align:center}
+    .pboot h1{margin:0;font-size:clamp(28px,7vw,56px);font-weight:700}.pboot h1 b{color:#ff9f1c}.pboot-c{color:#ff9f1c;font-size:26px}.pboot-s{opacity:.6;font-size:14px;letter-spacing:.4em}
+    .pboot-bar{width:min(240px,50vw);height:3px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:14px;border-radius:2px}.pboot-bar i{display:block;width:40%;height:100%;background:#ff9f1c;animation:pbl 1.1s ease-in-out infinite}
+    .pboot-t{font-size:13px;opacity:.55;letter-spacing:.12em}@keyframes pbl{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+  </style>
 </head>
 <!-- EDISI OFFLINE: hanya mode OPERATOR (FPS). Simulasi warzone tetap berjalan di belakang tanpa layar radar/warzone. -->
 <body class="play" data-doc="tni" data-view="fps">
@@ -23,41 +29,41 @@
   <canvas id="fps"></canvas>
   <div id="fpsmenu" class="fmenu off"></div>
   <div id="fpspause" class="fmenu off"></div>
-  <div id="ptitle" class="pscreen"></div>
+  <div id="ptitle" class="pscreen"><div class="pboot"><div class="pboot-c">★</div><h1>KOMANDO <b>TAKTIS</b></h1><div class="pboot-s">OPERATOR</div><div class="pboot-bar"><i></i></div><div class="pboot-t">Memuat medan perang…</div></div></div>
   <div id="pover" class="off"></div>
   <div id="protate"></div>
 </div>
 
-<script src="js/core/core.js"></script>
-<script src="js/core/geo.js"></script>
-<script src="js/core/doctrine.js"></script>
-<script src="js/warzone/war-lang.js"></script>
-<script src="js/warzone/war-data.js"></script>
-<script src="js/warzone/war.js"></script>
-<script src="js/warzone/war-terrain.js"></script>
-<script src="js/operator/fps-lang.js"></script>
-<script src="js/operator/fps-data.js"></script>
-<script src="js/operator/fps.js"></script>
-<script src="js/operator/fps-sfx.js"></script>
-<script src="js/operator/fps-audio.js"></script>
-<script src="js/operator/fps-render.js"></script>
-<script src="js/operator/fps-models.js"></script>
-<script src="js/operator/fps-models2.js"></script>
-<script src="js/operator/fps-body.js"></script>
-<script src="js/operator/fps-base.js"></script>
-<script src="js/operator/fps-gl.js"></script>
-<script src="js/operator/fps-vm.js"></script>
-<script src="js/operator/fps-heli.js"></script>
-<script src="js/operator/fps-veh.js"></script>
-<script src="js/operator/fps-life.js"></script>
-<script src="js/operator/fps-chute.js"></script>
-<script src="js/operator/fps-claycam.js"></script>
-<script src="js/operator/fps-cray.js"></script>
-<script src="js/operator/fps-kit.js"></script>
-<script src="js/operator/fps-bossdie.js"></script>
-<script src="js/operator/fps-ui.js"></script>
-<script src="js/operator/fps-touch.js"></script>
-<script src="js/operator/fps-beta.js"></script>
-<script src="js/offline/play.js"></script>
+<script defer src="js/core/core.js"></script>
+<script defer src="js/core/geo.js"></script>
+<script defer src="js/core/doctrine.js"></script>
+<script defer src="js/warzone/war-lang.js"></script>
+<script defer src="js/warzone/war-data.js"></script>
+<script defer src="js/warzone/war.js"></script>
+<script defer src="js/warzone/war-terrain.js"></script>
+<script defer src="js/operator/fps-lang.js"></script>
+<script defer src="js/operator/fps-data.js"></script>
+<script defer src="js/operator/fps.js"></script>
+<script defer src="js/operator/fps-sfx.js"></script>
+<script defer src="js/operator/fps-audio.js"></script>
+<script defer src="js/operator/fps-render.js"></script>
+<script defer src="js/operator/fps-models.js"></script>
+<script defer src="js/operator/fps-models2.js"></script>
+<script defer src="js/operator/fps-body.js"></script>
+<script defer src="js/operator/fps-base.js"></script>
+<script defer src="js/operator/fps-gl.js"></script>
+<script defer src="js/operator/fps-vm.js"></script>
+<script defer src="js/operator/fps-heli.js"></script>
+<script defer src="js/operator/fps-veh.js"></script>
+<script defer src="js/operator/fps-life.js"></script>
+<script defer src="js/operator/fps-chute.js"></script>
+<script defer src="js/operator/fps-claycam.js"></script>
+<script defer src="js/operator/fps-cray.js"></script>
+<script defer src="js/operator/fps-kit.js"></script>
+<script defer src="js/operator/fps-bossdie.js"></script>
+<script defer src="js/operator/fps-ui.js"></script>
+<script defer src="js/operator/fps-touch.js"></script>
+<script defer src="js/operator/fps-beta.js"></script>
+<script defer src="js/offline/play.js"></script>
 </body>
 </html>
