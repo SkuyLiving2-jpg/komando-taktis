@@ -749,9 +749,31 @@ body[data-doc="us"] .pm-cta { background: linear-gradient(100deg, #4aa3ff 0%, #8
 .pm-xp { height: 4px; margin: 4px 0 2px; background: rgba(255,255,255,.12); overflow: hidden; } .pm-xp i { display: block; height: 100%; background: linear-gradient(90deg, var(--pa), #ffe08a); box-shadow: 0 0 8px var(--pa); }
 .pm-cd em { font-style: normal; font-size: 9.5px; letter-spacing: .1em; color: var(--pd); }
 /* kartu pembaruan (kiri bawah, PC) */
-.pm-news { margin: 0 0 10px; padding: 9px 12px; max-width: 330px; background: linear-gradient(100deg, rgba(14,16,20,.7), rgba(14,16,20,.25)); border-left: 2px solid var(--pa); animation: pmIn .5s ease both; animation-delay: .5s; }
-.pm-news em { font-style: normal; display: block; font-size: 9.5px; letter-spacing: .26em; color: var(--pa); margin-bottom: 4px; }
-.pm-news ul { margin: 0; padding-left: 14px; font-size: 11px; line-height: 1.45; color: rgba(243,239,227,.82); } .pm-news li::marker { color: var(--pa); }
+/* v3.37 tombol LIHAT UPDATE TERBARU (beranda) + pop-up pembaruan */
+.pm-newsb { display: flex; align-items: center; gap: 11px; width: 100%; max-width: 330px; margin: 0 0 10px; padding: 8px 12px; border: 0; border-left: 2px solid var(--pa); background: linear-gradient(100deg, rgba(14,16,20,.72), rgba(14,16,20,.22));
+  color: var(--pt); font: inherit; text-align: left; cursor: pointer; animation: pmIn .5s ease both; animation-delay: .5s; transition: background .2s; }
+.pm-newsb i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--pa); animation: pmNews 1.8s ease-out infinite; }
+@keyframes pmNews { 0% { box-shadow: 0 0 0 0 var(--pa); } 70%, 100% { box-shadow: 0 0 0 7px transparent; } }
+.pm-newsb span { min-width: 0; } .pm-newsb em { display: block; font-style: normal; font-size: 9px; letter-spacing: .26em; color: var(--pa); }
+.pm-newsb b { display: block; margin-top: 1px; font-size: 12px; letter-spacing: .14em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pm-newsb s { margin-left: auto; text-decoration: none; font-size: 20px; line-height: 1; color: var(--pa); transition: transform .2s; }
+@media (hover: hover) { .pm-newsb:hover { background: linear-gradient(100deg, var(--pa2), rgba(14,16,20,.22)); } .pm-newsb:hover s { transform: translateX(3px); } }
+.pm-newsb:focus-visible { outline: 1px solid var(--pa); outline-offset: 2px; }
+.pm-modal { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  background: rgba(4,5,8,.66); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); animation: pmFade .22s ease both; }
+@keyframes pmFade { from { opacity: 0; } }
+.pm-mbox { display: flex; flex-direction: column; width: min(540px, 100%); max-height: min(80vh, 600px); max-height: min(80dvh, 600px); background: linear-gradient(160deg, rgba(22,23,26,.98), rgba(11,11,13,.98));
+  border: 1px solid var(--pl); border-top: 2px solid var(--pa); box-shadow: 0 24px 70px rgba(0,0,0,.65); animation: pmPop .3s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes pmPop { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+.pm-modal.still, .pm-modal.still .pm-mbox { animation: none; }
+.pm-mh { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 16px 11px; border-bottom: 1px solid var(--pl); }
+.pm-mh em { display: block; font-style: normal; font-size: 9.5px; letter-spacing: .28em; color: var(--pa); }
+.pm-mh b { display: block; margin-top: 3px; font-size: clamp(14px, 2.6vh, 17px); letter-spacing: .1em; }
+.pm-mx { flex: none; width: 34px; height: 34px; border: 1px solid var(--pl); background: transparent; color: var(--pt); font: inherit; font-size: 14px; cursor: pointer; transition: border-color .2s, color .2s; }
+.pm-mx:hover, .pm-mx:focus-visible { border-color: var(--pa); color: var(--pa); outline: none; }
+.pm-mbox ul { margin: 0; padding: 12px 18px 4px 34px; overflow-y: auto; overscroll-behavior: contain; font-size: 13px; line-height: 1.55; color: rgba(243,239,227,.88); }
+.pm-mbox li + li { margin-top: 9px; } .pm-mbox li::marker { color: var(--pa); }
+.pm-mok { align-self: flex-end; margin: 10px 16px 14px; }
 /* keterangan regu (tengah bawah) */
 .pm-squad { position: absolute; z-index: 2; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); text-align: center; pointer-events: none; white-space: nowrap; animation: pmUp .7s ease both; animation-delay: .8s; }
 .pm-squad i { display: block; width: 46px; height: 2px; margin: 0 auto 6px; background: var(--pa); box-shadow: 0 0 10px var(--pa); }
@@ -761,8 +783,8 @@ body[data-doc="us"] .pm-cta { background: linear-gradient(100deg, #4aa3ff 0%, #8
 @keyframes pmUp { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
 /* layar sempit / pendek (HP mendatar) */
 @media (max-width: 1100px) { .pm-squad small { display: none; } }
-@media (max-width: 900px) { .pm-squad { display: none; } .pm-news { display: none; } .pscreen { grid-template-columns: minmax(200px, 30%) 1fr minmax(270px, 37%); } .pscreen.pm-sub-on { grid-template-columns: minmax(200px, 30%) 1% 1fr; } }
-@media (max-height: 560px) { .pm-news { display: none; } }
+@media (max-width: 900px) { .pm-squad { display: none; } .pm-newsb { padding: 6px 10px; } .pm-newsb em { display: none; } .pscreen { grid-template-columns: minmax(200px, 30%) 1fr minmax(270px, 37%); } .pscreen.pm-sub-on { grid-template-columns: minmax(200px, 30%) 1% 1fr; } }
+@media (max-height: 560px) { .pm-newsb { margin-bottom: 6px; padding: 5px 10px; } .pm-newsb em { display: none; } .pm-newsb b { font-size: 11px; } .pm-mbox ul { font-size: 12px; } }
 @media (max-height: 430px) {
   .pm-card { top: max(6px, env(safe-area-inset-top)); padding: 4px 10px 4px 6px; min-width: 0; gap: 8px; } .pm-rk { width: 30px; height: 30px; } .pm-rk svg { width: 26px; height: 26px; }
   .pm-cd b { font-size: 12px; } .pm-cd em { display: none; }
@@ -773,6 +795,6 @@ body[data-doc="us"] .pm-cta { background: linear-gradient(100deg, #4aa3ff 0%, #8
   .pm-i b { font-size: clamp(14px, 4.4vh, 20px); }
 }
 @media (max-width: 640px) and (orientation: portrait) { .pscreen > .pm-l, .pscreen > .pm-r { grid-column: 1; } .pm-card { display: none; } }
-@media (prefers-reduced-motion: reduce) { .pm-cta::after, .pm-home, .pm-card, .pm-squad, .pm-news { animation: none !important; } #plobby { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .pm-cta::after, .pm-home, .pm-card, .pm-squad, .pm-newsb, .pm-newsb i, .pm-modal, .pm-mbox { animation: none !important; } #plobby { transition: none; } }
 .pscreen.pm-sub-on .pm-card { display: none; }
 .pscreen.pm-sub-on .pm-p { background: linear-gradient(165deg, rgba(16,18,22,.86), rgba(7,8,11,.92)); }
