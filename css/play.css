@@ -826,16 +826,20 @@ body[data-doc="us"] .pm-cta { background: linear-gradient(100deg, #4aa3ff 0%, #8
 @media (max-height: 560px) { .pp-r small, .pp-note, .pp-go { display: none; } .pp-r { padding: 4px 8px; } .pp-o { line-height: 1.3; } }
 
 /* v3.43.1 kartu OPERASI BERIKUTNYA terlipat: judul = tombol berpanah; dibuka → kartu memanjang, baris masuk bergiliran, garis pindai, angka menghitung naik */
-.pp-tg { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--pl); color: inherit; font: inherit; text-align: left; cursor: pointer; padding: 0 0 6px; }
+.pp-tg { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--pl); color: inherit; font: inherit; text-align: left; cursor: pointer; padding: 0 0 6px; outline: none; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+.pp-tg:hover, .pp-tg:active, .pp-tg:focus { background: none; color: inherit; } /* matikan sorotan baris dari button:hover umum (style.css) */
 .pp-tg h3 { flex: 1; } .pp-tg .pm-dif { order: 2; }
 .pp-more { order: 3; display: flex; align-items: center; gap: 6px; font-size: 9.5px; letter-spacing: .18em; color: var(--pa); }
 .pp-more em { font-style: normal; } .pp-more em + em, .pm-home.open .pp-more em:first-child { display: none; } .pm-home.open .pp-more em + em { display: inline; }
-.pp-ar { width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid var(--pa); border-radius: 50%; transition: transform .35s cubic-bezier(.2,.8,.2,1), background .2s; }
-.pp-ar::before { content: ""; width: 6px; height: 6px; border-right: 2px solid var(--pa); border-bottom: 2px solid var(--pa); transform: translateY(-2px) rotate(45deg); }
+.pp-ar { width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid var(--pa); border-radius: 50%; transition: transform .35s cubic-bezier(.2,.8,.2,1), background .18s, box-shadow .18s; }
+.pp-ar::before { content: ""; width: 6px; height: 6px; border-right: 2px solid var(--pa); border-bottom: 2px solid var(--pa); transform: translateY(-2px) rotate(45deg); transition: border-color .18s; }
 .pm-home:not(.open) .pp-ar { animation: ppNudge 1.8s ease-in-out infinite; }
 .pm-home.open .pp-ar { transform: rotate(180deg); background: rgba(255,170,40,.12); }
-@media (hover: hover) { .pp-tg:hover .pp-ar { background: rgba(255,170,40,.18); } .pp-tg:hover h3 { color: var(--pa); } }
-.pp-tg:focus-visible { outline: 2px solid var(--pa); outline-offset: 3px; }
+/* v3.43.2: hanya panah yang disorot — lingkaran terisi amber, panah jadi hitam; judul & baris tidak ikut menyala */
+@media (hover: hover) { .pp-tg:hover .pp-ar { background: var(--pa); box-shadow: 0 0 10px rgba(255,170,40,.55); animation: none; } .pp-tg:hover .pp-ar::before { border-color: #000; } }
+.pp-tg:active .pp-ar, .pp-tg:focus-visible .pp-ar { background: var(--pa); box-shadow: 0 0 10px rgba(255,170,40,.55); animation: none; }
+.pp-tg:active .pp-ar::before, .pp-tg:focus-visible .pp-ar::before { border-color: #000; }
+.pp-tg:focus-visible .pp-ar { outline: 2px solid var(--pa); outline-offset: 2px; }
 @keyframes ppNudge { 0%, 100% { transform: translateY(0); box-shadow: 0 0 0 0 rgba(255,170,40,.45); } 50% { transform: translateY(2px); box-shadow: 0 0 0 5px rgba(255,170,40,0); } }
 .pp-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .5s cubic-bezier(.2,.8,.2,1); }
 .pm-home.open .pp-wrap { grid-template-rows: 1fr; }
