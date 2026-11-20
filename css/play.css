@@ -85,6 +85,7 @@ body[data-doc="us"] .pm-p { background: linear-gradient(160deg, rgba(27,25,24,.8
 .pt-diff button { position: relative; display: grid; grid-template-columns: 26px 1fr; column-gap: 8px; text-align: left; padding: 8px 10px; border: 1px solid var(--pl); background: rgba(0,0,0,.25); color: var(--pt); cursor: pointer; font: inherit; }
 .pt-diff button em { grid-row: 1 / 3; font-style: normal; font-size: 13px; color: var(--pd); align-self: center; }
 .pt-diff button b { font-size: clamp(12px, 2.7vh, 14px); letter-spacing: .14em; } .pt-diff button small { font-size: 10.5px; color: var(--pd); line-height: 1.3; }
+.pt-diff.pt-tod { grid-template-columns: repeat(3, 1fr); }   /* v3.47 waktu operasi */
 .pt-diff button.on { border-color: var(--pa); background: var(--pa2); box-shadow: inset 3px 0 0 var(--pa); } .pt-diff button.on em, .pt-diff button.on b { color: var(--pa); }
 .pt-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .pt-row button { flex: 1 1 auto; padding: 8px 12px; border: 1px solid var(--pl); background: rgba(0,0,0,.25); color: var(--pt); letter-spacing: .12em; cursor: pointer; font: inherit; font-size: 11px; }
