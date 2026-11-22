@@ -458,3 +458,53 @@ body[data-doc="us"] #fpsload { --la: #4aa3ff; --lar: 74,163,255; --la2: #1f5f9e;
   color: #1a1406; background: #ffc93a; box-shadow: 0 6px 24px rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; white-space: nowrap; max-width: 94vw; overflow: hidden; text-overflow: ellipsis; }
 #gpbadge.on { opacity: 1; transform: translate(-50%, 0); }
 body.gp-on #ftouch { display: none !important; }   /* v3.14 HP + gamepad: tombol sentuh disembunyikan selama gamepad dipakai */
+
+/* ============================================================
+   v4.0 PUSAT OPERASI DI HP & TABLET (body.mob, js/core/touch-pc.js): tampilan utama memenuhi layar, kolom kiri/kanan = laci geser,
+   log = lembar bawah, bilah perintah di bawah. Tanpa geser halaman / gulir samping; tombol minimal 40 px untuk jari
+   ============================================================ */
+html.mob { touch-action: pan-x pan-y; }
+body.mob { overflow: hidden; height: 100vh; height: 100dvh; touch-action: pan-x pan-y; -webkit-user-select: none; user-select: none; --mbh: 52px; }
+body.mob .app { height: 100vh; height: 100dvh; padding: 4px 4px calc(var(--mbh) + 4px + env(safe-area-inset-bottom, 0px)); gap: 4px; grid-template-rows: auto 1fr; }
+body.mob header { flex-wrap: nowrap; gap: 8px; padding: 4px 8px; min-height: 0; overflow: hidden; }
+body.mob header small, body.mob .nxcore, body.mob .clock small { display: none; }
+body.mob header h1 { font-size: 11px; letter-spacing: .06em; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+body.mob .brand { min-width: 0; flex: 1 1 auto; } body.mob .crest { width: 26px; height: 26px; font-size: 14px; flex: none; }
+body.mob .alertbar { order: 0; flex: 0 1 auto; flex-basis: auto; padding: 4px 8px; font-size: 10px; letter-spacing: .12em; white-space: nowrap; overflow: hidden; }
+body.mob .clock { font-size: 11px; white-space: nowrap; } body.mob .docsw button { min-height: 30px; padding: 0 9px; }
+body.mob main { grid-template-columns: 1fr; min-height: 0; height: 100%; }
+body.mob .col.center { min-height: 0; height: 100%; }
+body.mob .viewp { height: auto !important; flex: 1; min-height: 0; }
+body.mob .vstage { touch-action: none; }
+body.mob .vstage canvas { touch-action: none; }
+body.mob .viewp > h2.tabs { height: 36px; } body.mob .viewp { padding-top: 36px; } body.mob .tabs .tab { padding: 0 12px; font-size: 11px; letter-spacing: .12em; }
+body.mob .tabs > span:first-child { overflow-x: auto; scrollbar-width: none; } body.mob .tabs > span:last-child { display: none; }
+body.mob .brand > div { min-width: 0; overflow: hidden; } body.mob header h1 { display: block; }
+body.mob .logp > h2.tabs { height: 30px; } body.mob .logp { padding-top: 30px; }
+body.mob .vbar { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+body.mob .vbar::-webkit-scrollbar { display: none; }
+body.mob .vbar .grp { flex: none; } body.mob .vbar button { min-height: 32px; }
+body.mob .logp { position: fixed; left: 4px; right: 4px; bottom: calc(var(--mbh) + 6px + env(safe-area-inset-bottom, 0px)); height: min(46vh, 320px); z-index: 60; transform: translateY(120%); transition: transform .22s ease; box-shadow: 0 -10px 30px rgba(0,0,0,.6); }
+body.mob.lg .logp { transform: none; }
+body.mob .col.left, body.mob .col.right { position: fixed; top: 4px; bottom: calc(var(--mbh) + 6px + env(safe-area-inset-bottom, 0px)); width: min(88vw, 380px); z-index: 60; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--bg); padding: 4px; transition: transform .22s ease; box-shadow: 0 0 30px rgba(0,0,0,.7); }
+body.mob .col.left { left: 0; transform: translateX(-108%); } body.mob .col.right { right: 0; transform: translateX(108%); }
+body.mob.dl .col.left, body.mob.dr .col.right { transform: none; }
+body.mob .panel.grow { flex: none; }
+body.mob .tblwrap { max-height: 46vh; }
+body.mob .ctl button, body.mob .chips button, body.mob .nx-btns button, body.mob .siteList > *, body.mob #wspeed button, body.mob #wdiff button { min-height: 40px; }
+body.mob #mscrim { position: fixed; inset: 0; z-index: 55; background: rgba(0,0,0,.45); display: none; }
+body.mob.dl #mscrim, body.mob.dr #mscrim, body.mob.lg #mscrim { display: block; }
+#mbar { display: none; }
+body.mob #mbar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; height: calc(var(--mbh) + env(safe-area-inset-bottom, 0px)); padding: 0 4px env(safe-area-inset-bottom, 0px); z-index: 70; gap: 3px;
+  background: linear-gradient(180deg, #06180c, #020804); border-top: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+body.mob #mbar::-webkit-scrollbar { display: none; }
+#mbar button { flex: 1 0 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: transparent; border: 1px solid transparent; color: var(--g); font: inherit; padding: 2px 4px; min-height: 44px; margin: 4px 0; border-radius: 3px; }
+#mbar button i { font-style: normal; font-size: 17px; line-height: 1; } #mbar button b { font-size: 8px; letter-spacing: .06em; font-weight: 600; white-space: nowrap; }
+#mbar button.on { background: var(--gdim); border-color: var(--g2); } #mbar button:active { background: var(--g2); color: #001; }
+#mbar button[data-mb="opr"] { color: #ffd24a; } #mbar button[hidden] { display: none; }
+.mb-ring { position: fixed; width: 56px; height: 56px; margin: -28px 0 0 -28px; border: 2px solid #ffd24a; border-radius: 50%; pointer-events: none; z-index: 80; animation: mbr .55s ease-out forwards; }
+@keyframes mbr { from { transform: scale(.3); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+body.mob .hud.tl.legend { display: none !important; } body.mob #hint { font-size: 10px; max-width: 70%; }
+body.mob #mini { width: 120px; height: 77px; }
+@media (orientation: portrait) { body.mob header .clock { display: none; } }
