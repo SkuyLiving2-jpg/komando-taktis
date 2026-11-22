@@ -508,3 +508,11 @@ body.mob #mbar::-webkit-scrollbar { display: none; }
 body.mob .hud.tl.legend { display: none !important; } body.mob #hint { font-size: 10px; max-width: 70%; }
 body.mob #mini { width: 120px; height: 77px; }
 @media (orientation: portrait) { body.mob header .clock { display: none; } }
+/* v4.2 menu kelas kampanye: lampiran senjata & gudang senjata */
+.kt-ca, .kt-arm { margin-top: 10px; }
+.kt-ca h4, .kt-arm h4 { margin: 8px 0 4px; font-size: 11px; letter-spacing: .08em; color: #cfd6df; } .kt-ca h4 em { font-style: normal; color: #ffc428; margin-left: 6px; }
+.kt-cag { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 5px; }
+.kt-ac { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 6px 7px; min-height: 38px; border: 1px solid #ffffff22; border-radius: 5px; background: #0d1117cc; color: #cfd6df; cursor: pointer; text-align: left; font: inherit; }
+.kt-ac b { font-size: 10.5px; line-height: 1.15; } .kt-ac small { font-size: 9px; opacity: .6; }
+.kt-ac:hover { border-color: #ffc42899; } .kt-ac.on { border-color: #ffc428; background: #2a2208; box-shadow: inset 0 0 0 1px #ffc428; color: #ffe08a; }
+.kt-arm.lock h3 { opacity: .6; }
