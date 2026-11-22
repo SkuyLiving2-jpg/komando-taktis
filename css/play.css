@@ -863,7 +863,7 @@ body[data-doc="us"] .pm-cta { background: linear-gradient(100deg, #4aa3ff 0%, #8
 .cp-op em { font-style: normal; opacity: .55; font-size: 11px; } .cp-op b { font-size: 12px; letter-spacing: .06em; } .cp-op span { color: var(--pa, #ffb020); font-size: 11px; letter-spacing: .05em; white-space: nowrap; } .cp-op span i { font-style: normal; font-size: 9px; letter-spacing: .14em; border: 1px solid; padding: 1px 4px; }
 .cp-op.on { border-left-color: var(--pa, #ffb020); background: rgba(255,176,32,.12); } .cp-op.lock { opacity: .4; cursor: default; }
 .cp-det { display: flex; flex-direction: column; gap: 4px; min-width: 0; } .cp-det > small { opacity: .7; font-size: 11px; letter-spacing: .1em; } .cp-det h4 { margin: 0; font-size: 20px; letter-spacing: .08em; }
-.cp-det p { margin: 2px 0 4px; font-size: 13px; line-height: 1.45; opacity: .9; } .cp-det ul { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.5; }
+.cp-det p { margin: 2px 0 4px; font-size: 13px; line-height: 1.45; opacity: .9; } .cp-det ol, .cp-det ul { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.5; }
 .cp-st { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11px; opacity: .65; margin: 4px 0 8px; } .cp-st .on { color: var(--pa, #ffb020); opacity: 1; }
 .cp-det .pt-go { align-self: flex-start; }
 @media (hover: hover) { .cp-op:not(.lock):hover { background: rgba(255,255,255,.09); } }
@@ -873,3 +873,19 @@ body[data-doc="us"] .pm-cta { background: linear-gradient(100deg, #4aa3ff 0%, #8
 .fcsub { position: absolute; left: 50%; bottom: 24%; transform: translateX(-50%); z-index: 5; max-width: min(76vw, 680px); padding: 6px 14px; background: rgba(0,0,0,.6); border-left: 3px solid #37d7ff; color: #fff; font-size: 14px; line-height: 1.35; pointer-events: none; text-shadow: 0 1px 2px #000; }
 .fcsub em { display: block; font-style: normal; font-size: 10px; letter-spacing: .16em; color: #37d7ff; margin-bottom: 1px; } .fcsub.foe { border-left-color: #ff4040; } .fcsub.foe em { color: #ff6060; }
 @media (max-height: 430px) { .fcamp { top: 17%; } .fcamp b { font-size: 12px; } .fcsub { font-size: 12px; bottom: 30%; max-width: 62vw; } }
+/* v4.1 kampanye: babak, tingkat kesulitan, cutscene, suara operator */
+.cp-act { font-size: 10px; letter-spacing: .2em; color: var(--pa, #ffb020); opacity: .8; padding: 8px 2px 2px; }
+.cp-dks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; } .cp-dk { padding: 7px 4px; min-height: 36px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.14); color: inherit; font: inherit; cursor: pointer; }
+.cp-dk b { font-size: 11px; letter-spacing: .08em; } .cp-dk.on { border-color: var(--pa, #ffb020); background: rgba(255,176,32,.16); color: #fff; } .cp-dks-s { opacity: .65; font-size: 11px; margin: 2px 0 6px; }
+.cine-skip { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: 14%; z-index: 40; padding: 8px 14px; min-height: 40px; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.35); color: #fff; font: 700 12px/1 inherit; letter-spacing: .14em; cursor: pointer; touch-action: manipulation; }
+.cine-skip:hover { background: rgba(0,0,0,.7); }
+body.cine-on #ftouch, body.cine-on #fcamp, body.cine-on #fcsub { display: none !important; }
+.fcsub.me { border-left-color: #fff; } .fcsub.me em { color: #fff; }
+/* v4.1 panel kampanye: daftar & rincian bergulir sendiri, tombol MULAI OPERASI selalu terlihat (HP: dulu terpotong di bawah layar) */
+.pm-p.cp { overflow: hidden; }
+.cp-body { flex: 1 1 auto; grid-template-rows: minmax(0, 1fr); }
+.cp-list { max-height: none; min-height: 0; overscroll-behavior: contain; touch-action: pan-y; }
+.cp-det { overflow-y: auto; min-height: 0; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+.cp-foot { position: sticky; bottom: 0; z-index: 2; margin-top: auto; padding-top: 6px; display: flex; flex-direction: column; gap: 4px; background: linear-gradient(rgba(10,11,14,.0), rgba(10,11,14,.96) 14px); }
+.cp-foot .pt-go { align-self: flex-start; }
+@media (max-height: 500px) { .pm-p.cp .pm-note, .cp-foot .pm-cap, .cp-dks-s { display: none; } .cp-foot { flex-direction: row; align-items: center; flex-wrap: wrap; } .cp-foot .cp-dks { flex: 1 1 260px; } .cp-det ol { font-size: 11px; line-height: 1.35; } .cp-dk { min-height: 32px; padding: 5px 2px; } .cp-dk b { font-size: 10px; } }
