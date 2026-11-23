@@ -872,6 +872,11 @@ body[data-doc="us"] .pm-cta { background: linear-gradient(100deg, #4aa3ff 0%, #8
 .fcamp small { display: block; font-size: 10px; letter-spacing: .18em; color: #ffd24a; opacity: .9; } .fcamp b { font-size: 14px; letter-spacing: .05em; text-shadow: 0 1px 2px #000; } .fcamp b em { font-style: normal; color: #ffd24a; margin-left: 6px; } .fcamp b.ok { color: #7dff9a; }
 .fcsub { position: absolute; left: 50%; bottom: 24%; transform: translateX(-50%); z-index: 5; max-width: min(76vw, 680px); padding: 6px 14px; background: rgba(0,0,0,.6); border-left: 3px solid #37d7ff; color: #fff; font-size: 14px; line-height: 1.35; pointer-events: none; text-shadow: 0 1px 2px #000; }
 .fcsub em { display: block; font-style: normal; font-size: 10px; letter-spacing: .16em; color: #37d7ff; margin-bottom: 1px; } .fcsub.foe { border-left-color: #ff4040; } .fcsub.foe em { color: #ff6060; }
+.cp-brief { margin: 4px 0 10px; padding: 8px 11px; background: rgba(0,0,0,.3); border-left: 3px solid #ffd24a; border-radius: 2px; }
+.cp-brief small { display: block; font-size: 10px; letter-spacing: .14em; color: #ffd24a; margin-bottom: 5px; }
+.cp-brief ol { margin: 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.6; }
+.cp-brief li { opacity: .55; } .cp-brief li.on { opacity: 1; color: #ffd24a; font-weight: 700; } .cp-brief li.ok { opacity: .8; color: #7dffa0; }
+.cp-ins-n { display: block; margin: 6px 0 4px; font-size: 11px; opacity: .78; line-height: 1.45; }
 @media (max-height: 430px) { .fcamp { top: 17%; } .fcamp b { font-size: 12px; } .fcsub { font-size: 12px; bottom: 30%; max-width: 62vw; } }
 /* v4.1 kampanye: babak, tingkat kesulitan, cutscene, suara operator */
 .cp-act { font-size: 10px; letter-spacing: .2em; color: var(--pa, #ffb020); opacity: .8; padding: 8px 2px 2px; }
