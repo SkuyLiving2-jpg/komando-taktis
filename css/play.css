@@ -578,7 +578,7 @@ body.play[data-doc="us"] #ftouch .tradiop { --a: #4aa3ff; --a2: rgba(74,163,255,
 .po-wrap .po-btns button { border-radius: 10px; border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.06); }
 .po-wrap .po-btns .pt-go { background: var(--a); color: #1a1200; border: 0; box-shadow: 0 0 24px var(--a2); }
 .po-wrap.lose .po-btns .pt-go { color: #200604; }
-@media (max-height: 430px) { .po-grid { grid-template-columns: repeat(8, 1fr); gap: 5px; } .po-t em { letter-spacing: .06em; } .po-top p { display: none; } }
+@media (max-height: 430px) { .po-grid { grid-template-columns: repeat(8, 1fr); gap: 5px; } .po-t em { letter-spacing: .06em; } .po-top p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 10px; max-width: 86vw; margin: 2px auto 0; } }
 @media (max-width: 560px) { .po-grid { grid-template-columns: repeat(2, 1fr); } .po-low { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .po-rays, .po-conf i, .po-card, .po-top h1, .po-stars i.on, .po-t, .po-med span, .tradiop, .tradiop .trl button { animation: none !important; opacity: 1; } .po-rank .bar i { width: var(--w); } }
 @media (min-width: 1100px) and (min-height: 700px) { .po-card { zoom: 1.3; } } @media (min-width: 1600px) and (min-height: 880px) { .po-card { zoom: 1.55; } }
@@ -805,7 +805,13 @@ body[data-doc="us"] .pm-cta { background: linear-gradient(100deg, #4aa3ff 0%, #8
 .pm-home .pm-brief { margin: 2px 0 2px; }
 /* v3.43 pengaturan bergeser (sensitivitas, FOV, volume, kontrol sentuh) di menu utama */
 .pm-slv { float: right; color: var(--pa); letter-spacing: .08em; font-size: 11px; }
-.pm-sl { width: 100%; margin: 2px 0 4px; accent-color: var(--pa); cursor: pointer; height: 22px; background: transparent; }
+.pm-sl { width: 100%; margin: 2px 0 4px; accent-color: var(--pa); cursor: pointer; height: 22px; background: transparent; -webkit-appearance: none; appearance: none; touch-action: pan-y; }
+/* v4.6 slider pengaturan bergaya sendiri: lintasan gelap, isian oranye sampai nilai, kenop bulat (dulu lintasan putih polos di HP) */
+.pm-sl::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(var(--pa), var(--pa)) 0 0 / var(--v, 50%) 100% no-repeat, rgba(255,255,255,.14); }
+.pm-sl::-moz-range-track { height: 6px; border-radius: 3px; background: rgba(255,255,255,.14); } .pm-sl::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--pa); }
+.pm-sl::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -6px; border-radius: 50%; background: #fff; border: 3px solid var(--pa); box-shadow: 0 1px 4px rgba(0,0,0,.6); }
+.pm-sl::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 3px solid var(--pa); }
+body.touch .pm-sl::-webkit-slider-thumb { width: 24px; height: 24px; margin-top: -9px; }
 
 /* v3.43 kartu PERSIAPAN OPERASI di beranda (menggantikan tombol MAIN kedua) */
 .pm-prep { display: flex; flex-direction: column; gap: 5px; }
@@ -877,7 +883,7 @@ body[data-doc="us"] .pm-cta { background: linear-gradient(100deg, #4aa3ff 0%, #8
 .cp-brief ol { margin: 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.6; }
 .cp-brief li { opacity: .55; } .cp-brief li.on { opacity: 1; color: #ffd24a; font-weight: 700; } .cp-brief li.ok { opacity: .8; color: #7dffa0; }
 .cp-ins-n { display: block; margin: 6px 0 4px; font-size: 11px; opacity: .78; line-height: 1.45; }
-@media (max-height: 430px) { .fcamp { top: 17%; } .fcamp b { font-size: 12px; } .fcsub { font-size: 12px; bottom: 30%; max-width: 62vw; } }
+@media (max-height: 430px) { .fcamp { top: 17%; } .fcamp b { font-size: 12px; } .fcsub { font-size: 12px; bottom: 18%; max-width: 58vw; padding: 4px 12px; } }
 /* v4.1 kampanye: babak, tingkat kesulitan, cutscene, suara operator */
 .cp-act { font-size: 10px; letter-spacing: .2em; color: var(--pa, #ffb020); opacity: .8; padding: 8px 2px 2px; }
 .cp-dks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; } .cp-dk { padding: 7px 4px; min-height: 36px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.14); color: inherit; font: inherit; cursor: pointer; }
@@ -891,7 +897,7 @@ body.cine-on #ftouch, body.cine-on #fcamp, body.cine-on #fcsub { display: none !
 .cp-body { flex: 1 1 auto; grid-template-rows: minmax(0, 1fr); }
 .cp-list { max-height: none; min-height: 0; overscroll-behavior: contain; touch-action: pan-y; }
 .cp-det { overflow-y: auto; min-height: 0; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
-.cp-foot { position: sticky; bottom: 0; z-index: 2; margin-top: auto; padding-top: 6px; display: flex; flex-direction: column; gap: 4px; background: linear-gradient(rgba(10,11,14,.0), rgba(10,11,14,.96) 14px); }
+.cp-foot { position: sticky; bottom: 0; z-index: 2; margin-top: auto; padding-top: 6px; display: flex; flex-direction: column; gap: 4px; background: linear-gradient(rgba(10,11,14,.0), rgba(10,11,14,.98) 7px); }   /* v4.6 dulu transparan 14 px: baris bintang tembus di belakang tombol kesulitan (HP) */
 .cp-foot .pt-go { align-self: flex-start; }
 @media (max-height: 500px) { .pm-p.cp .pm-note, .cp-foot .pm-cap, .cp-dks-s { display: none; } .cp-foot { flex-direction: row; align-items: center; flex-wrap: wrap; } .cp-foot .cp-dks { flex: 1 1 260px; } .cp-det ol { font-size: 11px; line-height: 1.35; } .cp-dk { min-height: 32px; padding: 5px 2px; } .cp-dk b { font-size: 10px; } }
 /* v4.2 hadiah kampanye */
@@ -903,3 +909,5 @@ body.cine-on #ftouch, body.cine-on #fcamp, body.cine-on #fcsub { display: none !
 .po-rw { margin: 2px auto 0; max-width: 560px; padding: 8px 12px; border: 1px solid var(--a); border-radius: 10px; background: rgba(255,176,32,.1); display: flex; flex-direction: column; gap: 4px; text-align: left; }
 .po-rw small { font-size: 10px; letter-spacing: .2em; color: var(--a); } .po-rw b { display: block; font-size: 13px; letter-spacing: .06em; } .po-rw span { font-size: 11.5px; opacity: .85; line-height: 1.4; }
 @media (max-height: 500px) { .cp-rw { margin-top: 3px; font-size: 10px; } .cp-rw b { display: none; } .po-rw span { display: none; } }
+/* v4.6 menu kampanye di HP: syarat bintang dulu tertutup tombol kesulitan (konten 25 px lebih tinggi dari panel) → baris dirapatkan, kaki panel pejal */
+@media (max-height: 500px) { .cp-det { gap: 2px; } .cp-det p { margin: 0 0 2px; line-height: 1.25; } .cp-det ol { line-height: 1.22; } .cp-det > .pm-cap { display: none; } .cp-det p { font-size: 10.5px; line-height: 1.22; } .cp-st { margin: 2px 0 4px; font-size: 10px; gap: 2px 10px; } .cp-foot { background: rgb(14,15,18); box-shadow: 0 -6px 6px -1px rgb(14,15,18); padding-top: 4px; } }
